@@ -1,0 +1,32 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('sale_products', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('product_id')->constrained(); //Referencia al producto vendido
+            $table->foreignId('sale_id')->constrained(); //Referencia a la venta
+            $table->integer('quantity');
+            $table->decimal('unitPrice', 8, 2); //Precio unitario al momento de la venta
+            $table->decimal('totalPrice', 10, 2); //Precio total (quantity * unitPrice)
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('sale_products');
+    }
+};
