@@ -31,10 +31,10 @@ class InvoiceController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'number' => 'required|string|unique:invoices,number',
+            'invoice_number' => 'required|string|unique:invoices,invoice_number',
             'amount' => 'required|numeric|min:0',
-            'date' => 'required|date',
-            // ... otros campos
+            'invoice_date' => 'required|date',
+            'service_order_id' => 'required|exists:service_orders,id',
         ]);
 
         Invoice::create($validated);

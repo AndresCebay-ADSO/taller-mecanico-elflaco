@@ -14,8 +14,8 @@ class ServiceOrderController extends Controller
      */
     public function index()
     {
-        $serviceOrders = ServiceOrder::with('mechanic')->get();
-        return view('service_orders.index', compact('serviceOrders'));
+        $serviceOrders = ServiceOrder::all();
+        return view('service-orders.index', compact('serviceOrders'));
     }
 
     /**
@@ -23,8 +23,7 @@ class ServiceOrderController extends Controller
      */
     public function create()
     {
-        $mechanics = Mechanic::where('is_active', true)->get();
-        return view('service_orders.create', compact('mechanics'));
+        return view('service-orders.create');
     }
 
     /**
@@ -33,12 +32,10 @@ class ServiceOrderController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'vehicle_plate' => 'required|string|max:10',
             'customer_name' => 'required|string|max:255',
-            'description' => 'required|string',
-            'mechanic_id' => 'required|exists:mechanics,id',
-            'status' => 'required|in:pending,in_progress,completed,cancelled',
-            'entry_date' => 'required|date',
+            'customer_phone' => 'nullable|string|max:20',
+            'vehicle_info' => 'required|string',
+            'service_description' => 'required|string',
         ]);
 
         ServiceOrder::create($validated);
@@ -51,7 +48,7 @@ class ServiceOrderController extends Controller
      */
     public function show(ServiceOrder $serviceOrder)
     {
-        return view('service_orders.show', compact('serviceOrder'));
+        return view('service-orders.show', compact('serviceOrder'));
     }
 
     /**
@@ -60,7 +57,7 @@ class ServiceOrderController extends Controller
     public function edit(ServiceOrder $serviceOrder)
     {
         $mechanics = Mechanic::all();
-        return view('service_orders.edit', compact('serviceOrder', 'mechanics'));
+        return view('service-orders.edit', compact('serviceOrder', 'mechanics'));
     }
 
     /**
