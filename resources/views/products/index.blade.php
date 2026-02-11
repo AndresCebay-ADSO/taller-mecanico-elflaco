@@ -14,7 +14,7 @@
             <input type="text" placeholder="Buscar por producto, categoría o proveedor..." class="w-full rounded-xl border border-slate-300 py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
         </div>
         <div class="flex items-center gap-3">
-            <select class="rounded-xl border border-slate-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-blue-500 focus:outline-none">
+            <select class="rounded-xl border border-slate-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-blue-500 focus:outline-none cursor-pointer">
                 <option>Todas las categorías</option>
             </select>
             <x-button variant="outline" size="sm">

@@ -12,39 +12,43 @@
 
     <!-- Navigation -->
     <nav class="flex-1 space-y-1 px-4 py-4 overflow-y-auto custom-scrollbar">
-        <x-sidebar-link href="/dashboard" icon="layout-grid" active="{{ request()->is('dashboard') }}">
+        <x-sidebar-link href="{{ route('dashboard') }}" icon="layout-grid" :active="request()->routeIs('dashboard')">
             Dashboard
         </x-sidebar-link>
         
-        <x-sidebar-link href="/inventory" icon="package">
+        <x-sidebar-link href="{{ route('inventory.index') }}" icon="history" :active="request()->routeIs('inventory.index')">
+            Trazabilidad
+        </x-sidebar-link>
+
+        <x-sidebar-link href="{{ route('products.index') }}" icon="package" :active="request()->routeIs('products.index')">
             Inventario
         </x-sidebar-link>
 
-        <x-sidebar-link href="/service-orders" icon="clipboard-list" active="{{ request()->is('service-orders*') }}">
+        <x-sidebar-link href="{{ route('service-orders.index') }}" icon="clipboard-list" :active="request()->routeIs('service-orders*')">
             Órdenes
         </x-sidebar-link>
 
-        <x-sidebar-link href="/tasks" icon="wrench">
+        <x-sidebar-link href="{{ route('jobs.index') }}" icon="wrench" :active="request()->routeIs('jobs*')">
             Trabajos
         </x-sidebar-link>
 
-        <x-sidebar-link href="/sales" icon="shopping-cart" active="{{ request()->is('sales*') }}">
-            Ventas
+        <x-sidebar-link href="{{ route('sales.index') }}" icon="shopping-cart" :active="request()->routeIs('sales*')">
+            Ventas Directas
         </x-sidebar-link>
 
-        <x-sidebar-link href="/mechanics" icon="users" active="{{ request()->is('mechanics*') }}">
+        <x-sidebar-link href="{{ route('mechanics.index') }}" icon="users" :active="request()->routeIs('mechanics*')">
             Mecánicos
         </x-sidebar-link>
 
-        <x-sidebar-link href="/suppliers" icon="truck" active="{{ request()->is('suppliers*') }}">
+        <x-sidebar-link href="{{ route('suppliers.index') }}" icon="truck" :active="request()->routeIs('suppliers*')">
             Proveedores
         </x-sidebar-link>
 
-        <x-sidebar-link href="/reports" icon="bar-chart-3">
+        <x-sidebar-link href="{{ route('reports') }}" icon="bar-chart-3" :active="request()->routeIs('reports')">
             Reportes
         </x-sidebar-link>
 
-        <x-sidebar-link href="/job-types" icon="settings-2">
+        <x-sidebar-link href="{{ route('job-types.index') }}" icon="settings-2" :active="request()->routeIs('job-types*')">
             Tipos de Trabajo
         </x-sidebar-link>
     </nav>

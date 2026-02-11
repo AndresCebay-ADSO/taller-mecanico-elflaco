@@ -25,7 +25,7 @@
                     
                     <div class="space-y-1.5">
                         <label for="service_order_id" class="block text-sm font-semibold text-slate-700">Orden de Servicio <span class="text-red-500">*</span></label>
-                        <select id="service_order_id" name="service_order_id" required class="block w-full rounded-xl border border-slate-300 px-4 py-2.5 text-slate-900 shadow-sm transition-all duration-200 focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                        <select id="service_order_id" name="service_order_id" required class="block w-full rounded-xl border border-slate-300 px-4 py-2.5 text-slate-900 shadow-sm transition-all duration-200 focus:border-blue-500 focus:ring-blue-500 sm:text-sm cursor-pointer">
                             <option value="">Seleccione una orden...</option>
                             @foreach($serviceOrders as $order)
                                 <option value="{{ $order->id }}">Orden #{{ str_pad($order->id, 4, '0', STR_PAD_LEFT) }} - {{ $order->customer_name }}</option>

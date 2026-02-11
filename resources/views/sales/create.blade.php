@@ -12,8 +12,15 @@
             <form action="{{ route('sales.store') }}" method="POST" class="space-y-6">
                 @csrf
                 <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <x-input label="Monto Total" name="total" type="number" step="0.01" required placeholder="0.00" />
-                    <x-input label="Fecha de Venta" name="sale_date" type="date" required value="{{ date('Y-m-d') }}" />
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Producto / Repuesto</label>
+                        <select name="product_id" required class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm cursor-pointer">
+                            @foreach($products as $product)
+                            <option value="{{ $product->id }}">{{ $product->name }} (${{ number_format($product->sale_price, 0, ',', '.') }}) - Stock: {{ $product->stock }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <x-input label="Cantidad" name="quantity" type="number" required placeholder="1" value="1" />
                 </div>
 
                 <div class="flex justify-end pt-4">

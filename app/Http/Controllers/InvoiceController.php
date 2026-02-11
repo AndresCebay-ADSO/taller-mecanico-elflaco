@@ -73,6 +73,31 @@ class InvoiceController extends Controller
     }
 
     /**
+     * Generate an invoice from a Service Order.
+     */
+    public function generateFromServiceOrder(\App\Models\ServiceOrder $serviceOrder)
+    {
+        if ($serviceOrder->invoices()->exists()) {
+            return back()->with('error', 'Esta orden ya tiene una factura vinculada.');
+        }
+
+        $totalLabor = $serviceOrder->workshopJobs->sum('labor_cost');
+        $totalProducts = $serviceOrder->workshopJobs->sum(fn($j) => $j->jobProducts->sum('total_price'));
+        $totalAmount = $totalLabor + $totalProducts;
+
+        $invoice = Invoice::create([
+            'invoice_number' => 'FAC-' . strtoupper(uniqid()),
+            'service_order_id' => $serviceOrder->id,
+            'amount' => $totalAmount,
+            'invoice_date' => now(),
+        ]);
+
+        $serviceOrder->update(['status' => 'completed']);
+
+        return redirect()->route('invoices.show', $invoice)->with('success', 'Factura consolidada generada con éxito.');
+    }
+
+    /**
      * Remove the specified resource from storage.
      */
     public function destroy(Invoice $invoice)

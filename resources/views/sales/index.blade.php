@@ -19,7 +19,7 @@
                         {{ \Carbon\Carbon::parse($sale->sale_date)->format('d/m/Y') }}
                     </td>
                     <td class="px-6 py-4 text-sm font-bold text-slate-900">
-                        ${{ number_format($sale->total, 2) }}
+                        ${{ number_format($sale->total_amount, 2) }}
                     </td>
                     <td class="px-6 py-4 text-sm">
                         <x-badge variant="emerald">Completada</x-badge>

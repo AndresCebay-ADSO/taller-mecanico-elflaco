@@ -9,8 +9,8 @@ use App\Http\Controllers\ServiceOrderController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\JobTypeController;
-
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\InventoryController;
 
 Route::get('/', function () {
     return redirect()->route('dashboard');
@@ -22,16 +22,33 @@ Route::get('/dashboard', function () {
 
 Route::get('/reports', [ReportController::class, 'index'])->name('reports');
 
+// Gestión de Inventario (Traceability)
+Route::prefix('inventory')->name('inventory.')->group(function () {
+    Route::get('/', [InventoryController::class, 'index'])->name('index');
+    Route::get('/purchase', [InventoryController::class, 'createPurchase'])->name('purchase');
+    Route::post('/purchase', [InventoryController::class, 'storePurchase'])->name('store-purchase');
+    Route::get('/adjustment', [InventoryController::class, 'createAdjustment'])->name('adjustment');
+    Route::post('/adjustment', [InventoryController::class, 'storeAdjustment'])->name('store-adjustment');
+});
+
 Route::resource('suppliers', SupplierController::class);
 Route::resource('products', ProductController::class);
-Route::resource('mechanics', MechanicController::class);
+Route::resource('mechanics', \App\Http\Controllers\MechanicController::class);
+Route::resource('jobs', \App\Http\Controllers\WorkshopJobController::class)->only(['index', 'destroy']);
+Route::post('jobs/store-standalone', [\App\Http\Controllers\WorkshopJobController::class, 'storeStandalone'])->name('jobs.store_individual');
+Route::post('jobs/{job}/complete', [\App\Http\Controllers\WorkshopJobController::class, 'complete'])->name('jobs.complete');
 Route::resource('service-orders', ServiceOrderController::class);
+
+// Rutas de Trabajos dentro de Órdenes
+Route::post('/service-orders/{serviceOrder}/jobs', [\App\Http\Controllers\WorkshopJobController::class, 'store'])->name('service-orders.jobs.store');
+
+
 Route::resource('sales', SaleController::class);
 Route::resource('invoices', InvoiceController::class);
+Route::post('invoices/generate/{serviceOrder}', [\App\Http\Controllers\InvoiceController::class, 'generateFromServiceOrder'])->name('invoices.generate');
 Route::resource('job-types', JobTypeController::class);
 
-// Stub routes for navigation
-Route::get('/inventory', fn() => redirect()->route('products.index'))->name('inventory');
-Route::get('/tasks', fn() => redirect()->route('service-orders.index'))->name('tasks');
-Route::get('/reports', fn() => view('dashboard'))->name('reports');
-Route::get('/settings', fn() => view('dashboard'))->name('settings');
+// Basic routes
+Route::get('/settings', fn() => redirect()->route('dashboard'))->name('settings');
+
+// End of routes

@@ -22,6 +22,43 @@ class Product extends Model
         return $this->belongsTo(Supplier::class);
     }
 
+    /**
+     * Increment stock and record movement
+     */
+    public function incrementStock($quantity, $unitPrice = null, $supplierId = null, $reference = null)
+    {
+        $this->increment('stock', $quantity);
+        
+        if ($unitPrice) {
+            $this->update(['purchase_price' => $unitPrice]);
+        }
+
+        return $this->inventoryMovements()->create([
+            'movement_type' => 'purchase',
+            'quantity' => $quantity,
+            'unit_price' => $unitPrice ?? $this->purchase_price,
+            'supplier_id' => $supplierId ?? $this->supplier_id,
+            'reference' => $reference,
+            'movement_date' => now(),
+        ]);
+    }
+
+    /**
+     * Decrement stock and record movement
+     */
+    public function decrementStock($quantity, $reason = 'sale', $reference = null)
+    {
+        $this->decrement('stock', $quantity);
+
+        return $this->inventoryMovements()->create([
+            'movement_type' => $reason,
+            'quantity' => -$quantity,
+            'unit_price' => $this->sale_price,
+            'reference' => $reference,
+            'movement_date' => now(),
+        ]);
+    }
+
     public function jobProducts()
     {
         return $this->hasMany(JobProduct::class);

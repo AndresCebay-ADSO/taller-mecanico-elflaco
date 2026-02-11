@@ -22,7 +22,8 @@ class SaleController extends Controller
      */
     public function create()
     {
-        return view('sales.create');
+        $products = \App\Models\Product::where('stock', '>', 0)->get();
+        return view('sales.create', compact('products'));
     }
 
     /**
@@ -31,13 +32,23 @@ class SaleController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'total' => 'required|numeric|min:0',
-            'sale_date' => 'required|date',
+            'product_id' => 'required|exists:products,id',
+            'quantity' => 'required|integer|min:1',
         ]);
 
-        Sale::create($validated);
+        $product = \App\Models\Product::findOrFail($validated['product_id']);
+        
+        $total = $product->sale_price * $validated['quantity'];
+        
+        $sale = \App\Models\Sale::create([
+            'customer_name' => $request->customer_name ?? 'Cliente General',
+            'total_amount' => $total,
+            'sale_date' => now(),
+        ]);
 
-        return redirect()->route('sales.index')->with('success', 'Venta registrada.');
+        $product->decrementStock($validated['quantity'], 'sale', "Venta #{$sale->id}");
+
+        return redirect()->route('sales.index')->with('success', 'Venta registrada y stock descontado.');
     }
 
     /**
@@ -62,7 +73,7 @@ class SaleController extends Controller
     public function update(Request $request, Sale $sale)
     {
         $validated = $request->validate([
-            'total' => 'required|numeric|min:0',
+            'total_amount' => 'required|numeric|min:0',
         ]);
 
         $sale->update($validated);

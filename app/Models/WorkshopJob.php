@@ -23,6 +23,20 @@ class WorkshopJob extends Model
         'completed_at',
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($job) {
+            if ($job->job_type_id) {
+                $calculation = $job->jobType->calculateEarnings($job->labor_cost);
+                $job->mechanic_cost = $calculation['mechanic'];
+                $job->workshop_cost = $calculation['workshop'];
+                $job->total_amount = $calculation['total'];
+            }
+        });
+    }
+
     protected $casts = [
         'started_at' => 'datetime',
         'completed_at' => 'datetime',

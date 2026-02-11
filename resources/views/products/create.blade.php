@@ -16,7 +16,7 @@
                     
                     <div>
                         <label for="category" class="block text-sm font-semibold text-slate-700 space-y-1.5">Categoría <span class="text-red-500">*</span></label>
-                        <select id="category" name="category" required class="mt-1.5 block w-full rounded-xl border border-slate-300 px-4 py-2.5 text-slate-900 shadow-sm transition-all duration-200 focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                        <select id="category" name="category" required class="mt-1.5 block w-full rounded-xl border border-slate-300 px-4 py-2.5 text-slate-900 shadow-sm transition-all duration-200 focus:border-blue-500 focus:ring-blue-500 sm:text-sm cursor-pointer">
                             <option value="">Selecciona una categoría</option>
                             <option value="Repuestos">Repuestos</option>
                             <option value="Aceites">Aceites</option>
@@ -27,7 +27,7 @@
 
                     <div>
                         <label for="supplier_id" class="block text-sm font-semibold text-slate-700 space-y-1.5">Proveedor <span class="text-red-500">*</span></label>
-                        <select id="supplier_id" name="supplier_id" required class="mt-1.5 block w-full rounded-xl border border-slate-300 px-4 py-2.5 text-slate-900 shadow-sm transition-all duration-200 focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                        <select id="supplier_id" name="supplier_id" required class="mt-1.5 block w-full rounded-xl border border-slate-300 px-4 py-2.5 text-slate-900 shadow-sm transition-all duration-200 focus:border-blue-500 focus:ring-blue-500 sm:text-sm cursor-pointer">
                             <option value="">Selecciona un proveedor</option>
                             @foreach($suppliers as $supplier)
                                 <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
