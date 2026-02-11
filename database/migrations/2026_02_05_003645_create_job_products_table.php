@@ -13,12 +13,11 @@ return new class extends Migration
     {
         Schema::create('job_products', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('job_id')->constrained();
+            $table->foreignId('job_id')->constrained('workshop_jobs')->cascadeOnDelete();
             $table->foreignId('product_id')->constrained();
-            $table->integer('quantity');
-            $table->decimal('unitePrice', 10, 2);
-            $table->decimal('totalPrice', 10, 2);
-            $table->timestamps('created_at');
+            $table->unsignedInteger('quantity');
+            $table->decimal('unit_price', 10, 2);
+            $table->decimal('total_price', 12, 2);
             $table->timestamps();
         });
     }

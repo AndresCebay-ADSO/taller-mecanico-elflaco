@@ -13,19 +13,19 @@ return new class extends Migration
     {
         Schema::create('service_orders', function (Blueprint $table) {
             $table->id();
-            $table->string('customerName')->index();
-            $table->string('customerPhone')->nullable();
-            $table->string('vehicleInfo'); //Detalles del vehiculo (marca, modelo, año, color, etc)
-            $table->text('serviceDescription'); //Descripcion del servicio solicitado
+            $table->string('customer_name')->index();
+            $table->string('customer_phone')->nullable();
+            $table->string('vehicle_info'); // Detalles del vehiculo (marca, modelo, año, color, etc)
+            $table->text('service_description'); // Descripción del servicio solicitado
 
-            //Estado del servicio, puede ser: pendiente, en progreso, completado, cancelado
+            // Estado del servicio, puede ser: pendiente, en progreso, completado, cancelado
             $table->enum('status', ['pending', 
             'in_progress', 
             'completed', 
             'cancelled'])->default('pending')->index();
 
-            $table->timestamp('startedAt')->nullable(); //Fecha de inicio del servicio
-            $table->timestap('completedAt')->nullable(); //Fecha de finalizacion del servicio
+            $table->timestamp('started_at')->nullable(); // Fecha de inicio del servicio
+            $table->timestamp('completed_at')->nullable(); // Fecha de finalizacion del servicio
             $table->timestamps();
         });
     }

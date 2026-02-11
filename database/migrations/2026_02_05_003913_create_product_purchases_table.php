@@ -15,12 +15,12 @@ return new class extends Migration
             $table->id();
             $table->foreignId('product_id')->constrained(); //Referencia al producto comprado
             $table->foreignId('supplier_id')->constrained(); //Referencia a la compra
-            $table->decimal('unitPrice', 10, 2); //Precio unitario
-            $table->decimal('purchasePrice', 10, 2); //Precio de compra
+            $table->decimal('unit_price', 10, 2); //Precio unitario
+            $table->decimal('purchase_price', 10, 2); //Precio de compra
             $table->integer('quantity'); //cantidad comprada
             $table->string('note')->nullable(); //Nota adicional sobre la compra
             
-            $table->date('purchaseDate')->index(); //Fecha de la compra
+            $table->date('purchase_date')->index(); //Fecha de la compra
             $table->timestamps();
         });
     }

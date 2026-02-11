@@ -15,14 +15,14 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('category');
-            $table->foreignId('supplier_id')->constrained(); //https://laravel.com/docs/12.x/migrations#foreign-key-constraints
-            $table->string('purchasePrice'); //Precio de compra
-            $table->string('salePrice'); //Precio de venta
-            $table->integer('stock');
-            $table->integer('minStock'); //Hacer el uso de este para las alertas de stock bajo
-            $table->date('createdAt'); //Fecha de creacion
-            $table->date('updatedAt')->nullable(); //Fecha de ultima actualizacion
-            $table->string('upc')->unique(); //codigo de barra (universal product code)
+            $table->foreignId('supplier_id')
+                ->constrained()
+                ->restrictOnDelete(); // Evitar productos huérfanos si se borra proveedor
+            $table->decimal('purchase_price', 10, 2); // Precio de compra
+            $table->decimal('sale_price', 10, 2); // Precio de venta
+            $table->unsignedInteger('stock');
+            $table->unsignedInteger('min_stock'); // Umbral para alertas de stock bajo
+            $table->string('upc')->unique(); // Código de barras (universal product code)
             
             $table->timestamps();
         });

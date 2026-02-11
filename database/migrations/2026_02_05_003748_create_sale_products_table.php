@@ -16,8 +16,8 @@ return new class extends Migration
             $table->foreignId('product_id')->constrained(); //Referencia al producto vendido
             $table->foreignId('sale_id')->constrained(); //Referencia a la venta
             $table->integer('quantity');
-            $table->decimal('unitPrice', 8, 2); //Precio unitario al momento de la venta
-            $table->decimal('totalPrice', 10, 2); //Precio total (quantity * unitPrice)
+            $table->decimal('unit_price', 8, 2); //Precio unitario al momento de la venta
+            $table->decimal('total_price', 10, 2); //Precio total (quantity * unit_price)
             $table->timestamps();
         });
     }

@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('sales', function (Blueprint $table) { //Representa una venta directa al cliente
             $table->id();
-            $table->string('customerName'); //Nombre del cliente
-            $table->decimal('totalAmount');
-            $table->date('saleDate')->index(); //Fecha de la venta 
+            $table->string('customer_name'); //Nombre del cliente
+            $table->decimal('total_amount', 12, 2);
+            $table->date('sale_date')->index(); //Fecha de la venta 
 
             $table->timestamps();
         });
