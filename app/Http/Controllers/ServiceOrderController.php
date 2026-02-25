@@ -60,8 +60,7 @@ class ServiceOrderController extends Controller
      */
     public function edit(ServiceOrder $serviceOrder)
     {
-        $mechanics = Mechanic::all();
-        return view('service-orders.edit', compact('serviceOrder', 'mechanics'));
+        return view('service-orders.edit', compact('serviceOrder'));
     }
 
     /**
@@ -70,14 +69,16 @@ class ServiceOrderController extends Controller
     public function update(Request $request, ServiceOrder $serviceOrder)
     {
         $validated = $request->validate([
-            'vehicle_plate' => 'required|string|max:10',
+            'customer_name' => 'required|string|max:255',
+            'customer_phone' => 'nullable|string|max:20',
+            'vehicle_info' => 'required|string',
+            'service_description' => 'required|string',
             'status' => 'required|in:pending,in_progress,completed,cancelled',
-            // ... otros campos
         ]);
 
         $serviceOrder->update($validated);
 
-        return redirect()->route('service-orders.index')->with('success', 'Orden actualizada.');
+        return redirect()->route('service-orders.index')->with('success', 'Orden actualizada correctamente.');
     }
 
     /**
