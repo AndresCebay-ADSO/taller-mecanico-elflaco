@@ -23,7 +23,7 @@
                 </div>
             </div>
             <p class="text-2xl font-black text-emerald-600">${{ number_format($workshopProfit, 0, ',', '.') }}</p>
-            <p class="mt-1 text-[10px] text-slate-400 font-bold">25% de trabajos + margen de ventas</p>
+            <p class="mt-1 text-[10px] text-slate-400 font-bold">Trabajos + margen de ventas</p>
         </x-card>
 
         <x-card class="bg-white border-blue-100">
@@ -45,7 +45,7 @@
                 </div>
             </div>
             <p class="text-2xl font-black text-amber-600">$0.00</p>
-            <p class="mt-1 text-[10px] text-slate-400 font-bold">75% de trabajos realizados</p>
+            <p class="mt-1 text-[10px] text-slate-400 font-bold">Total pagado a mecánicos</p>
         </x-card>
     </div>
 
