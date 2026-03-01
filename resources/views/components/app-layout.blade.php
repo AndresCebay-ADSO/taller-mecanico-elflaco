@@ -18,7 +18,7 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="h-full font-sans text-slate-900 antialiased bg-slate-50">
+<body {{ $attributes->merge(['class' => 'h-full font-sans text-slate-900 antialiased bg-slate-50']) }}>
     <div class="flex h-full overflow-hidden">
         <!-- Sidebar -->
         <x-sidebar />

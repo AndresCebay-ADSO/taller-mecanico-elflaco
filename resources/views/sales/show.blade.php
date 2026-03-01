@@ -17,7 +17,11 @@
                             <h3 class="text-lg font-bold text-slate-900">Resumen de Venta</h3>
                             <p class="text-sm text-slate-500">Registrado el {{ $sale->created_at->format('d/m/Y H:i') }}</p>
                         </div>
-                        <x-badge variant="emerald">Completada</x-badge>
+                        @if($sale->status === 'completada')
+                            <x-badge variant="emerald">Completada</x-badge>
+                        @else
+                            <x-badge variant="red">Anulada</x-badge>
+                        @endif
                     </div>
 
                     <div class="grid grid-cols-2 gap-8">
@@ -59,3 +63,9 @@
         </div>
     </div>
 </x-app-layout>
+
+@if(request('print') == '1')
+<script>
+    window.addEventListener('load', function () { window.print(); });
+</script>
+@endif

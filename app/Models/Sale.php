@@ -10,6 +10,9 @@ class Sale extends Model
         'customer_name',
         'total_amount',
         'sale_date',
+        'payment_method',
+        'user_id',
+        'status',
     ];
 
     protected $casts = [
@@ -19,5 +22,15 @@ class Sale extends Model
     public function saleProducts()
     {
         return $this->hasMany(SaleProduct::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function getTotalItemsAttribute()
+    {
+        return $this->saleProducts->sum('quantity');
     }
 }

@@ -83,7 +83,7 @@ class WorkshopJobController extends Controller
                         'total_price' => $product->sale_price * $pData['quantity'],
                     ]);
 
-                    $product->decrementStock($pData['quantity'], 'job', "Trabajo Individual #{$job->id}");
+                    $product->decrementStock($pData['quantity'], 'job_usage', "Trabajo Individual #{$job->id}");
                 }
             }
 
@@ -129,7 +129,7 @@ class WorkshopJobController extends Controller
                     ]);
 
                     // Descontar stock con trazabilidad
-                    $product->decrementStock($pData['quantity'], 'job', "Trabajo #{$job->id} - Orden #{$serviceOrder->id}");
+                    $product->decrementStock($pData['quantity'], 'job_usage', "Trabajo #{$job->id} - Orden #{$serviceOrder->id}");
                 }
             }
 

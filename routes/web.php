@@ -11,6 +11,7 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\JobTypeController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\WorkshopJobController;
 
 Route::get('/', function () {
     return redirect()->route('dashboard');
@@ -33,19 +34,19 @@ Route::prefix('inventory')->name('inventory.')->group(function () {
 
 Route::resource('suppliers', SupplierController::class);
 Route::resource('products', ProductController::class);
-Route::resource('mechanics', \App\Http\Controllers\MechanicController::class);
-Route::resource('jobs', \App\Http\Controllers\WorkshopJobController::class)->only(['index', 'destroy']);
-Route::post('jobs/store-standalone', [\App\Http\Controllers\WorkshopJobController::class, 'storeStandalone'])->name('jobs.store_individual');
-Route::post('jobs/{job}/complete', [\App\Http\Controllers\WorkshopJobController::class, 'complete'])->name('jobs.complete');
+Route::resource('mechanics', MechanicController::class);
+
+Route::resource('jobs', WorkshopJobController::class)->only(['index', 'destroy']);
+Route::post('jobs/store-standalone', [WorkshopJobController::class, 'storeStandalone'])->name('jobs.store_individual');
+Route::post('jobs/{job}/complete', [WorkshopJobController::class, 'complete'])->name('jobs.complete');
+
 Route::resource('service-orders', ServiceOrderController::class);
-
-// Rutas de Trabajos dentro de Órdenes
-Route::post('/service-orders/{serviceOrder}/jobs', [\App\Http\Controllers\WorkshopJobController::class, 'store'])->name('service-orders.jobs.store');
-
+Route::post('/service-orders/{serviceOrder}/jobs', [WorkshopJobController::class, 'store'])->name('service-orders.jobs.store');
 
 Route::resource('sales', SaleController::class);
+Route::post('sales/{sale}/cancel', [SaleController::class, 'cancel'])->name('sales.cancel');
 Route::resource('invoices', InvoiceController::class);
-Route::post('invoices/generate/{serviceOrder}', [\App\Http\Controllers\InvoiceController::class, 'generateFromServiceOrder'])->name('invoices.generate');
+Route::post('invoices/generate/{serviceOrder}', [InvoiceController::class, 'generateFromServiceOrder'])->name('invoices.generate');
 Route::resource('job-types', JobTypeController::class);
 
 // Basic routes

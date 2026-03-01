@@ -5,6 +5,10 @@
                 <i data-lucide="arrow-left" class="mr-2 h-4 w-4"></i>
                 Volver
             </x-button>
+            <x-button variant="outline" onclick="window.location.href='{{ route('service-orders.edit', $serviceOrder) }}'">
+                <i data-lucide="pencil" class="mr-2 h-4 w-4"></i>
+                Editar
+            </x-button>
             <x-button variant="primary" @click="showJobModal = true">
                 <i data-lucide="plus" class="mr-2 h-4 w-4"></i>
                 Añadir Trabajo

@@ -44,6 +44,22 @@ class Product extends Model
     }
 
     /**
+     * Reverse stock from a cancelled sale and record the movement as 'reversal'
+     */
+    public function reverseStock($quantity, $reference = null)
+    {
+        $this->increment('stock', $quantity);
+
+        return $this->inventoryMovements()->create([
+            'movement_type' => 'reversal',
+            'quantity'      => $quantity,
+            'unit_price'    => $this->purchase_price,
+            'reference'     => $reference,
+            'movement_date' => now(),
+        ]);
+    }
+
+    /**
      * Decrement stock and record movement
      */
     public function decrementStock($quantity, $reason = 'sale', $reference = null)

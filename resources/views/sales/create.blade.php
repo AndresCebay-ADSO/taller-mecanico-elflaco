@@ -12,6 +12,19 @@
             <form action="{{ route('sales.store') }}" method="POST" class="space-y-6">
                 @csrf
                 <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    <x-input label="Nombre del Cliente" name="customer_name" placeholder="Venta Mostrador" />
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Método de Pago</label>
+                        <select name="payment_method" required class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm cursor-pointer">
+                            <option value="Efectivo">Efectivo</option>
+                            <option value="Transferencia">Transferencia</option>
+                            <option value="Tarjeta">Tarjeta</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-1.5">Producto / Repuesto</label>
                         <select name="product_id" required class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm cursor-pointer">
