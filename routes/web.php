@@ -44,6 +44,7 @@ Route::resource('service-orders', ServiceOrderController::class);
 Route::post('/service-orders/{serviceOrder}/jobs', [WorkshopJobController::class, 'store'])->name('service-orders.jobs.store');
 
 Route::resource('sales', SaleController::class);
+Route::post('sales/{sale}/cancel', [SaleController::class, 'cancel'])->name('sales.cancel');
 Route::resource('invoices', InvoiceController::class);
 Route::post('invoices/generate/{serviceOrder}', [InvoiceController::class, 'generateFromServiceOrder'])->name('invoices.generate');
 Route::resource('job-types', JobTypeController::class);
