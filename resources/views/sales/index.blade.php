@@ -47,7 +47,7 @@
                                 <div class="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5">
                                     <span class="inline-block px-1.5 py-0.5 bg-slate-100 rounded text-slate-600">{{ $sale->payment_method }}</span>
                                     <span>•</span>
-                                    <span>Resp: {{ $sale->user->name ?? 'Sistema' }}</span>
+                                    <span>Resp: {{ $sale->user?->name ?? 'Sistema' }}</span>
                                 </div>
                             </td>
                             <td class="px-6 py-4">
@@ -59,6 +59,9 @@
                                             <span class="text-slate-500 ml-1.5 font-medium">x{{ $item->quantity }}</span>
                                         </div>
                                     @endforeach
+                                    <div class="text-xs text-slate-400 mt-1 font-medium">
+                                        Total: {{ $sale->total_items }} art&iacute;culo(s)
+                                    </div>
                                 </div>
                             </td>
                             <td class="px-6 py-4">
@@ -75,7 +78,7 @@
                                         <a href="{{ route('sales.show', $sale) }}" class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Ver detalle">
                                             <i data-lucide="eye" class="w-4 h-4"></i>
                                         </a>
-                                        <button onclick="alert('Funcionalidad de impresión en desarrollo')" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors" title="Imprimir recibo">
+                                        <button onclick="window.open('{{ route('sales.show', $sale) }}?print=1', '_blank')" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors" title="Imprimir recibo">
                                             <i data-lucide="printer" class="w-4 h-4"></i>
                                         </button>
                                         @if($sale->status === 'completada')

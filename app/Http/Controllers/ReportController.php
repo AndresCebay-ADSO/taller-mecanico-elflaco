@@ -13,7 +13,7 @@ class ReportController extends Controller
     public function index()
     {
         // Totals (calculados de forma simple para la demo)
-        $totalIncome = Sale::sum('total_amount');
+        $totalIncome = Sale::where('status', '!=', 'anulada')->sum('total_amount');
         $workshopProfit = $totalIncome * 0.25; // 25% de margen sugerido en la imagen
         $monthlyJobs = ServiceOrder::whereMonth('created_at', now()->month)->count();
         
