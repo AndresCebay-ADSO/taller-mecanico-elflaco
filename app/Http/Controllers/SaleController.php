@@ -48,37 +48,46 @@ class SaleController extends Controller
             'payment_method' => 'required|string|in:Efectivo,Transferencia,Tarjeta,Otro',
         ]);
 
-        $product = \App\Models\Product::findOrFail($validated['product_id']);
+        $quantity = $validated['quantity'];
 
-        // Bug #8: Verificar stock disponible antes de proceder
-        if ($product->stock < $validated['quantity']) {
-            return back()->withErrors([
-                'quantity' => "Stock insuficiente. Disponible: {$product->stock} unidades.",
-            ])->withInput();
+        // Bug #1 (TOCTOU): El chequeo y decremento ocurren DENTRO de la transacción
+        // con lockForUpdate() para evitar race conditions concurrentes.
+        try {
+            DB::transaction(function () use ($validated, $quantity) {
+                $product = \App\Models\Product::where('id', $validated['product_id'])
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                if ($product->stock < $quantity) {
+                    throw new \Illuminate\Validation\ValidationException(
+                        validator([], []),
+                        back()->withErrors(['quantity' => "Stock insuficiente. Disponible: {$product->stock} unidades."])->withInput()
+                    );
+                }
+
+                $total = $product->sale_price * $quantity;
+
+                $sale = Sale::create([
+                    'customer_name'  => $validated['customer_name'] ?? 'Venta Mostrador',
+                    'total_amount'   => $total,
+                    'sale_date'      => now(),
+                    'payment_method' => $validated['payment_method'],
+                    'user_id'        => auth()->id(),
+                    'status'         => 'completada',
+                ]);
+
+                $sale->saleProducts()->create([
+                    'product_id'  => $product->id,
+                    'quantity'    => $quantity,
+                    'unit_price'  => $product->sale_price,
+                    'total_price' => $total,
+                ]);
+
+                $product->decrementStock($quantity, 'sale', "Venta #{$sale->id}");
+            });
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return $e->getResponse();
         }
-
-        $total = $product->sale_price * $validated['quantity'];
-
-        // Bug #6: Envolver en transacción para evitar estados inconsistentes
-        DB::transaction(function () use ($validated, $product, $total) {
-            $sale = Sale::create([
-                'customer_name'  => $validated['customer_name'] ?? 'Venta Mostrador',
-                'total_amount'   => $total,
-                'sale_date'      => now(),
-                'payment_method' => $validated['payment_method'],
-                'user_id'        => auth()->id(),
-                'status'         => 'completada',
-            ]);
-
-            $sale->saleProducts()->create([
-                'product_id'  => $product->id,
-                'quantity'    => $validated['quantity'],
-                'unit_price'  => $product->sale_price,
-                'total_price' => $total,
-            ]);
-
-            $product->decrementStock($validated['quantity'], 'sale', "Venta #{$sale->id}");
-        });
 
         return redirect()->route('sales.index')->with('success', 'Venta registrada y stock descontado.');
     }
@@ -116,15 +125,14 @@ class SaleController extends Controller
     /**
      * Remove the specified resource from storage.
      */
+    /**
+     * Remove the specified resource from storage.
+     * Bug #2: Deshabilitado para preservar la trazabilidad de stock.
+     * Las ventas deben anularse mediante cancel(), no eliminarse.
+     */
     public function destroy(Sale $sale)
     {
-        // Bug #7: Eliminar registros relacionados antes de borrar la venta (FK constraint)
-        DB::transaction(function () use ($sale) {
-            $sale->saleProducts()->delete();
-            $sale->delete();
-        });
-
-        return redirect()->route('sales.index')->with('success', 'Venta eliminada.');
+        abort(403, 'Las ventas no pueden eliminarse directamente. Use la opción de Anular para revertir el stock correctamente.');
     }
 
     /**
