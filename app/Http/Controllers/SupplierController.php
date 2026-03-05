@@ -34,7 +34,7 @@ class SupplierController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:20',
-            // ... agregar más campos según el modelo
+            'address' => 'nullable|string|max:255',
         ]);
 
         Supplier::create($validated);
