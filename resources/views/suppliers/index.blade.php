@@ -47,5 +47,10 @@
                 </tr>
             @endforelse
         </x-table>
+        @if($suppliers->hasPages())
+        <div class="px-6 py-4 border-t border-slate-200">
+            {{ $suppliers->links() }}
+        </div>
+        @endif
     </x-card>
 </x-app-layout>

@@ -86,5 +86,10 @@
                 </tr>
             @endforelse
         </x-table>
+        @if($products->hasPages())
+        <div class="px-6 py-4 border-t border-slate-200">
+            {{ $products->links() }}
+        </div>
+        @endif
     </x-card>
 </x-app-layout>

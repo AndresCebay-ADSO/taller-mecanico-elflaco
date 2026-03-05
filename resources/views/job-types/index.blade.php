@@ -84,4 +84,10 @@
         </x-card>
         @endforeach
     </div>
+
+    @if($jobTypes->hasPages())
+    <div class="mt-6">
+        {{ $jobTypes->links() }}
+    </div>
+    @endif
 </x-app-layout>

@@ -13,7 +13,7 @@ class MechanicController extends Controller
      */
     public function index()
     {
-        $mechanics = Mechanic::all();
+        $mechanics = Mechanic::paginate(10);
         return view('mechanics.index', compact('mechanics'));
     }
 
