@@ -14,7 +14,7 @@ class ServiceOrderController extends Controller
      */
     public function index()
     {
-        $serviceOrders = ServiceOrder::all();
+        $serviceOrders = ServiceOrder::latest()->paginate(10);
         return view('service-orders.index', compact('serviceOrders'));
     }
 
