@@ -106,15 +106,18 @@ class PaginationSeeder extends Seeder
         // 6. Ventas (30 records)
         $paymentMethods = ['Efectivo', 'Transferencia', 'Tarjeta', 'Otro'];
         for ($i = 0; $i < 30; $i++) {
-            $sale = Sale::create([
+            $createdAt = clone $faker->dateTimeBetween('-1 month', 'now');
+            $saleId = DB::table('sales')->insertGetId([
                 'customer_name' => $faker->name,
                 'total_amount' => 0, // Calculated later
-                'sale_date' => clone $faker->dateTimeBetween('-1 month', 'now'), // Must be date instance
+                'sale_date' => clone $createdAt,
                 'payment_method' => $faker->randomElement($paymentMethods),
                 'user_id' => $user->id,
                 'status' => $faker->boolean(90) ? 'completada' : 'anulada',
-                'created_at' => $faker->dateTimeBetween('-1 month', 'now'),
+                'created_at' => $createdAt,
+                'updated_at' => $createdAt,
             ]);
+            $sale = Sale::find($saleId);
 
             // Añadir 1 o 2 productos a la venta
             $saleTotal = 0;
@@ -133,7 +136,7 @@ class PaginationSeeder extends Seeder
 
                 $saleTotal += $totalItem;
                 
-                // Generar movimiento de inventario simulado (sin decrementar para no dejar sin stock la BD de prueba)
+                // Generar movimiento de inventario simulado (y decrementar, para no dejar inconsistente)
                 DB::table('inventory_movements')->insert([
                     'product_id' => $product->id,
                     'movement_type' => 'sale',
@@ -144,9 +147,10 @@ class PaginationSeeder extends Seeder
                     'created_at' => $sale->created_at,
                     'updated_at' => $sale->created_at,
                 ]);
+                $product->decrement('stock', $qty);
             }
 
-            $sale->update(['total_amount' => $saleTotal]);
+            DB::table('sales')->where('id', $saleId)->update(['total_amount' => $saleTotal]);
         }
     }
 }
