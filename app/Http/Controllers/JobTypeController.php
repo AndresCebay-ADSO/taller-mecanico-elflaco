@@ -9,7 +9,7 @@ class JobTypeController extends Controller
 {
     public function index()
     {
-        $jobTypes = JobType::paginate(10);
+        $jobTypes = JobType::latest()->paginate(10);
         return view('job-types.index', compact('jobTypes'));
     }
 
