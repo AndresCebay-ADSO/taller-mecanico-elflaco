@@ -18,6 +18,11 @@ class Supplier extends Model
         return $this->hasMany(Product::class);
     }
 
+    public function productsManyToMany()
+    {
+        return $this->belongsToMany(Product::class);
+    }
+
     public function productPurchases()
     {
         return $this->hasMany(ProductPurchase::class);

@@ -23,6 +23,14 @@ class Product extends Model
     }
 
     /**
+     * Multiple suppliers for this product (primary relationship)
+     */
+    public function suppliers()
+    {
+        return $this->belongsToMany(Supplier::class);
+    }
+
+    /**
      * Increment stock and record movement
      */
     public function incrementStock($quantity, $unitPrice = null, $supplierId = null, $reference = null)

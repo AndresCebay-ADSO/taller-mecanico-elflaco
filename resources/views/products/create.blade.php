@@ -25,14 +25,24 @@
                         </select>
                     </div>
 
-                    <div>
-                        <label for="supplier_id" class="block text-sm font-semibold text-slate-700 space-y-1.5">Proveedor <span class="text-red-500">*</span></label>
-                        <select id="supplier_id" name="supplier_id" required class="mt-1.5 block w-full rounded-xl border border-slate-300 px-4 py-2.5 text-slate-900 shadow-sm transition-all duration-200 focus:border-blue-500 focus:ring-blue-500 sm:text-sm cursor-pointer">
-                            <option value="">Selecciona un proveedor</option>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">
+                            Proveedores <span class="text-red-500">*</span>
+                        </label>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-2 rounded-xl border border-slate-200 p-4 bg-slate-50 max-h-48 overflow-y-auto">
                             @foreach($suppliers as $supplier)
-                                <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
+                                <label class="flex items-center gap-2 cursor-pointer rounded-lg px-3 py-2 hover:bg-white hover:shadow-sm transition-all text-sm text-slate-700">
+                                    <input type="checkbox"
+                                        name="supplier_ids[]"
+                                        value="{{ $supplier->id }}"
+                                        class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                                    <span>{{ $supplier->name }}</span>
+                                </label>
                             @endforeach
-                        </select>
+                        </div>
+                        @error('supplier_ids')
+                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <x-input label="Código UPC / Barcode" name="upc" required placeholder="Ej. 1234567890" />
