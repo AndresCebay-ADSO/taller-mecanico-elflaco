@@ -17,8 +17,8 @@ class InventoryController extends Controller
 
     public function createPurchase()
     {
-        $products = Product::all();
-        $suppliers = Supplier::all();
+        $products = Product::with('suppliers')->orderBy('name')->get();
+        $suppliers = Supplier::orderBy('name')->get();
         return view('inventory.purchase', compact('products', 'suppliers'));
     }
 
@@ -26,7 +26,16 @@ class InventoryController extends Controller
     {
         $validated = $request->validate([
             'product_id' => 'required|exists:products,id',
-            'supplier_id' => 'required|exists:suppliers,id',
+            'supplier_id' => [
+                'required',
+                'exists:suppliers,id',
+                function ($attribute, $value, $fail) use ($request) {
+                    $product = \App\Models\Product::find($request->product_id);
+                    if ($product && !$product->suppliers()->where('suppliers.id', $value)->exists()) {
+                        $fail('El proveedor seleccionado no está asociado a este producto.');
+                    }
+                },
+            ],
             'quantity' => 'required|integer|min:1',
             'unit_price' => 'required|numeric|min:0',
             'reference' => 'nullable|string',

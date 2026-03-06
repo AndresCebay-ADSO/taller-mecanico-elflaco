@@ -14,7 +14,7 @@ class ProductController extends Controller
      */
     public function index()
     {
-        $products = Product::with('supplier')->latest()->paginate(10);
+        $products = Product::with('suppliers')->latest()->paginate(10);
         return view('products.index', compact('products'));
     }
 
@@ -23,7 +23,7 @@ class ProductController extends Controller
      */
     public function create()
     {
-        $suppliers = Supplier::all();
+        $suppliers = Supplier::orderBy('name')->get();
         return view('products.create', compact('suppliers'));
     }
 
@@ -35,7 +35,8 @@ class ProductController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'category' => 'required|string|max:255',
-            'supplier_id' => 'required|exists:suppliers,id',
+            'supplier_ids' => 'required|array|min:1',
+            'supplier_ids.*' => 'exists:suppliers,id',
             'purchase_price' => 'required|numeric|min:0',
             'sale_price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
@@ -43,7 +44,11 @@ class ProductController extends Controller
             'upc' => 'required|string|unique:products,upc',
         ]);
 
-        Product::create($validated);
+        $supplierIds = $validated['supplier_ids'];
+        unset($validated['supplier_ids']);
+
+        $product = Product::create($validated);
+        $product->suppliers()->sync($supplierIds);
 
         return redirect()->route('products.index')->with('success', 'Producto creado exitosamente.');
     }
@@ -61,8 +66,9 @@ class ProductController extends Controller
      */
     public function edit(Product $product)
     {
-        $suppliers = Supplier::all();
-        return view('products.edit', compact('product', 'suppliers'));
+        $suppliers = Supplier::orderBy('name')->get();
+        $selectedSupplierIds = $product->suppliers()->pluck('suppliers.id')->toArray();
+        return view('products.edit', compact('product', 'suppliers', 'selectedSupplierIds'));
     }
 
     /**
@@ -73,7 +79,8 @@ class ProductController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'category' => 'required|string|max:255',
-            'supplier_id' => 'required|exists:suppliers,id',
+            'supplier_ids' => 'required|array|min:1',
+            'supplier_ids.*' => 'exists:suppliers,id',
             'purchase_price' => 'required|numeric|min:0',
             'sale_price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
@@ -81,7 +88,11 @@ class ProductController extends Controller
             'upc' => 'required|string|unique:products,upc,' . $product->id,
         ]);
 
+        $supplierIds = $validated['supplier_ids'];
+        unset($validated['supplier_ids']);
+
         $product->update($validated);
+        $product->suppliers()->sync($supplierIds);
 
         return redirect()->route('products.index')->with('success', 'Producto actualizado exitosamente.');
     }

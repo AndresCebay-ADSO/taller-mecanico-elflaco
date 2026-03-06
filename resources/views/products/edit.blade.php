@@ -25,15 +25,22 @@
                         </select>
                     </div>
 
-                    <div>
-                        <label for="supplier_id" class="block text-sm font-semibold text-slate-700 space-y-1.5">Proveedor <span class="text-red-500">*</span></label>
-                        <select id="supplier_id" name="supplier_id" required class="mt-1.5 block w-full rounded-xl border border-slate-300 px-4 py-2.5 text-slate-900 shadow-sm transition-all duration-200 focus:border-blue-500 focus:ring-blue-500 sm:text-sm cursor-pointer">
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">
+                            Proveedores <span class="text-red-500">*</span>
+                            <span class="text-xs font-normal text-slate-400 ml-1">(Ctrl+clic para seleccionar varios)</span>
+                        </label>
+                        <select id="supplier_ids" name="supplier_ids[]" multiple required
+                            class="mt-1.5 block w-full rounded-xl border border-slate-300 px-4 py-2.5 text-slate-900 shadow-sm transition-all duration-200 focus:border-blue-500 focus:ring-blue-500 sm:text-sm cursor-pointer min-h-[120px]">
                             @foreach($suppliers as $supplier)
-                                <option value="{{ $supplier->id }}" {{ $product->supplier_id == $supplier->id ? 'selected' : '' }}>
+                                <option value="{{ $supplier->id }}" {{ in_array($supplier->id, $selectedSupplierIds) ? 'selected' : '' }}>
                                     {{ $supplier->name }}
                                 </option>
                             @endforeach
                         </select>
+                        @error('supplier_ids')
+                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <x-input label="Código UPC / Barcode" name="upc" required :value="$product->upc" />
