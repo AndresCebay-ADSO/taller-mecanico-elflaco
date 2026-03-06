@@ -39,7 +39,7 @@
                         <x-badge variant="slate">{{ $product->category }}</x-badge>
                     </td>
                     <td class="px-6 py-4 text-sm font-medium text-slate-600">
-                        {{ $product->supplier->name ?? 'N/A' }}
+                        {{ $product->suppliers->pluck('name')->join(', ') ?: 'N/A' }}
                     </td>
                     <td class="px-6 py-4 text-sm font-bold text-slate-600">
                         ${{ number_format($product->purchase_price, 0, ',', '.') }}
