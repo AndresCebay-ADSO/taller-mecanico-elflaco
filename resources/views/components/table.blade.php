@@ -2,23 +2,23 @@
     'headers' => [],
 ])
 
-<div class="overflow-x-auto">
-    <table class="min-w-full divide-y divide-slate-200">
-        <thead class="bg-slate-50/50">
+<div class="overflow-x-auto custom-scrollbar">
+    <table class="min-w-full divide-y divide-gray-100 dark:divide-gray-800">
+        <thead class="bg-gray-50/50 dark:bg-white/[0.02]">
             <tr>
                 @foreach($headers as $header)
-                    <th scope="col" class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-500">
+                    <th scope="col" class="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">
                         {{ $header }}
                     </th>
                 @endforeach
                 @if(isset($actions))
-                    <th scope="col" class="relative px-6 py-3.5">
+                    <th scope="col" class="relative px-6 py-4">
                         <span class="sr-only">Acciones</span>
                     </th>
                 @endif
             </tr>
         </thead>
-        <tbody class="divide-y divide-slate-200 bg-white">
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-800 bg-white dark:bg-transparent">
             {{ $slot }}
         </tbody>
     </table>

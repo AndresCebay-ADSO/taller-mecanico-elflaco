@@ -14,7 +14,7 @@
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-10">
         <!-- Total Products Card -->
-        <div class="relative overflow-hidden rounded-3xl bg-white p-6 shadow-sm border border-slate-200 group">
+        <div class="relative overflow-hidden rounded-3xl bg-white dark:bg-gray-900/50 p-6 shadow-sm border border-slate-200 dark:border-gray-800 group">
             <div class="absolute top-0 right-0 p-4">
                 <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
                     <i data-lucide="package" class="h-6 w-6"></i>
@@ -31,7 +31,7 @@
         </div>
 
         <!-- Active Jobs Card -->
-        <div class="relative overflow-hidden rounded-3xl bg-white p-6 shadow-sm border border-slate-200 group">
+        <div class="relative overflow-hidden rounded-3xl bg-white dark:bg-gray-900/50 p-6 shadow-sm border border-slate-200 dark:border-gray-800 group">
             <div class="absolute top-0 right-0 p-4">
                 <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
                     <i data-lucide="wrench" class="h-6 w-6"></i>
@@ -46,7 +46,7 @@
         </div>
 
         <!-- Today's Earnings Card -->
-        <div class="relative overflow-hidden rounded-3xl bg-white p-6 shadow-sm border border-slate-200 group">
+        <div class="relative overflow-hidden rounded-3xl bg-white dark:bg-gray-900/50 p-6 shadow-sm border border-slate-200 dark:border-gray-800 group">
             <div class="absolute top-0 right-0 p-4">
                 <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
                     <i data-lucide="dollar-sign" class="h-6 w-6"></i>
@@ -61,7 +61,7 @@
         </div>
 
         <!-- Month's Earnings Card -->
-        <div class="relative overflow-hidden rounded-3xl bg-white p-6 shadow-sm border border-slate-200 group">
+        <div class="relative overflow-hidden rounded-3xl bg-white dark:bg-gray-900/50 p-6 shadow-sm border border-slate-200 dark:border-gray-800 group">
             <div class="absolute top-0 right-0 p-4">
                 <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
                     <i data-lucide="trending-up" class="h-6 w-6"></i>
@@ -81,21 +81,21 @@
         <div class="space-y-8">
             <!-- Stock Alerts -->
             @if($lowStockCount > 0)
-            <div class="rounded-3xl bg-amber-50/50 border border-amber-100 p-6">
+            <div class="rounded-3xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 p-6">
                 <div class="flex items-center gap-3 mb-4">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400">
                         <i data-lucide="alert-triangle" class="h-5 w-5"></i>
                     </div>
                     <div>
-                        <h3 class="font-bold text-amber-900">Stock Bajo</h3>
-                        <p class="text-sm text-amber-700 font-medium">{{ $lowStockCount }} producto(s) requieren reabastecimiento</p>
+                        <h3 class="font-bold text-amber-900 dark:text-amber-200">Stock Bajo</h3>
+                        <p class="text-sm text-amber-700 dark:text-amber-400 font-medium">{{ $lowStockCount }} producto(s) requieren reabastecimiento</p>
                     </div>
                 </div>
                 <div class="space-y-3">
                     @foreach($lowStockProducts as $lp)
-                    <div class="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm border border-amber-100">
-                        <span class="font-bold text-slate-800">{{ $lp->name }}</span>
-                        <x-badge variant="red">Stock: {{ $lp->stock }} / Mín: {{ $lp->min_stock }}</x-badge>
+                    <div class="flex items-center justify-between rounded-2xl bg-white dark:bg-gray-900/50 p-4 shadow-sm border border-amber-100 dark:border-amber-900/20">
+                        <span class="font-bold text-slate-800 dark:text-slate-200">{{ $lp->name }}</span>
+                        <x-badge variant="error">Stock: {{ $lp->stock }} / Mín: {{ $lp->min_stock }}</x-badge>
                     </div>
                     @endforeach
                 </div>

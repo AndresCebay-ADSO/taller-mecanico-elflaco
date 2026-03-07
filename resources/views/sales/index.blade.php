@@ -9,15 +9,15 @@
     </x-page-header>
 
     <!-- Tarjeta de Resumen -->
-    <div class="mb-6 bg-white rounded-xl shadow-sm border border-slate-200 border-t-4 border-t-emerald-500 overflow-hidden">
+    <div class="mb-6 bg-white dark:bg-gray-900/50 rounded-xl shadow-sm border border-slate-200 dark:border-gray-800 border-t-4 border-t-emerald-500 overflow-hidden">
         <div class="p-6 flex justify-between items-center">
             <div>
                 <p class="text-sm font-medium text-slate-500 mb-1">Ventas de Hoy</p>
                 <h3 class="text-3xl font-bold text-slate-900">${{ number_format($todayTotal) }}</h3>
                 <p class="text-sm text-slate-500 mt-1">{{ $todayCount }} venta(s)</p>
             </div>
-            <div class="bg-emerald-100 p-4 rounded-xl flex items-center justify-center">
-                <i data-lucide="shopping-cart" class="w-8 h-8 text-emerald-600"></i>
+            <div class="bg-emerald-100 dark:bg-emerald-900/30 p-4 rounded-xl flex items-center justify-center">
+                <i data-lucide="shopping-cart" class="w-8 h-8 text-emerald-600 dark:text-emerald-400"></i>
             </div>
         </div>
     </div>
@@ -25,7 +25,7 @@
     <x-search-filter action="{{ route('sales.index') }}" searchPlaceholder="Cliente, producto, ID...">
         <div>
             <label for="status" class="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">Estado de Venta</label>
-            <select name="status" id="status" class="w-full rounded-2xl border-slate-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 transition-all">
+            <select name="status" id="status" class="w-full rounded-2xl border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-950/50 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 dark:text-gray-300 transition-all">
                 <option value="">Cualquier estado</option>
                 <option value="completada" {{ request('status') == 'completada' ? 'selected' : '' }}>Completada</option>
                 <option value="anulada" {{ request('status') == 'anulada' ? 'selected' : '' }}>Anulada</option>
@@ -33,7 +33,7 @@
         </div>
         <div>
             <label for="payment_method" class="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">Método de Pago</label>
-            <select name="payment_method" id="payment_method" class="w-full rounded-2xl border-slate-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 transition-all">
+            <select name="payment_method" id="payment_method" class="w-full rounded-2xl border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-950/50 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 dark:text-gray-300 transition-all">
                 <option value="">Cualquier método</option>
                 <option value="Efectivo" {{ request('payment_method') == 'Efectivo' ? 'selected' : '' }}>Efectivo</option>
                 <option value="Transferencia" {{ request('payment_method') == 'Transferencia' ? 'selected' : '' }}>Transferencia</option>
@@ -42,20 +42,20 @@
             </select>
         </div>
         <div>
-            <label for="date_start" class="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">Fecha Desde</label>
-            <input type="date" name="date_start" id="date_start" value="{{ request('date_start') }}" class="w-full rounded-2xl border-slate-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 transition-all text-center">
+            <label for="date_start" class="block text-xs font-bold text-slate-400 dark:text-gray-500 uppercase mb-2 ml-1">Fecha Desde</label>
+            <input type="date" name="date_start" id="date_start" value="{{ request('date_start') }}" class="w-full rounded-2xl border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-950/50 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 dark:text-gray-300 transition-all text-center">
         </div>
         <div>
-            <label for="date_end" class="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">Fecha Hasta</label>
-            <input type="date" name="date_end" id="date_end" value="{{ request('date_end') }}" class="w-full rounded-2xl border-slate-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 transition-all text-center">
+            <label for="date_end" class="block text-xs font-bold text-slate-400 dark:text-gray-500 uppercase mb-2 ml-1">Fecha Hasta</label>
+            <input type="date" name="date_end" id="date_end" value="{{ request('date_end') }}" class="w-full rounded-2xl border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-950/50 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 dark:text-gray-300 transition-all text-center">
         </div>
     </x-search-filter>
 
     <!-- Tabla -->
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    <div class="bg-white dark:bg-gray-900/50 rounded-xl shadow-sm border border-slate-200 dark:border-gray-800 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
-                <thead class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <thead class="bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-gray-800 text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider">
                     <tr>
                         <th class="px-6 py-4">Fecha</th>
                         <th class="px-6 py-4">Cliente / Info</th>
@@ -64,9 +64,9 @@
                         <th class="px-6 py-4 text-right">Acciones</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-200">
+                <tbody class="divide-y divide-slate-200 dark:divide-gray-800">
                     @forelse($sales as $sale)
-                        <tr class="hover:bg-slate-50 transition-colors">
+                        <tr class="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
                             <td class="px-6 py-4">
                                 <div class="text-sm font-bold text-slate-900">{{ \Carbon\Carbon::parse($sale->created_at)->translatedFormat('d M Y') }}</div>
                                 <div class="text-xs text-slate-500 mt-0.5">{{ \Carbon\Carbon::parse($sale->created_at)->format('H:i') }} | #S{{ str_pad($sale->id, 4, '0', STR_PAD_LEFT) }}</div>
@@ -139,7 +139,7 @@
         </div>
         
         @if($sales->hasPages())
-        <div class="px-6 py-4 border-t border-slate-200">
+        <div class="px-6 py-4 border-t border-slate-200 dark:border-gray-800">
             {{ $sales->links() }}
         </div>
         @endif
