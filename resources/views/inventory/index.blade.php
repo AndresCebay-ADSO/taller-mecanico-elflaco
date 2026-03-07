@@ -13,9 +13,9 @@
     </x-page-header>
 
     <x-search-filter action="{{ route('inventory.index') }}" searchPlaceholder="Producto, proveedor o referencia...">
-        <div>
-            <label for="type" class="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">Tipo de Movimiento</label>
-            <select name="type" id="type" class="w-full rounded-2xl border-slate-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 transition-all">
+        <div class="space-y-2">
+            <label for="type" class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Tipo de Movimiento</label>
+            <select name="type" id="type" class="w-full rounded-2xl border-slate-200 bg-white shadow-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 py-4 px-4 text-sm font-bold text-slate-700 transition-all dark:bg-slate-950/40 dark:border-slate-800 dark:text-white dark:focus:bg-slate-950/60">
                 <option value="">Todos los tipos</option>
                 <option value="purchase" {{ request('type') == 'purchase' ? 'selected' : '' }}>Compra</option>
                 <option value="sale" {{ request('type') == 'sale' ? 'selected' : '' }}>Venta</option>
@@ -24,13 +24,22 @@
                 <option value="reversal" {{ request('type') == 'reversal' ? 'selected' : '' }}>Reversión</option>
             </select>
         </div>
-        <div>
-            <label for="date_start" class="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">Desde</label>
-            <input type="date" name="date_start" id="date_start" value="{{ request('date_start') }}" class="w-full rounded-2xl border-slate-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 transition-all text-center">
-        </div>
-        <div>
-            <label for="date_end" class="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">Hasta</label>
-            <input type="date" name="date_end" id="date_end" value="{{ request('date_end') }}" class="w-full rounded-2xl border-slate-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 transition-all text-center">
+        
+        <div class="sm:col-span-2 lg:col-span-2 grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+                <label for="date_start" class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Desde</label>
+                <div class="relative group">
+                    <input type="date" name="date_start" id="date_start" value="{{ request('date_start') }}" 
+                        class="w-full rounded-2xl border-slate-200 bg-white shadow-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 py-4 px-4 text-sm font-bold text-slate-700 transition-all text-center dark:bg-slate-950/40 dark:border-slate-800 dark:text-white dark:focus:bg-slate-950/60 appearance-none">
+                </div>
+            </div>
+            <div class="space-y-2">
+                <label for="date_end" class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Hasta</label>
+                <div class="relative group">
+                    <input type="date" name="date_end" id="date_end" value="{{ request('date_end') }}" 
+                        class="w-full rounded-2xl border-slate-200 bg-white shadow-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 py-4 px-4 text-sm font-bold text-slate-700 transition-all text-center dark:bg-slate-950/40 dark:border-slate-800 dark:text-white dark:focus:bg-slate-950/60 appearance-none">
+                </div>
+            </div>
         </div>
     </x-search-filter>
 
