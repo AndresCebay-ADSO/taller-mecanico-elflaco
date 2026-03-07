@@ -1,25 +1,25 @@
 @props([
-    'variant' => 'primary',
-    'size' => 'md',
+    'variant' => 'primary', // primary, secondary, danger, success, ghost, outline
+    'size' => 'md', // sm, md, lg
     'type' => 'button',
 ])
 
 @php
-    $baseClasses = 'inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer';
+    $baseClasses = 'inline-flex items-center justify-center font-bold rounded-2xl transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer focus:outline-none focus:ring-4';
     
     $variants = [
-        'primary' => 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 shadow-sm shadow-blue-500/20',
-        'secondary' => 'bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-400',
-        'danger' => 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 shadow-sm shadow-red-500/20',
-        'success' => 'bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-500 shadow-sm shadow-emerald-500/20',
-        'outline' => 'border border-slate-300 text-slate-700 hover:bg-slate-50 focus:ring-slate-400',
-        'ghost' => 'text-slate-600 hover:bg-slate-100 focus:ring-slate-400',
+        'primary' => 'bg-brand-500 text-white hover:bg-brand-600 focus:ring-brand-500/20 shadow-theme-sm dark:bg-brand-500 dark:hover:bg-brand-600',
+        'secondary' => 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 focus:ring-gray-100 shadow-theme-xs dark:bg-white/5 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-white/10',
+        'danger' => 'bg-error-500 text-white hover:bg-error-600 focus:ring-error-500/20 shadow-theme-sm',
+        'success' => 'bg-success-500 text-white hover:bg-success-600 focus:ring-success-500/20 shadow-theme-sm',
+        'outline' => 'border-2 border-brand-500 text-brand-600 hover:bg-brand-50 focus:ring-brand-500/20 dark:border-brand-500 dark:text-brand-400 dark:hover:bg-brand-500/10',
+        'ghost' => 'text-gray-600 hover:bg-gray-100 focus:ring-gray-100 dark:text-gray-400 dark:hover:bg-white/5',
     ];
 
     $sizes = [
-        'sm' => 'px-3 py-1.5 text-xs',
-        'md' => 'px-4 py-2.5 text-sm',
-        'lg' => 'px-6 py-3.5 text-base',
+        'sm' => 'px-3 py-2 text-xs',
+        'md' => 'px-5 py-3 text-sm',
+        'lg' => 'px-8 py-4 text-base',
     ];
 
     $classes = "{$baseClasses} {$variants[$variant]} {$sizes[$size]}";

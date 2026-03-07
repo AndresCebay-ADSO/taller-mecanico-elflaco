@@ -1,17 +1,21 @@
-<aside class="flex w-64 flex-col bg-[#1a1f2b] text-slate-300 transition-all duration-300">
+<aside class="flex w-72 flex-col bg-gray-950 text-gray-400 transition-all duration-300 border-r border-gray-900">
     <!-- Header -->
-    <div class="flex items-center gap-3 px-6 py-5">
-        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 shadow-lg shadow-blue-500/20">
-            <i data-lucide="bike" class="h-7 w-7 text-white"></i>
+    <div class="flex items-center justify-between px-6 py-8">
+        <div class="flex items-center gap-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500 shadow-lg shadow-brand-500/20">
+                <i data-lucide="bike" class="h-6 w-6 text-white"></i>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-xl font-black tracking-tight text-white leading-none">MotoTaller</span>
+                <span class="mt-1 text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-none">Management</span>
+            </div>
         </div>
-        <div class="flex flex-col">
-            <span class="text-xl font-bold tracking-tight text-white leading-none">MotoTaller</span>
-            <span class="mt-1 text-xs text-slate-400 font-medium tracking-wide leading-none">Sistema de Gestión</span>
-        </div>
+        
+        <x-theme-toggle />
     </div>
 
     <!-- Navigation -->
-    <nav class="flex-1 space-y-1 px-4 py-4 overflow-y-auto custom-scrollbar">
+    <nav class="flex-1 space-y-1.5 px-4 py-2 overflow-y-auto custom-scrollbar">
         <x-sidebar-link href="{{ route('dashboard') }}" icon="layout-grid" :active="request()->routeIs('dashboard')">
             Dashboard
         </x-sidebar-link>
@@ -54,7 +58,7 @@
     </nav>
 
     <!-- Footer -->
-    <div class="border-t border-slate-700/50 p-4">
+    <div class="border-t border-gray-900 p-6">
         <x-sidebar-link href="/settings" icon="settings">
             Configuración
         </x-sidebar-link>
