@@ -22,6 +22,33 @@
         </div>
     </div>
 
+    <x-search-filter action="{{ route('sales.index') }}" searchPlaceholder="Buscar por cliente o producto...">
+        <div class="w-full md:w-[15%]">
+            <label for="status" class="block text-sm font-medium text-slate-700 mb-1">Estado</label>
+            <select name="status" id="status" class="w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                <option value="">Todos</option>
+                <option value="completada" {{ request('status') == 'completada' ? 'selected' : '' }}>Completada</option>
+                <option value="anulada" {{ request('status') == 'anulada' ? 'selected' : '' }}>Anulada</option>
+            </select>
+        </div>
+        <div class="w-full md:w-[20%]">
+            <label for="payment_method" class="block text-sm font-medium text-slate-700 mb-1">Método Pago</label>
+            <select name="payment_method" id="payment_method" class="w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                <option value="">Todos los Métodos</option>
+                <option value="Efectivo" {{ request('payment_method') == 'Efectivo' ? 'selected' : '' }}>Efectivo</option>
+                <option value="Transferencia" {{ request('payment_method') == 'Transferencia' ? 'selected' : '' }}>Transferencia</option>
+                <option value="Tarjeta" {{ request('payment_method') == 'Tarjeta' ? 'selected' : '' }}>Tarjeta</option>
+                <option value="Otro" {{ request('payment_method') == 'Otro' ? 'selected' : '' }}>Otro</option>
+            </select>
+        </div>
+        <div class="w-full md:w-1/5">
+            <x-input type="date" name="date_start" label="Desde" value="{{ request('date_start') }}" />
+        </div>
+        <div class="w-full md:w-1/5">
+            <x-input type="date" name="date_end" label="Hasta" value="{{ request('date_end') }}" />
+        </div>
+    </x-search-filter>
+
     <!-- Tabla -->
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="overflow-x-auto">

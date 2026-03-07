@@ -8,6 +8,8 @@
         </x-slot>
     </x-page-header>
 
+    <x-search-filter action="{{ route('suppliers.index') }}" searchPlaceholder="Buscar nombre o teléfono..." />
+
     <x-card>
         <x-table :headers="['Nombre', 'Teléfono', 'Email', 'Dirección']">
             @forelse($suppliers as $supplier)

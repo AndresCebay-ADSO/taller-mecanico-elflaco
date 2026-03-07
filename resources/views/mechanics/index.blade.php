@@ -7,6 +7,17 @@
             </x-button>
         </x-slot>
     </x-page-header>
+    
+    <x-search-filter action="{{ route('mechanics.index') }}" searchPlaceholder="Buscar nombre o teléfono...">
+        <div class="w-full md:w-1/4">
+            <label for="status" class="block text-sm font-medium text-slate-700 mb-1">Estado</label>
+            <select name="status" id="status" class="w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                <option value="">Todos los Estados</option>
+                <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Activo</option>
+                <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactivo</option>
+            </select>
+        </div>
+    </x-search-filter>
 
     <x-card class="overflow-hidden p-0">
         <x-table :headers="['MECÁNICO', 'TELÉFONO', 'EMAIL', 'FECHA CONTRATACIÓN', 'ESTADO', 'ACCIONES']">
