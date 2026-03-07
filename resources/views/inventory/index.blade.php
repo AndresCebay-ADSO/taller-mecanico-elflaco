@@ -12,23 +12,25 @@
         </x-slot>
     </x-page-header>
 
-    <x-search-filter action="{{ route('inventory.index') }}" searchPlaceholder="Buscar por producto o proveedor...">
-        <div class="w-full md:w-1/4">
-            <label for="type" class="block text-sm font-medium text-slate-700 mb-1">Tipo</label>
-            <select name="type" id="type" class="w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
-                <option value="">Todos los Tipos</option>
+    <x-search-filter action="{{ route('inventory.index') }}" searchPlaceholder="Producto, proveedor o referencia...">
+        <div>
+            <label for="type" class="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">Tipo de Movimiento</label>
+            <select name="type" id="type" class="w-full rounded-2xl border-slate-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 transition-all">
+                <option value="">Todos los tipos</option>
                 <option value="purchase" {{ request('type') == 'purchase' ? 'selected' : '' }}>Compra</option>
                 <option value="sale" {{ request('type') == 'sale' ? 'selected' : '' }}>Venta</option>
                 <option value="job_usage" {{ request('type') == 'job_usage' ? 'selected' : '' }}>Uso en Trabajo</option>
-                <option value="adjustment" {{ request('type') == 'adjustment' ? 'selected' : '' }}>Ajuste (Manual/Pérdida)</option>
-                <option value="reversal" {{ request('type') == 'reversal' ? 'selected' : '' }}>Reversión (Anulada)</option>
+                <option value="adjustment" {{ request('type') == 'adjustment' ? 'selected' : '' }}>Ajuste</option>
+                <option value="reversal" {{ request('type') == 'reversal' ? 'selected' : '' }}>Reversión</option>
             </select>
         </div>
-        <div class="w-full md:w-1/5">
-            <x-input type="date" name="date_start" label="Desde" value="{{ request('date_start') }}" />
+        <div>
+            <label for="date_start" class="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">Desde</label>
+            <input type="date" name="date_start" id="date_start" value="{{ request('date_start') }}" class="w-full rounded-2xl border-slate-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 transition-all text-center">
         </div>
-        <div class="w-full md:w-1/5">
-            <x-input type="date" name="date_end" label="Hasta" value="{{ request('date_end') }}" />
+        <div>
+            <label for="date_end" class="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">Hasta</label>
+            <input type="date" name="date_end" id="date_end" value="{{ request('date_end') }}" class="w-full rounded-2xl border-slate-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 transition-all text-center">
         </div>
     </x-search-filter>
 

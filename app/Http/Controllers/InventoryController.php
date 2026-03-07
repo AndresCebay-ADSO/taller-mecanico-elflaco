@@ -27,7 +27,7 @@ class InventoryController extends Controller
                     $q2->where('name', 'like', "%{$search}%");
                 })->orWhereHas('supplier', function ($q2) use ($search) {
                     $q2->where('name', 'like', "%{$search}%");
-                });
+                })->orWhere('reference', 'like', "%{$search}%");
             });
         }
 
@@ -43,7 +43,7 @@ class InventoryController extends Controller
             $query->whereDate('movement_date', '<=', $request->input('date_end'));
         }
 
-        $movements = $query->latest('movement_date')->latest()->paginate(10)->appends($request->all());
+        $movements = $query->latest('movement_date')->latest('id')->paginate(10)->appends($request->all());
         return view('inventory.index', compact('movements'));
     }
 
