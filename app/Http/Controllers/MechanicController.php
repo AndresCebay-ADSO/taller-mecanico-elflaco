@@ -11,9 +11,29 @@ class MechanicController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $mechanics = Mechanic::latest()->paginate(10);
+        $request->validate([
+            'search' => 'nullable|string|max:255',
+            'status' => 'nullable|string|in:active,inactive',
+        ]);
+
+        $query = Mechanic::query();
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('status')) {
+            $isActive = $request->input('status') === 'active';
+            $query->where('is_active', $isActive);
+        }
+
+        $mechanics = $query->latest()->paginate(10)->appends($request->all());
         return view('mechanics.index', compact('mechanics'));
     }
 

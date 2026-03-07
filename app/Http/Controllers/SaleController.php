@@ -11,11 +11,51 @@ class SaleController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $sales = Sale::with(['user', 'saleProducts.product'])
+        $request->validate([
+            'search' => 'nullable|string|max:255',
+            'payment_method' => 'nullable|string|in:Efectivo,Transferencia,Tarjeta,Otro',
+            'status' => 'nullable|string|in:completada,anulada',
+            'date_start' => 'nullable|date',
+            'date_end' => 'nullable|date|after_or_equal:date_start',
+        ]);
+
+        $query = Sale::with(['user', 'saleProducts.product']);
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                if (is_numeric($search)) {
+                    $q->where('id', $search);
+                }
+                $q->orWhere('customer_name', 'like', "%{$search}%")
+                  ->orWhereHas('saleProducts.product', function ($q2) use ($search) {
+                      $q2->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        if ($request->filled('payment_method')) {
+            $query->where('payment_method', $request->input('payment_method'));
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        if ($request->filled('date_start')) {
+            $query->whereDate('sale_date', '>=', $request->input('date_start'));
+        }
+
+        if ($request->filled('date_end')) {
+            $query->whereDate('sale_date', '<=', $request->input('date_end'));
+        }
+
+        $sales = $query->latest('sale_date')
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->appends($request->all());
             
         $todayTotal = Sale::whereDate('sale_date', today())
             ->where('status', '!=', 'anulada')
