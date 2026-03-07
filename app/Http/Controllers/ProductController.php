@@ -12,10 +12,39 @@ class ProductController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::with('suppliers')->latest()->paginate(10);
-        return view('products.index', compact('products'));
+        $query = Product::with('suppliers');
+
+        // Search filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('category', 'like', "%{$search}%")
+                  ->orWhere('upc', 'like', "%{$search}%")
+                  ->orWhereHas('suppliers', function($sq) use ($search) {
+                      $sq->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Category filter
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
+        }
+
+        // Low stock filter (Optional but recommended since it was in the UI)
+        if ($request->has('low_stock')) {
+            $query->whereColumn('stock', '<=', 'min_stock');
+        }
+
+        $products = $query->latest()->paginate(10)->appends($request->all());
+        
+        // Get unique categories for the filter
+        $categories = Product::distinct()->pluck('category')->sort();
+
+        return view('products.index', compact('products', 'categories'));
     }
 
     /**

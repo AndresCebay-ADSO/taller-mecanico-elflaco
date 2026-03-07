@@ -22,6 +22,35 @@
         </div>
     </div>
 
+    <x-search-filter action="{{ route('sales.index') }}" searchPlaceholder="Cliente, producto, ID...">
+        <div>
+            <label for="status" class="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">Estado de Venta</label>
+            <select name="status" id="status" class="w-full rounded-2xl border-slate-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 transition-all">
+                <option value="">Cualquier estado</option>
+                <option value="completada" {{ request('status') == 'completada' ? 'selected' : '' }}>Completada</option>
+                <option value="anulada" {{ request('status') == 'anulada' ? 'selected' : '' }}>Anulada</option>
+            </select>
+        </div>
+        <div>
+            <label for="payment_method" class="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">Método de Pago</label>
+            <select name="payment_method" id="payment_method" class="w-full rounded-2xl border-slate-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 transition-all">
+                <option value="">Cualquier método</option>
+                <option value="Efectivo" {{ request('payment_method') == 'Efectivo' ? 'selected' : '' }}>Efectivo</option>
+                <option value="Transferencia" {{ request('payment_method') == 'Transferencia' ? 'selected' : '' }}>Transferencia</option>
+                <option value="Tarjeta" {{ request('payment_method') == 'Tarjeta' ? 'selected' : '' }}>Tarjeta</option>
+                <option value="Otro" {{ request('payment_method') == 'Otro' ? 'selected' : '' }}>Otro</option>
+            </select>
+        </div>
+        <div>
+            <label for="date_start" class="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">Fecha Desde</label>
+            <input type="date" name="date_start" id="date_start" value="{{ request('date_start') }}" class="w-full rounded-2xl border-slate-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 transition-all text-center">
+        </div>
+        <div>
+            <label for="date_end" class="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">Fecha Hasta</label>
+            <input type="date" name="date_end" id="date_end" value="{{ request('date_end') }}" class="w-full rounded-2xl border-slate-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 transition-all text-center">
+        </div>
+    </x-search-filter>
+
     <!-- Tabla -->
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="overflow-x-auto">

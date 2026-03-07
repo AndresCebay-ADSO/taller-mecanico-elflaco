@@ -7,6 +7,8 @@
             </x-button>
         </x-slot>
     </x-page-header>
+    
+    <x-search-filter action="{{ route('mechanics.index') }}" searchPlaceholder="Nombre del mecánico o teléfono..."></x-search-filter>
 
     <x-card class="overflow-hidden p-0">
         <x-table :headers="['MECÁNICO', 'TELÉFONO', 'EMAIL', 'FECHA CONTRATACIÓN', 'ESTADO', 'ACCIONES']">

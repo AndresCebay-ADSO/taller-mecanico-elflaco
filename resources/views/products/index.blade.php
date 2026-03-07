@@ -8,20 +8,25 @@
         </x-slot>
     </x-page-header>
 
-    <div class="mb-6 flex flex-col gap-4 md:flex-row md:items-center">
-        <div class="relative flex-1">
-            <i data-lucide="search" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"></i>
-            <input type="text" placeholder="Buscar por producto, categoría o proveedor..." class="w-full rounded-xl border border-slate-300 py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
-        </div>
-        <div class="flex items-center gap-3">
-            <select class="rounded-xl border border-slate-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-blue-500 focus:outline-none cursor-pointer">
-                <option>Todas las categorías</option>
+    <x-search-filter action="{{ route('products.index') }}" searchPlaceholder="Producto, categoría, UPC o proveedor...">
+        <div>
+            <label for="category" class="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">Categoría</label>
+            <select name="category" id="category" class="w-full rounded-2xl border-slate-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 transition-all">
+                <option value="">Todas las categorías</option>
+                @foreach($categories as $category)
+                    <option value="{{ $category }}" {{ request('category') == $category ? 'selected' : '' }}>
+                        {{ $category }}
+                    </option>
+                @endforeach
             </select>
-            <x-button variant="outline" size="sm">
-                Stock Bajo
-            </x-button>
         </div>
-    </div>
+        <div class="flex items-center pt-6">
+            <label for="low_stock" class="flex items-center gap-3 w-full bg-white px-6 py-4 rounded-2xl border border-slate-200 shadow-sm cursor-pointer hover:bg-slate-50 transition-all">
+                <input type="checkbox" name="low_stock" id="low_stock" value="1" {{ request('low_stock') ? 'checked' : '' }} class="h-5 w-5 rounded-lg border-slate-300 text-blue-600 focus:ring-blue-500 transition-all">
+                <span class="text-xs font-black text-slate-500 uppercase tracking-widest">Solo Stock Bajo</span>
+            </label>
+        </div>
+    </x-search-filter>
 
     <x-card class="overflow-hidden p-0">
         <x-table :headers="['PRODUCTO', 'CATEGORÍA', 'PROVEEDOR', 'PRECIO COMPRA', 'PRECIO VENTA', 'GANANCIA', 'STOCK', 'ACCIONES']">

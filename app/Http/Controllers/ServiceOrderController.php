@@ -12,9 +12,41 @@ class ServiceOrderController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $serviceOrders = ServiceOrder::latest()->paginate(10);
+        $request->validate([
+            'search' => 'nullable|string|max:255',
+            'status' => 'nullable|string|in:pending,in_progress,completed,cancelled',
+            'date_start' => 'nullable|date',
+            'date_end' => 'nullable|date|after_or_equal:date_start',
+        ]);
+
+        $query = ServiceOrder::query();
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                // If it's a number, it might be an ID search
+                if (is_numeric($search)) {
+                    $q->where('id', $search);
+                }
+                $q->orWhere('customer_name', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        if ($request->filled('date_start')) {
+            $query->whereDate('created_at', '>=', $request->input('date_start'));
+        }
+
+        if ($request->filled('date_end')) {
+            $query->whereDate('created_at', '<=', $request->input('date_end'));
+        }
+
+        $serviceOrders = $query->latest()->paginate(10)->appends($request->all());
         return view('service-orders.index', compact('serviceOrders'));
     }
 

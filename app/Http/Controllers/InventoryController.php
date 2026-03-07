@@ -9,9 +9,41 @@ use App\Models\Supplier;
 
 class InventoryController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $movements = InventoryMovement::with(['product', 'supplier'])->latest()->paginate(10);
+        $request->validate([
+            'search' => 'nullable|string|max:255',
+            'type' => 'nullable|string|max:50',
+            'date_start' => 'nullable|date',
+            'date_end' => 'nullable|date|after_or_equal:date_start',
+        ]);
+
+        $query = InventoryMovement::with(['product', 'supplier']);
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('product', function ($q2) use ($search) {
+                    $q2->where('name', 'like', "%{$search}%");
+                })->orWhereHas('supplier', function ($q2) use ($search) {
+                    $q2->where('name', 'like', "%{$search}%");
+                })->orWhere('reference', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('type')) {
+            $query->where('movement_type', $request->input('type'));
+        }
+
+        if ($request->filled('date_start')) {
+            $query->whereDate('movement_date', '>=', $request->input('date_start'));
+        }
+
+        if ($request->filled('date_end')) {
+            $query->whereDate('movement_date', '<=', $request->input('date_end'));
+        }
+
+        $movements = $query->latest('movement_date')->latest('id')->paginate(10)->appends($request->all());
         return view('inventory.index', compact('movements'));
     }
 
