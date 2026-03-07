@@ -8,22 +8,25 @@
         </x-slot>
     </x-page-header>
 
-    <x-search-filter action="{{ route('service-orders.index') }}" searchPlaceholder="Buscar por ID o cliente...">
-        <div class="w-full md:w-1/4">
-            <label for="status" class="block text-sm font-medium text-slate-700 mb-1">Estado</label>
-            <select name="status" id="status" class="w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
-                <option value="">Todos los Estados</option>
-                <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pendiente</option>
-                <option value="in_progress" {{ request('status') == 'in_progress' ? 'selected' : '' }}>En Progreso</option>
-                <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completado</option>
-                <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelado</option>
+    <x-search-filter action="{{ route('service-orders.index') }}" searchPlaceholder="ID, cliente, orden...">
+        <div>
+            <label for="status" class="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">Estado del Servicio</label>
+            <select name="status" id="status" class="w-full rounded-2xl border-slate-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 transition-all">
+                <option value="">Cualquier estado</option>
+                <option value="pendiente" {{ request('status') == 'pendiente' ? 'selected' : '' }}>Pendiente</option>
+                <option value="en_proceso" {{ request('status') == 'en_proceso' ? 'selected' : '' }}>En Proceso</option>
+                <option value="completado" {{ request('status') == 'completado' ? 'selected' : '' }}>Completado</option>
+                <option value="entregado" {{ request('status') == 'entregado' ? 'selected' : '' }}>Entregado</option>
+                <option value="cancelado" {{ request('status') == 'cancelado' ? 'selected' : '' }}>Cancelado</option>
             </select>
         </div>
-        <div class="w-full md:w-1/5">
-            <x-input type="date" name="date_start" label="Desde" value="{{ request('date_start') }}" />
+        <div>
+            <label for="date_start" class="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">Desde</label>
+            <input type="date" name="date_start" id="date_start" value="{{ request('date_start') }}" class="w-full rounded-2xl border-slate-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 transition-all text-center">
         </div>
-        <div class="w-full md:w-1/5">
-            <x-input type="date" name="date_end" label="Hasta" value="{{ request('date_end') }}" />
+        <div>
+            <label for="date_end" class="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">Hasta</label>
+            <input type="date" name="date_end" id="date_end" value="{{ request('date_end') }}" class="w-full rounded-2xl border-slate-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 transition-all text-center">
         </div>
     </x-search-filter>
 
