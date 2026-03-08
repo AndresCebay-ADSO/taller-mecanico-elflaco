@@ -7,14 +7,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Ampliar el ENUM para incluir 'reversal' (anulaciones de ventas) y 'job' (alias defensivo)
+        if (DB::getDriverName() === 'sqlite') return;
+
         DB::statement("ALTER TABLE `inventory_movements` MODIFY `movement_type` ENUM('purchase', 'sale', 'job_usage', 'adjustment', 'reversal') NOT NULL");
     }
 
     public function down(): void
     {
-        // Bug #3: Verificar si ya existen movimientos 'reversal' antes de eliminar el valor del ENUM.
-        // Si existen, el rollback fallaría o corrompería los datos, así que se aborta con error claro.
+        if (DB::getDriverName() === 'sqlite') return;
+
         $hasReversal = DB::table('inventory_movements')
             ->where('movement_type', 'reversal')
             ->exists();

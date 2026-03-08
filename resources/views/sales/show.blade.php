@@ -35,6 +35,32 @@
                         </div>
                     </div>
 
+                    <div class="mt-8">
+                        <h4 class="text-sm font-bold text-slate-700 uppercase tracking-wider mb-4">Productos Vendidos</h4>
+                        <div class="overflow-hidden rounded-xl border border-slate-200">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-slate-50 border-b border-slate-200">
+                                    <tr>
+                                        <th class="px-4 py-3 font-bold text-slate-700">Producto</th>
+                                        <th class="px-4 py-3 font-bold text-slate-700 text-center">Cantidad</th>
+                                        <th class="px-4 py-3 font-bold text-slate-700 text-right">P. Unitario</th>
+                                        <th class="px-4 py-3 font-bold text-slate-700 text-right">Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    @foreach($sale->saleProducts as $item)
+                                    <tr>
+                                        <td class="px-4 py-3 text-slate-900 font-medium">{{ $item->product->name }}</td>
+                                        <td class="px-4 py-3 text-slate-600 text-center">{{ $item->quantity }}</td>
+                                        <td class="px-4 py-3 text-slate-600 text-right">${{ number_format($item->unit_price, 2, ',', '.') }}</td>
+                                        <td class="px-4 py-3 text-slate-900 font-bold text-right">${{ number_format($item->total_price, 2, ',', '.') }}</td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
                     <div class="mt-8 border-t border-slate-100 pt-6">
                         <div class="flex justify-between items-center bg-slate-50 p-6 rounded-2xl">
                             <span class="text-sm font-bold text-slate-500 uppercase">Monto Total Recaudado</span>
@@ -42,6 +68,7 @@
                         </div>
                     </div>
                 </div>
+
             </x-card>
         </div>
 
