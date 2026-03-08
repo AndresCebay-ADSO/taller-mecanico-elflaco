@@ -82,48 +82,65 @@ class SaleController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'product_id'     => 'required|exists:products,id',
-            'quantity'       => 'required|integer|min:1',
             'customer_name'  => 'nullable|string|max:255',
             'payment_method' => 'required|string|in:Efectivo,Transferencia,Tarjeta,Otro',
+            'products'       => 'required|array|min:1',
+            'products.*.id'  => 'required|distinct|exists:products,id',
+            'products.*.quantity' => 'required|integer|min:1',
         ]);
 
-        $quantity = $validated['quantity'];
-
-        // Bug #1 (TOCTOU): El chequeo y decremento ocurren DENTRO de la transacción
-        // con lockForUpdate() para evitar race conditions concurrentes.
         try {
-            DB::transaction(function () use ($validated, $quantity) {
-                $product = \App\Models\Product::where('id', $validated['product_id'])
-                    ->lockForUpdate()
-                    ->firstOrFail();
-
-                if ($product->stock < $quantity) {
-                    throw new \Illuminate\Validation\ValidationException(
-                        validator([], []),
-                        back()->withErrors(['quantity' => "Stock insuficiente. Disponible: {$product->stock} unidades."])->withInput()
-                    );
+            DB::transaction(function () use ($validated) {
+                // Consolidar productos (aunque validation distinct ya previene duplicados en el array, 
+                // si el usuario enviara el mismo ID sin distinct, aquí los sumaríamos)
+                $productData = [];
+                foreach ($validated['products'] as $item) {
+                    $id = $item['id'];
+                    $qty = $item['quantity'];
+                    if (isset($productData[$id])) {
+                        $productData[$id] += $qty;
+                    } else {
+                        $productData[$id] = $qty;
+                    }
                 }
-
-                $total = $product->sale_price * $quantity;
 
                 $sale = Sale::create([
                     'customer_name'  => $validated['customer_name'] ?? 'Venta Mostrador',
-                    'total_amount'   => $total,
+                    'total_amount'   => 0, // Se actualizará al final
                     'sale_date'      => now(),
                     'payment_method' => $validated['payment_method'],
                     'user_id'        => auth()->id(),
                     'status'         => 'completada',
                 ]);
 
-                $sale->saleProducts()->create([
-                    'product_id'  => $product->id,
-                    'quantity'    => $quantity,
-                    'unit_price'  => $product->sale_price,
-                    'total_price' => $total,
-                ]);
+                $totalSaleAmount = 0;
 
-                $product->decrementStock($quantity, 'sale', "Venta #{$sale->id}");
+                foreach ($productData as $productId => $quantity) {
+                    $product = \App\Models\Product::where('id', $productId)
+                        ->lockForUpdate()
+                        ->firstOrFail();
+
+                    if ($product->stock < $quantity) {
+                        throw new \Illuminate\Validation\ValidationException(
+                            validator([], []),
+                            back()->withErrors(["products.{$productId}.quantity" => "Stock insuficiente para {$product->name}. Disponible: {$product->stock} unidades."])->withInput()
+                        );
+                    }
+
+                    $itemTotal = $product->sale_price * $quantity;
+                    $totalSaleAmount += $itemTotal;
+
+                    $sale->saleProducts()->create([
+                        'product_id'  => $product->id,
+                        'quantity'    => $quantity,
+                        'unit_price'  => $product->sale_price,
+                        'total_price' => $itemTotal,
+                    ]);
+
+                    $product->decrementStock($quantity, 'sale', "Venta #{$sale->id}");
+                }
+
+                $sale->update(['total_amount' => $totalSaleAmount]);
             });
         } catch (\Illuminate\Validation\ValidationException $e) {
             return $e->getResponse();
@@ -131,6 +148,7 @@ class SaleController extends Controller
 
         return redirect()->route('sales.index')->with('success', 'Venta registrada y stock descontado.');
     }
+
 
     /**
      * Display the specified resource.
