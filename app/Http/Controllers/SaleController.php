@@ -129,7 +129,7 @@ class SaleController extends Controller
                 if ($product->stock < $quantity) {
                     throw new \Illuminate\Validation\ValidationException(
                         validator([], []),
-                        back()->withErrors(["products.{$productId}.quantity" => "Stock insuficiente para {$product->name}. Disponible: {$product->stock} unidades."])->withInput()
+                        back()->withErrors(['stock' => "Stock insuficiente para {$product->name}. Disponible: {$product->stock} unidades."])->withInput()
                     );
                 }
 
