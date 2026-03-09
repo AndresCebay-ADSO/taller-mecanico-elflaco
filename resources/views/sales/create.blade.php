@@ -10,8 +10,8 @@
     <div class="max-w-4xl" x-data="{
         items: {{ json_encode(
             collect(old('products', [['id' => '', 'quantity' => 1]]))->map(fn($p) => [
-                'id' => $p['id'] ?? '',
-                'quantity' => $p['quantity'] ?? 1
+                'id' => is_array($p) ? ($p['id'] ?? '') : '',
+                'quantity' => is_array($p) ? ($p['quantity'] ?? 1) : 1
             ])->values()
         ) }},
         addItem() {
@@ -53,7 +53,8 @@
                                 <div class="md:col-span-7">
                                     <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Producto</label>
                                     <select :name="`products[${index}][id]`" required
-                                        x-init="$el.value = item.id"
+                                        :value="item.id"
+                                        @change="item.id = $event.target.value"
                                         class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm cursor-pointer focus:ring-2 focus:ring-navy-500 focus:border-navy-500 transition-all bg-white">
                                         <option value="">Seleccione un producto</option>
                                         @foreach($products as $product)
@@ -83,7 +84,7 @@
                 @if ($errors->any())
                 <div class="px-4 py-3 rounded-xl bg-red-50 border border-red-200">
                     <ul class="list-disc list-inside text-sm text-red-600">
-                        @foreach ($errors->unique() as $error)
+                        @foreach (array_unique($errors->all()) as $error)
                         <li>{{ $error }}</li>
                         @endforeach
                     </ul>
