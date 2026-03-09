@@ -7,8 +7,13 @@
         </x-slot>
     </x-page-header>
 
-    <div class="max-w-4xl" x-data="{ 
-        items: [{ id: '', quantity: 1 }],
+    <div class="max-w-4xl" x-data="{
+        items: {{ json_encode(
+            collect(old('products', [['id' => '', 'quantity' => 1]]))->map(fn($p) => [
+                'id' => $p['id'] ?? '',
+                'quantity' => $p['quantity'] ?? 1
+            ])->values()
+        ) }},
         addItem() {
             this.items.push({ id: '', quantity: 1 });
         },
@@ -47,7 +52,8 @@
                             <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end p-4 rounded-xl border border-slate-200 bg-slate-50/50 relative group">
                                 <div class="md:col-span-7">
                                     <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Producto</label>
-                                    <select :name="`products[${index}][id]`" required 
+                                    <select :name="`products[${index}][id]`" required
+                                        x-init="$el.value = item.id"
                                         class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm cursor-pointer focus:ring-2 focus:ring-navy-500 focus:border-navy-500 transition-all bg-white">
                                         <option value="">Seleccione un producto</option>
                                         @foreach($products as $product)
@@ -77,7 +83,7 @@
                 @if ($errors->any())
                 <div class="px-4 py-3 rounded-xl bg-red-50 border border-red-200">
                     <ul class="list-disc list-inside text-sm text-red-600">
-                        @foreach ($errors->all() as $error)
+                        @foreach ($errors->unique() as $error)
                         <li>{{ $error }}</li>
                         @endforeach
                     </ul>
