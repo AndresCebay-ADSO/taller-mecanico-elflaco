@@ -51,7 +51,7 @@ class SupplierController extends Controller
         ], [
             'name.required'  => 'El nombre es obligatorio.',
             'phone.required' => 'El teléfono es obligatorio.',
-            'phone.digits'   => 'El teléfono debe tener exactamente 10 dígitos.',
+            'phone.digits' => 'El teléfono debe tener exactamente 10 dígitos numéricos.',
             'email.email'    => 'El correo electrónico no es válido.',
         ]);
 
