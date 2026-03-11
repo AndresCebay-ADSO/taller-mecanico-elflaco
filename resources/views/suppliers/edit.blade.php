@@ -14,7 +14,9 @@
                 @method('PUT')
                 <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <x-input label="Nombre" name="name" required :value="$supplier->name" />
-                    <x-input label="Teléfono" name="phone" required :value="$supplier->phone" />
+                    <x-input label="Teléfono" name="phone" required :value="$supplier->phone"
+                        type="tel" minlength="10" maxlength="10" pattern="[0-9]{10}"
+                        title="Ingresa exactamente 10 dígitos numéricos" />
                     <x-input label="Email" name="email" type="email" :value="$supplier->email" />
                     <x-input label="Dirección" name="address" :value="$supplier->address" />
                 </div>

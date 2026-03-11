@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-
 use App\Models\Supplier;
 
 class SupplierController extends Controller
@@ -45,10 +44,15 @@ class SupplierController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
-            'email' => 'nullable|email|max:255',
+            'name'    => 'required|string|max:255',
+            'phone'   => 'required|digits:10',
+            'email'   => 'nullable|email|max:255',
             'address' => 'nullable|string|max:255',
+        ], [
+            'name.required'  => 'El nombre es obligatorio.',
+            'phone.required' => 'El teléfono es obligatorio.',
+            'phone.digits'   => 'El teléfono debe tener exactamente 10 dígitos.',
+            'email.email'    => 'El correo electrónico no es válido.',
         ]);
 
         Supplier::create($validated);
@@ -78,10 +82,15 @@ class SupplierController extends Controller
     public function update(Request $request, Supplier $supplier)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
-            'email' => 'nullable|email|max:255',
+            'name'    => 'required|string|max:255',
+            'phone'   => 'required|digits:10',
+            'email'   => 'nullable|email|max:255',
             'address' => 'nullable|string|max:255',
+        ], [
+            'name.required'  => 'El nombre es obligatorio.',
+            'phone.required' => 'El teléfono es obligatorio.',
+            'phone.digits'   => 'El teléfono debe tener exactamente 10 dígitos.',
+            'email.email'    => 'El correo electrónico no es válido.',
         ]);
 
         $supplier->update($validated);
