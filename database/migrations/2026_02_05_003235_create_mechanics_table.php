@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('mechanics', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('phone', 20);
+            $table->string('phone', 10);
             $table->string('email')->nullable();
             $table->date('hire_date'); // Fecha de contratación
             $table->boolean('is_active')->default(true); // Estado del mecánico
