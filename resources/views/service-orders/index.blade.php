@@ -8,16 +8,15 @@
         </x-slot>
     </x-page-header>
 
-    <x-search-filter action="{{ route('service-orders.index') }}" searchPlaceholder="ID, cliente, orden...">
+    <x-search-filter action="{{ route('service-orders.index') }}" searchPlaceholder="ID o cliente...">
         <div>
             <label for="status" class="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">Estado del Servicio</label>
             <select name="status" id="status" class="w-full rounded-2xl border-slate-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 transition-all">
                 <option value="">Cualquier estado</option>
-                <option value="pendiente" {{ request('status') == 'pendiente' ? 'selected' : '' }}>Pendiente</option>
-                <option value="en_proceso" {{ request('status') == 'en_proceso' ? 'selected' : '' }}>En Proceso</option>
-                <option value="completado" {{ request('status') == 'completado' ? 'selected' : '' }}>Completado</option>
-                <option value="entregado" {{ request('status') == 'entregado' ? 'selected' : '' }}>Entregado</option>
-                <option value="cancelado" {{ request('status') == 'cancelado' ? 'selected' : '' }}>Cancelado</option>
+                <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pendiente</option>
+                <option value="in_progress" {{ request('status') == 'in_progress' ? 'selected' : '' }}>En Proceso</option>
+                <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completado</option>
+                <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelado</option>
             </select>
         </div>
         <div>
