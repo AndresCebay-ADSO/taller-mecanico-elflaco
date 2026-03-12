@@ -42,12 +42,8 @@
             </select>
         </div>
         <div>
-            <label for="date_start" class="block text-xs font-bold text-slate-400 dark:text-gray-500 uppercase mb-2 ml-1">Fecha Desde</label>
+            <label for="date_start" class="block text-xs font-bold text-slate-400 dark:text-gray-500 uppercase mb-2 ml-1">Fecha</label>
             <input type="date" name="date_start" id="date_start" value="{{ request('date_start') }}" class="w-full rounded-2xl border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-950/50 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 dark:text-gray-300 transition-all text-center">
-        </div>
-        <div>
-            <label for="date_end" class="block text-xs font-bold text-slate-400 dark:text-gray-500 uppercase mb-2 ml-1">Fecha Hasta</label>
-            <input type="date" name="date_end" id="date_end" value="{{ request('date_end') }}" class="w-full rounded-2xl border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-950/50 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 dark:text-gray-300 transition-all text-center">
         </div>
     </x-search-filter>
 
@@ -89,7 +85,7 @@
                                         </div>
                                     @endforeach
                                     <div class="text-xs text-slate-400 mt-1 font-medium">
-                                        Total: {{ $sale->total_items }} art&iacute;culo(s)
+                                        Total: {{ $sale->total_items }} artículo(s)
                                     </div>
                                 </div>
                             </td>
@@ -137,7 +133,7 @@
                 </tbody>
             </table>
         </div>
-        
+
         @if($sales->hasPages())
         <div class="px-6 py-4 border-t border-slate-200 dark:border-gray-800">
             {{ $sales->links() }}
