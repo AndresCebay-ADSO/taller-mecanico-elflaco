@@ -19,27 +19,10 @@
                 <option value="">Todos los tipos</option>
                 <option value="purchase" {{ request('type') == 'purchase' ? 'selected' : '' }}>Compra</option>
                 <option value="sale" {{ request('type') == 'sale' ? 'selected' : '' }}>Venta</option>
-                <option value="job_usage" {{ request('type') == 'job_usage' ? 'selected' : '' }}>Uso en Trabajo</option>
+                <option value="job_usage" {{ request('type') == 'job_usage' ? 'selected' : '' }}>Uso en Orden</option>
                 <option value="adjustment" {{ request('type') == 'adjustment' ? 'selected' : '' }}>Ajuste</option>
-                <option value="reversal" {{ request('type') == 'reversal' ? 'selected' : '' }}>Reversión</option>
+                <option value="reversal" {{ request('type') == 'reversal' ? 'selected' : '' }}>Anulación</option>
             </select>
-        </div>
-        
-        <div class="sm:col-span-2 lg:col-span-2 grid grid-cols-2 gap-4">
-            <div class="space-y-2">
-                <label for="date_start" class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Desde</label>
-                <div class="relative group">
-                    <input type="date" name="date_start" id="date_start" value="{{ request('date_start') }}" 
-                        class="w-full rounded-2xl border-slate-200 bg-white shadow-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 py-4 px-4 text-sm font-bold text-slate-700 transition-all text-center dark:bg-slate-950/40 dark:border-slate-800 dark:text-white dark:focus:bg-slate-950/60 appearance-none">
-                </div>
-            </div>
-            <div class="space-y-2">
-                <label for="date_end" class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Hasta</label>
-                <div class="relative group">
-                    <input type="date" name="date_end" id="date_end" value="{{ request('date_end') }}" 
-                        class="w-full rounded-2xl border-slate-200 bg-white shadow-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 py-4 px-4 text-sm font-bold text-slate-700 transition-all text-center dark:bg-slate-950/40 dark:border-slate-800 dark:text-white dark:focus:bg-slate-950/60 appearance-none">
-                </div>
-            </div>
         </div>
     </x-search-filter>
 
@@ -57,15 +40,24 @@
                 <td class="px-6 py-4">
                     @php
                         $typeBadge = match($mov->movement_type) {
-                            'purchase' => 'emerald',
-                            'sale' => 'blue',
+                            'purchase'  => 'emerald',
+                            'sale'      => 'blue',
                             'job_usage' => 'amber',
-                            'adjustment' => 'slate',
-                            default => 'slate'
+                            'adjustment'=> 'slate',
+                            'reversal'  => 'red',
+                            default     => 'slate'
+                        };
+                        $typeLabel = match($mov->movement_type) {
+                            'purchase'  => 'Compra',
+                            'sale'      => 'Venta',
+                            'job_usage' => 'Uso en Orden',
+                            'adjustment'=> 'Ajuste',
+                            'reversal'  => 'Anulación',
+                            default     => $mov->movement_type
                         };
                     @endphp
                     <x-badge :variant="$typeBadge" class="uppercase text-[9px]">
-                        {{ $mov->movement_type }}
+                        {{ $typeLabel }}
                     </x-badge>
                 </td>
                 <td class="px-6 py-4 text-sm font-black {{ $mov->quantity > 0 ? 'text-emerald-600' : 'text-red-600' }}">

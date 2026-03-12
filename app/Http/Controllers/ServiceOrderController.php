@@ -22,15 +22,19 @@ class ServiceOrderController extends Controller
 
         $query = ServiceOrder::query()
 
-            ->when($request->search, function ($q, $search) {
+            ->when($request->filled('search'), function ($q) use ($request) {
+
+                $search = $request->search;
 
                 $q->where(function ($sub) use ($search) {
 
                     if (is_numeric($search)) {
-                        $sub->where('id', $search);
+                        $sub->where('id', $search)
+                            ->orWhere('customer_name', 'like', "%{$search}%");
+                    } else {
+                        $sub->where('customer_name', 'like', "%{$search}%");
                     }
 
-                    $sub->orWhere('customer_name', 'like', "%{$search}%");
                 });
 
             })
@@ -48,9 +52,14 @@ class ServiceOrderController extends Controller
             });
 
         $serviceOrders = $query
-            ->latest()
+            ->orderByDesc('created_at')
             ->paginate(10)
-            ->appends($request->all());
+            ->appends($request->only([
+                'search',
+                'status',
+                'date_start',
+                'date_end'
+            ]));
 
         return view('service-orders.index', compact('serviceOrders'));
     }
