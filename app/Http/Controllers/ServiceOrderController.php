@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-
 use App\Models\ServiceOrder;
 use App\Models\Mechanic;
 
@@ -21,32 +20,38 @@ class ServiceOrderController extends Controller
             'date_end' => 'nullable|date|after_or_equal:date_start',
         ]);
 
-        $query = ServiceOrder::query();
+        $query = ServiceOrder::query()
 
-        if ($request->filled('search')) {
-            $search = $request->input('search');
-            $query->where(function ($q) use ($search) {
-                // If it's a number, it might be an ID search
-                if (is_numeric($search)) {
-                    $q->where('id', $search);
-                }
-                $q->orWhere('customer_name', 'like', "%{$search}%");
+            ->when($request->search, function ($q, $search) {
+
+                $q->where(function ($sub) use ($search) {
+
+                    if (is_numeric($search)) {
+                        $sub->where('id', $search);
+                    }
+
+                    $sub->orWhere('customer_name', 'like', "%{$search}%");
+                });
+
+            })
+
+            ->when($request->status, function ($q, $status) {
+                $q->where('status', $status);
+            })
+
+            ->when($request->date_start, function ($q, $date) {
+                $q->whereDate('created_at', '>=', $date);
+            })
+
+            ->when($request->date_end, function ($q, $date) {
+                $q->whereDate('created_at', '<=', $date);
             });
-        }
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->input('status'));
-        }
+        $serviceOrders = $query
+            ->latest()
+            ->paginate(10)
+            ->appends($request->all());
 
-        if ($request->filled('date_start')) {
-            $query->whereDate('created_at', '>=', $request->input('date_start'));
-        }
-
-        if ($request->filled('date_end')) {
-            $query->whereDate('created_at', '<=', $request->input('date_end'));
-        }
-
-        $serviceOrders = $query->latest()->paginate(10)->appends($request->all());
         return view('service-orders.index', compact('serviceOrders'));
     }
 
@@ -72,7 +77,9 @@ class ServiceOrderController extends Controller
 
         ServiceOrder::create($validated);
 
-        return redirect()->route('service-orders.index')->with('success', 'Orden de servicio creada.');
+        return redirect()
+            ->route('service-orders.index')
+            ->with('success', 'Orden de servicio creada.');
     }
 
     /**
@@ -80,11 +87,14 @@ class ServiceOrderController extends Controller
      */
     public function show(ServiceOrder $serviceOrder)
     {
-        $mechanics = \App\Models\Mechanic::where('is_active', true)->get();
+        $mechanics = Mechanic::where('is_active', true)->get();
         $jobTypes = \App\Models\JobType::where('is_active', true)->get();
         $products = \App\Models\Product::where('stock', '>', 0)->get();
 
-        return view('service-orders.show', compact('serviceOrder', 'mechanics', 'jobTypes', 'products'));
+        return view(
+            'service-orders.show',
+            compact('serviceOrder', 'mechanics', 'jobTypes', 'products')
+        );
     }
 
     /**
@@ -110,7 +120,9 @@ class ServiceOrderController extends Controller
 
         $serviceOrder->update($validated);
 
-        return redirect()->route('service-orders.index')->with('success', 'Orden actualizada correctamente.');
+        return redirect()
+            ->route('service-orders.index')
+            ->with('success', 'Orden actualizada correctamente.');
     }
 
     /**
@@ -119,6 +131,9 @@ class ServiceOrderController extends Controller
     public function destroy(ServiceOrder $serviceOrder)
     {
         $serviceOrder->delete();
-        return redirect()->route('service-orders.index')->with('success', 'Orden eliminada.');
+
+        return redirect()
+            ->route('service-orders.index')
+            ->with('success', 'Orden eliminada.');
     }
 }
