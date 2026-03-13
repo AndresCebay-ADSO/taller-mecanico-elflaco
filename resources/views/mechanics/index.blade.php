@@ -16,10 +16,10 @@
                 <tr>
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-3">
-                            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30 font-bold text-blue-700 dark:text-blue-400">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-700">
                                 {{ strtoupper(substr($mechanic->name, 0, 1)) }}
                             </div>
-                            <div class="text-sm font-bold text-slate-900 dark:text-white">{{ $mechanic->name }}</div>
+                            <div class="text-sm font-bold text-slate-900">{{ $mechanic->name }}</div>
                         </div>
                     </td>
                     <td class="px-6 py-4 text-sm font-medium text-slate-600">

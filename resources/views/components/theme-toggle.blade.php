@@ -1,7 +1,7 @@
 <button 
     @click="toggleTheme()" 
     type="button" 
-    class="relative p-2 rounded-xl border border-gray-200 bg-white shadow-theme-xs transition-all hover:bg-gray-50 active:scale-95 dark:bg-white/5 dark:border-gray-800 dark:hover:bg-white/10"
+    class="relative p-2 rounded-xl border border-gray-200 bg-white shadow-theme-xs transition-all hover:bg-gray-50 active:scale-95"
     title="Cambiar tema"
 >
     {{-- Sol (Modo Oscuro -> Pasa a Claro) --}}

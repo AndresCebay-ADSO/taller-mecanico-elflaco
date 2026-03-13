@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+﻿@import 'tailwindcss';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
@@ -51,7 +51,7 @@
     --color-warning-600: #dc6803;
 
     /* Typography & Effects */
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
 
     --shadow-theme-xs: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
     --shadow-theme-sm: 0px 1px 3px 0px rgba(16, 24, 40, 0.1), 0px 1px 2px 0px rgba(16, 24, 40, 0.06);
@@ -71,32 +71,7 @@
         /* gray-50 */
     }
 
-    /* Global Background and Border Overrides for Dark Mode */
-    .dark .bg-white {
-        background-color: var(--color-gray-900) !important;
-        border-color: var(--color-gray-800) !important;
-    }
-
-    .dark .bg-slate-50, 
-    .dark .bg-gray-50,
-    .dark .bg-slate-100,
-    .dark .bg-gray-100 {
-        background-color: var(--color-gray-800) !important;
-        border-color: var(--color-gray-700) !important;
-    }
-
-    .dark .border-slate-200,
-    .dark .border-gray-200,
-    .dark .border-slate-100,
-    .dark .border-gray-100 {
-        border-color: var(--color-gray-800) !important;
-    }
-
-    .dark .border-slate-300,
-    .dark .border-gray-300 {
-        border-color: var(--color-gray-700) !important;
-    }
-
+    /* Global Text Overrides for Dark Mode visibility */
     .dark .text-slate-900,
     .dark .text-gray-900,
     .dark .text-slate-800,
@@ -115,26 +90,6 @@
     .dark span:not(.text-white) {
         color: #94a3b8 !important;
         /* Lighter subtext */
-    }
-
-    /* Table Specific Dark Mode Overrides */
-    .dark table thead th,
-    .dark table thead {
-        background-color: var(--color-gray-900) !important;
-        border-color: var(--color-gray-800) !important;
-        color: var(--color-gray-300) !important;
-    }
-
-    .dark table tbody tr {
-        border-color: var(--color-gray-800) !important;
-    }
-
-    .dark table tbody td {
-        border-color: var(--color-gray-800) !important;
-    }
-
-    .dark table tbody tr:hover {
-        background-color: var(--color-gray-800) !important;
     }
 
     body {
