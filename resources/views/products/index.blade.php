@@ -10,8 +10,8 @@
 
     <x-search-filter action="{{ route('products.index') }}" searchPlaceholder="Producto, categoría, UPC o proveedor...">
         <div>
-            <label for="category" class="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">Categoría</label>
-            <select name="category" id="category" class="w-full rounded-2xl border-slate-200 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 transition-all">
+            <label for="category" class="block text-xs font-bold text-slate-400 dark:text-gray-500 uppercase mb-2 ml-1">Categoría</label>
+            <select name="category" id="category" class="w-full rounded-2xl border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-950/50 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 dark:text-gray-300 transition-all">
                 <option value="">Todas las categorías</option>
                 @foreach($categories as $category)
                     <option value="{{ $category }}" {{ request('category') == $category ? 'selected' : '' }}>
@@ -21,9 +21,9 @@
             </select>
         </div>
         <div class="flex items-center pt-6">
-            <label for="low_stock" class="flex items-center gap-3 w-full bg-white px-6 py-4 rounded-2xl border border-slate-200 shadow-sm cursor-pointer hover:bg-slate-50 transition-all">
-                <input type="checkbox" name="low_stock" id="low_stock" value="1" {{ request('low_stock') ? 'checked' : '' }} class="h-5 w-5 rounded-lg border-slate-300 bg-white text-blue-600 focus:ring-blue-500 transition-all">
-                <span class="text-xs font-black text-slate-500 uppercase tracking-widest">Solo Stock Bajo</span>
+            <label for="low_stock" class="flex items-center gap-3 w-full bg-white dark:bg-gray-950/50 px-6 py-4 rounded-2xl border border-slate-200 dark:border-gray-800 shadow-sm cursor-pointer hover:bg-slate-50 dark:hover:bg-gray-900/50 transition-all">
+                <input type="checkbox" name="low_stock" id="low_stock" value="1" {{ request('low_stock') ? 'checked' : '' }} class="h-5 w-5 rounded-lg border-slate-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-blue-600 focus:ring-blue-500 transition-all">
+                <span class="text-xs font-black text-slate-500 dark:text-gray-400 uppercase tracking-widest">Solo Stock Bajo</span>
             </label>
         </div>
     </x-search-filter>
@@ -34,10 +34,10 @@
                 <tr>
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-3">
-                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
                                 <i data-lucide="package" class="h-5 w-5"></i>
                             </div>
-                            <div class="text-sm font-bold text-slate-900">{{ $product->name }}</div>
+                            <div class="text-sm font-bold text-slate-900 dark:text-white">{{ $product->name }}</div>
                         </div>
                     </td>
                     <td class="px-6 py-4">

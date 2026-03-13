@@ -14,8 +14,8 @@
 
     <x-search-filter action="{{ route('inventory.index') }}" searchPlaceholder="Producto, proveedor o referencia...">
         <div class="space-y-2">
-            <label for="type" class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tipo de Movimiento</label>
-            <select name="type" id="type" class="w-full rounded-2xl border-slate-200 bg-white shadow-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 py-4 px-4 text-sm font-bold text-slate-700 transition-all">
+            <label for="type" class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Tipo de Movimiento</label>
+            <select name="type" id="type" class="w-full rounded-2xl border-slate-200 bg-white shadow-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 py-4 px-4 text-sm font-bold text-slate-700 transition-all dark:bg-slate-950/40 dark:border-slate-800 dark:text-white dark:focus:bg-slate-950/60">
                 <option value="">Todos los tipos</option>
                 <option value="purchase" {{ request('type') == 'purchase' ? 'selected' : '' }}>Compra</option>
                 <option value="sale" {{ request('type') == 'sale' ? 'selected' : '' }}>Venta</option>
