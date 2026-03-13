@@ -55,9 +55,9 @@
                 @csrf
                 <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
                     <div class="space-y-2">
-                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Producto</label>
+                        <label class="block text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Producto</label>
                         <select id="product_id" name="product_id" required onchange="filterSuppliers()"
-                            class="w-full rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm font-bold text-slate-700 cursor-pointer focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 transition-all">
+                            class="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 px-5 py-4 text-sm font-bold text-slate-700 dark:text-white cursor-pointer focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 transition-all">
                             <option value="">Selecciona un producto</option>
                             @foreach($products as $product)
                             <option value="{{ $product->id }}" {{ old('product_id') == $product->id ? 'selected' : '' }}>
@@ -67,9 +67,9 @@
                         </select>
                     </div>
                     <div class="space-y-2">
-                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Proveedor</label>
+                        <label class="block text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Proveedor</label>
                         <select id="supplier_id" name="supplier_id" required disabled
-                            class="w-full rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm font-bold text-slate-700 cursor-pointer focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                            class="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 px-5 py-4 text-sm font-bold text-slate-700 dark:text-white cursor-pointer focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                             <option value="">Selecciona primero un producto</option>
                         </select>
                         <p id="supplier-help" class="text-[10px] text-slate-400 font-medium mt-1.5 ml-1">Selecciona un producto para ver sus proveedores.</p>
@@ -79,27 +79,27 @@
                     </div>
 
                     <div class="space-y-2">
-                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Cantidad a Ingresar</label>
+                        <label class="block text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Cantidad a Ingresar</label>
                         <x-input name="quantity" type="number" required placeholder="Ej. 10" />
                     </div>
 
                     <div class="space-y-2">
-                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Precio Compra Unitario</label>
+                        <label class="block text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Precio Compra Unitario</label>
                         <x-input name="unit_price" type="number" step="0.01" required placeholder="0.00" />
                     </div>
 
                     <div class="md:col-span-2 space-y-2">
-                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Referencia (Factura / Nota)</label>
+                        <label class="block text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Referencia (Factura / Nota)</label>
                         <x-input name="reference" placeholder="Ej. FAC-123" />
                     </div>
 
                     <div class="md:col-span-2 space-y-2">
-                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Notas adicionales</label>
+                        <label class="block text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Notas adicionales</label>
                         <x-input name="notes" placeholder="Opcional..." />
                     </div>
                 </div>
 
-                <div class="flex justify-end pt-6 border-t border-slate-100">
+                <div class="flex justify-end pt-6 border-t border-slate-100 dark:border-slate-800/50">
                     <x-button variant="primary" type="submit" class="w-full md:w-auto px-12 py-5 text-base font-black rounded-2xl shadow-lg shadow-brand-500/20 active:scale-95 transition-all">
                         Registrar Entrada de Stock
                     </x-button>
