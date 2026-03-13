@@ -1,7 +1,9 @@
 <?php
 
-test('the application returns a successful response', function () {
+it('la raíz redirige a login si no hay sesión', function () {
     $response = $this->get('/');
 
-    $response->assertStatus(200);
+    // '/' → '/dashboard' → '/login' (dos redirects)
+    $response->assertRedirect();
 });
+
