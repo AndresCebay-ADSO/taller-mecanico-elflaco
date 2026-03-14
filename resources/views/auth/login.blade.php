@@ -17,7 +17,7 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Scripts / Styles -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -27,185 +27,149 @@
 
     <style>
         [x-cloak] { display: none !important; }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #030712;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .login-card {
-            background: #0f172a;
-            border: 1px solid #1e293b;
-            border-radius: 1.25rem;
-            padding: 2.5rem;
-            width: 100%;
-            max-width: 420px;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
-        }
-
-        .login-input {
-            width: 100%;
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 0.625rem;
-            color: #f1f5f9;
-            font-size: 0.875rem;
-            padding: 0.75rem 1rem;
-            outline: none;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        .login-input:focus {
-            border-color: #6366f1;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-        }
-
-        .login-input::placeholder {
-            color: #475569;
-        }
-
-        .login-input.error {
-            border-color: #ef4444;
-        }
-
-        .login-btn {
-            width: 100%;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            color: white;
-            font-weight: 700;
-            font-size: 0.9rem;
-            padding: 0.8rem 1rem;
-            border-radius: 0.625rem;
-            border: none;
-            cursor: pointer;
-            transition: opacity 0.2s, transform 0.1s;
-            letter-spacing: 0.02em;
-        }
-
-        .login-btn:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
-        }
-
-        .login-btn:active {
-            transform: translateY(0);
-        }
-
-        .error-msg {
-            color: #f87171;
-            font-size: 0.78rem;
-            margin-top: 0.35rem;
-        }
-
-        label {
-            display: block;
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: #94a3b8;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            margin-bottom: 0.4rem;
-        }
     </style>
 </head>
-<body>
+<body class="h-full bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 antialiased font-sans transition-colors duration-500">
+    <div class="flex min-h-screen">
+        <!-- Lado Izquierdo: Formulario de Login -->
+        <div class="flex flex-1 flex-col justify-center px-6 py-12 sm:px-12 lg:flex-none lg:w-1/2 xl:px-24">
+            <div class="mx-auto w-full max-w-sm lg:w-96">
+                
+                <!-- Identidad MotoTaller (Solo visible en móviles) -->
+                <div class="lg:hidden mb-10 flex items-center gap-3">
+                    <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-500 shadow-xl shadow-brand-500/20">
+                        <i data-lucide="bike" class="h-7 w-7 text-white"></i>
+                    </div>
+                    <span class="text-2xl font-black tracking-tight text-gray-900 dark:text-white leading-none">MotoTaller</span>
+                </div>
 
-    <div class="login-card">
+                <div class="mb-10">
+                    <h2 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Iniciar Sesión</h2>
+                    <p class="mt-2 text-sm text-slate-500 dark:text-gray-400 font-medium">
+                        Ingresa tu correo y contraseña para acceder al panel.
+                    </p>
+                </div>
 
-        {{-- Logo / Brand --}}
-        <div style="text-align:center; margin-bottom: 2rem;">
-            <div style="display:inline-flex; align-items:center; justify-content:center;
-                        width:3.5rem; height:3.5rem; border-radius:1rem;
-                        background: linear-gradient(135deg, #6366f1, #8b5cf6);
-                        box-shadow: 0 8px 24px rgba(99,102,241,0.35);
-                        margin-bottom: 1rem;">
-                <i data-lucide="bike" style="width:1.6rem; height:1.6rem; color:white;"></i>
+                @if (session('status'))
+                    <div class="mb-6 rounded-xl bg-success-50 p-4 dark:bg-success-500/10 border border-success-200 dark:border-success-500/20">
+                        <p class="text-sm font-medium text-success-800 dark:text-success-400">{{ session('status') }}</p>
+                    </div>
+                @endif
+
+                <form method="POST" action="{{ route('login') }}" class="space-y-6">
+                    @csrf
+                    
+                    <div>
+                        <label for="email" class="block text-sm font-bold text-slate-700 dark:text-gray-300">
+                            Correo Electrónico <span class="text-error-500">*</span>
+                        </label>
+                        <div class="mt-2">
+                            <input 
+                                id="email" 
+                                name="email" 
+                                type="email" 
+                                autocomplete="email" 
+                                required 
+                                placeholder="taller@ejemplo.com" 
+                                value="{{ old('email') }}"
+                                class="block w-full rounded-2xl border border-slate-300 px-4 py-3.5 bg-white text-slate-900 shadow-theme-xs transition-all duration-200 placeholder:text-slate-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 sm:text-sm dark:bg-gray-900 dark:border-gray-800 dark:text-white dark:placeholder:text-gray-600 dark:focus:border-brand-500 dark:focus:ring-brand-500/20 @error('email') border-error-500 focus:border-error-500 focus:ring-error-500/10 @enderror"
+                            >
+                        </div>
+                        @error('email')
+                            <p class="mt-1 text-sm font-medium text-error-600 dark:text-error-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label for="password" class="block text-sm font-bold text-slate-700 dark:text-gray-300">
+                            Contraseña <span class="text-error-500">*</span>
+                        </label>
+                        <div class="mt-2">
+                            <input 
+                                id="password" 
+                                name="password" 
+                                type="password" 
+                                autocomplete="current-password" 
+                                required 
+                                placeholder="••••••••"
+                                class="block w-full rounded-2xl border border-slate-300 px-4 py-3.5 bg-white text-slate-900 shadow-theme-xs transition-all duration-200 placeholder:text-slate-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 sm:text-sm dark:bg-gray-900 dark:border-gray-800 dark:text-white dark:placeholder:text-gray-600 dark:focus:border-brand-500 dark:focus:ring-brand-500/20 @error('password') border-error-500 focus:border-error-500 focus:ring-error-500/10 @enderror"
+                            >
+                        </div>
+                        @error('password')
+                            <p class="mt-1 text-sm font-medium text-error-600 dark:text-error-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <input 
+                                id="remember_me" 
+                                name="remember" 
+                                type="checkbox"
+                                class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-600 dark:border-gray-700 dark:bg-gray-900 dark:ring-offset-gray-950 cursor-pointer"
+                            >
+                            <label for="remember_me" class="block text-sm font-medium text-slate-600 dark:text-gray-400 cursor-pointer select-none">
+                                Mantener sesión iniciada
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="pt-2">
+                        <button type="submit"
+                            class="flex w-full justify-center rounded-2xl bg-brand-600 px-4 py-4 text-sm font-bold text-white shadow-theme-sm transition-all hover:bg-brand-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 active:scale-[0.98]">
+                            Iniciar Sesión
+                        </button>
+                    </div>
+                </form>
             </div>
-            <h1 style="font-size:1.6rem; font-weight:800; color:#f1f5f9; letter-spacing:-0.02em; margin:0;">
-                MotoTaller
-            </h1>
-            <p style="font-size:0.8rem; color:#475569; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; margin-top:0.25rem;">
-                Sistema de Gestión
-            </p>
         </div>
 
-        {{-- Session Status --}}
-        @if (session('status'))
-            <div style="background:#052e16; border:1px solid #14532d; border-radius:0.5rem; padding:0.75rem 1rem; margin-bottom:1.25rem;">
-                <p style="color:#4ade80; font-size:0.85rem; margin:0;">{{ session('status') }}</p>
+        <!-- Lado Derecho: Branding (Premium Blue Background) -->
+        <div class="relative hidden w-0 flex-1 lg:block bg-brand-950 overflow-hidden">
+            <!-- Decorative Subtle Grid Pattern -->
+            <div class="absolute inset-0 opacity-[0.03] dark:opacity-5 mix-blend-overlay">
+                <svg class="absolute inset-0 h-full w-full" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <pattern id="grid-pattern" width="60" height="60" patternUnits="userSpaceOnUse">
+                            <path d="M 60 0 L 0 0 0 60" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                        </pattern>
+                    </defs>
+                    <rect width="100%" height="100%" fill="url(#grid-pattern)" />
+                </svg>
             </div>
-        @endif
+            
+            <div class="absolute inset-0 flex flex-col items-center justify-center text-center px-16 z-10 transition-transform duration-700 hover:scale-105">
+                <div class="flex items-center justify-center gap-4 mb-6">
+                    <div class="flex h-[72px] w-[72px] items-center justify-center rounded-2xl bg-brand-500 shadow-2xl shadow-brand-500/40">
+                        <i data-lucide="bike" class="h-10 w-10 text-white"></i>
+                    </div>
+                    <span class="text-5xl font-black text-white tracking-tight">MotoTaller</span>
+                </div>
+                <h3 class="text-xl font-medium text-brand-200 max-w-lg mt-2">
+                    Sistema de Gestión Profesional
+                </h3>
+                <p class="mt-6 text-brand-400/80 text-sm font-medium leading-relaxed max-w-md">
+                    Control absoluto de inventario, órdenes de servicio, registro de ventas directas y administración de personal desde un solo lugar.
+                </p>
+            </div>
 
-        <form method="POST" action="{{ route('login') }}" style="display:flex; flex-direction:column; gap:1.25rem;">
-            @csrf
-
-            {{-- Email --}}
-            <div>
-                <label for="email">Correo Electrónico</label>
-                <input
-                    id="email"
-                    type="email"
-                    name="email"
-                    class="login-input {{ $errors->has('email') ? 'error' : '' }}"
-                    value="{{ old('email') }}"
-                    placeholder="admin@ejemplo.com"
-                    required
-                    autofocus
-                    autocomplete="username"
+            <!-- Theme Toggle en la esquina inferior derecha -->
+            <div class="absolute bottom-10 right-10 z-20">
+                <button 
+                    @click="darkMode = !darkMode; localStorage.setItem('darkMode', darkMode)" 
+                    type="button" 
+                    class="relative p-4 rounded-full border border-brand-800 bg-brand-900 text-brand-400 shadow-2xl transition-all hover:bg-brand-800 hover:scale-105 active:scale-95 hover:text-white"
+                    title="Alternar tema"
                 >
-                @error('email')
-                    <p class="error-msg">{{ $message }}</p>
-                @enderror
+                    <i x-show="!darkMode" data-lucide="moon" class="h-6 w-6"></i>
+                    <i x-show="darkMode" data-lucide="sun" x-cloak class="h-6 w-6 text-brand-200"></i>
+                </button>
             </div>
-
-            {{-- Password --}}
-            <div>
-                <label for="password">Contraseña</label>
-                <input
-                    id="password"
-                    type="password"
-                    name="password"
-                    class="login-input {{ $errors->has('password') ? 'error' : '' }}"
-                    placeholder="••••••••"
-                    required
-                    autocomplete="current-password"
-                >
-                @error('password')
-                    <p class="error-msg">{{ $message }}</p>
-                @enderror
-            </div>
-
-            {{-- Remember Me --}}
-            <div style="display:flex; align-items:center; gap:0.5rem;">
-                <input
-                    id="remember_me"
-                    type="checkbox"
-                    name="remember"
-                    style="accent-color:#6366f1; width:1rem; height:1rem; cursor:pointer;"
-                >
-                <label for="remember_me" style="text-transform:none; letter-spacing:normal; color:#64748b; font-size:0.85rem; font-weight:500; cursor:pointer; margin:0;">
-                    Recordarme
-                </label>
-            </div>
-
-            {{-- Submit --}}
-            <button type="submit" class="login-btn">
-                Iniciar Sesión
-            </button>
-        </form>
-
-        {{-- Footer --}}
-        <p style="text-align:center; color:#334155; font-size:0.75rem; margin-top:2rem; margin-bottom:0;">
-            Taller Mecánico El Flaco &copy; {{ date('Y') }}
-        </p>
-
+        </div>
     </div>
 
-    <script>lucide.createIcons();</script>
-
+    <script>
+        lucide.createIcons();
+    </script>
 </body>
 </html>
