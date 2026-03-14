@@ -1,116 +1,101 @@
-# Sistema de Gestión de Taller Mecánico "El Flaco" 🚗🔧
+# MotoTaller "El Flaco" - Sistema de Gestión Premium 🏍️🔧
 
 ![Laravel 11](https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)
-![PHP](https://img.shields.io/badge/PHP-777BB4?style=for-the-badge&logo=php&logoColor=white)
-![MySQL](https://img.shields.io/badge/MySQL-00000F?style=for-the-badge&logo=mysql&logoColor=white)
-![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![PHP 8.2](https://img.shields.io/badge/PHP-777BB4?style=for-the-badge&logo=php&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
+![TailwindCSS 4](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 
-Este es un sistema integral y moderno desarrollado en **Laravel 11** para la optimización y gestión administrativa y operativa de un taller mecánico. Diseñado para simplificar el día a día, el sistema centraliza el control de inventarios, órdenes de servicio, gestión de mecánicos, ventas directas y métricas de negocio.
-
----
-
-## 🚀 Características Principales
-
-### 📦 Gestión de Inventario Avanzada
-- **Control de Stock y Trazabilidad:** Seguimiento preciso de productos, control de stock mínimo y alertas automatizadas.
-- **Gestión de Proveedores y Compras:** Historial detallado de compras por proveedor y seguimiento de precios.
-- **Sistema FIFO:** Gestión de inventario mediante el método PEPS (Primeros en Entrar, Primeros en Salir) para un cálculo preciso de los márgenes de ganancia.
-
-### 📋 Órdenes de Servicio y Trabajos
-- **Control Integral de Vehículos:** Registro detallado de la entrada de vehículos, clientes asociados y seguimiento de diagnóstico.
-- **Asignación a Mecánicos:** Asignación de tareas específicas a mecánicos.
-- **Cálculo de Ganancias Automático:** Reglas de negocio configurables por *Tipo de Trabajo* (porcentaje sobre mano de obra o cuotas fijas).
-- **Control de Estados:** Flujo de vida desde la recepción hasta la entrega (`Pendiente` → `En Progreso` → `Completado`).
-
-### 💰 Ventas y Facturación
-- **Venta Directa de Mostrador:** Módulo de Venta Rápida (POS) para repuestos e insumos sin requerir orden de servicio.
-- **Facturación Integrada:** Generación automática de facturas a partir de órdenes de servicio completadas, detallando mano de obra y refacciones.
-
-### 📊 Dashboard y Reportes
-- **Métricas en Tiempo Real:** Visualización rápida del estado del taller (trabajos activos, ganancias del día/mes, stock bajo).
+MotoTaller "El Flaco" es una solución integral y moderna diseñada para la gestión administrativa y operativa de talleres mecánicos de motocicletas. Con un enfoque en la experiencia de usuario y la eficiencia técnica, el sistema ofrece una interfaz premium con soporte para modo oscuro y una gestión de inventario de vanguardia.
 
 ---
 
-## 🛠️ Tecnologías y Arquitectura
+## ✨ Características Destacadas
 
-El proyecto sigue una arquitectura sólida utilizando los últimos estándares de desarrollo web:
+### 🎨 Interfaz Premium & UX Moderna
+- **Diseño Navy/Slate:** Una paleta de colores sofisticada y profesional.
+- **Modo Oscuro Nativo:** Soporte completo para trabajar en condiciones de poca luz sin fatiga visual.
+- **Componentes Dinámicos:** Animaciones sutiles y transiciones fluidas para una experiencia fluida.
 
-- **Backend:** Laravel 11.x (PHP 8.2+) con Eloquent ORM.
-- **Frontend:** Laravel Breeze, Blade Components y Tailwind CSS para una interfaz reactiva y limpia.
-- **Base de Datos:** MySQL / MariaDB (con diseño relacional normalizado).
-- **Pruebas:** Pest PHP para pruebas unitarias y de integración.
+### 📦 Gestión de Inventario Inteligente (FIFO/PEPS)
+- **Trazabilidad por Lotes:** Control absoluto sobre cada entrada de repuestos.
+- **Método PEPS:** El sistema utiliza el método *Primero en Entrar, Primero en Salir* para asegurar que los costos de venta y márgenes de ganancia sean exactos basándose en el precio de compra real de los lotes más antiguos.
+- **Alertas Proactivas:** Notificaciones visuales de stock bajo directamente en el Dashboard.
+
+### 💰 Ciclo de Ventas y Servicios
+- **Órdenes de Servicio Consolidadas:** Agrupa múltiples trabajos, productos y diagnósticos en una sola orden para el cliente.
+- **Venta Directa POS:** Módulo de venta rápida de mostrador con capacidad de agregar múltiples productos de forma simultánea.
+- **Facturación Automatizada:** Generación de comprobantes detallados con desglose de mano de obra y refacciones.
+
+### 📊 Inteligencia de Negocio
+- **Dashboard en Tiempo Real:** Métricas clave (ganancias del día, trabajos activos, stock crítico) al alcance de un vistazo.
+- **Tipos de Trabajo Configurables:** Reglas de ganancia personalizables (porcentaje sobre mano de obra o montos fijos) para mecánicos y taller.
 
 ---
 
-## 📁 Documentación Técnica del Sistema
+## 🛠️ Stack Tecnológico
 
-Toda la documentación relacionada con la arquitectura, requerimientos y lógica de negocio se encuentra en el directorio `/docs`:
-
-- 📄 **[IEEE 830 - Funcionalidades y Requisitos (SRS)](docs/IEEE_830_SRS.md)**: Especificación formal de requerimientos de software.
-- 📄 **[Guía Técnica de Rutas y Controladores](docs/guia_tecnica.md)**: Arquitectura RESTful implementada.
-- 📄 **[Explicación de Modelos y DB](docs/explicacion_modelos.md)**: Relaciones de Eloquent y diagrama de flujo de datos.
-- 📄 **[Requisitos Iniciales](docs/requisitos.md)**: Historias de usuario base del proyecto.
+- **Backend:** Laravel 11.x (PHP 8.2+)
+- **Frontend:** Blade Components + Alpine.js
+- **Estilos:** Tailwind CSS 4 + Vite
+- **Base de Datos:** MySQL / MariaDB
+- **Autenticación:** Laravel Breeze (Custom Premium Theme)
 
 ---
 
-## ⚙️ Requisitos Previos e Instalación
+## 📂 Documentación del Proyecto
 
-### Requisitos del Servidor
+Puedes encontrar detalles específicos sobre la arquitectura y requerimientos en la carpeta `/docs`:
+
+- 📄 **[Requerimientos del Sistema (SRS)](docs/IEEE_830_SRS.md)**
+- 📄 **[Guía Técnica de Arquitectura](docs/guia_tecnica.md)**
+- 📄 **[Modelo de Datos y Eloquent](docs/explicacion_modelos.md)**
+
+---
+
+## ⚙️ Instalación Rápida
+
+### Requisitos
 - PHP >= 8.2
 - Composer
 - Node.js & NPM
-- MySQL o MariaDB
+- MySQL / MariaDB
 
-### Instalación Paso a Paso
-
-1. **Clonar el repositorio:**
+### Pasos
+1. **Clonar y entrar:**
    ```bash
-   git clone https://github.com/tu-usuario/taller-mecanico-elflaco.git
+   git clone https://github.com/AndresCebay-ADSO/taller-mecanico-elflaco.git
    cd taller-mecanico-elflaco
    ```
-
-2. **Instalar dependencias de PHP:**
+2. **Dependencias:**
    ```bash
    composer install
+   npm install
    ```
-
-3. **Configurar el entorno:**
+3. **Configuración:**
    ```bash
    cp .env.example .env
-   # Configura tus variables de entorno DB_DATABASE, DB_USERNAME, DB_PASSWORD en el archivo .env
-   ```
-
-4. **Generar la clave de la aplicación:**
-   ```bash
    php artisan key:generate
    ```
-
-5. **Ejecutar migraciones y seeders:**
+4. **Base de Datos:**
+   *(Configura tus credenciales en el archivo .env)*
    ```bash
    php artisan migrate --seed
    ```
-
-6. **Instalar y compilar dependencias del Frontend:**
+5. **Ejecutar:**
    ```bash
-   npm install
-   npm run build
-   ```
-
-7. **Iniciar el servidor local:**
-   ```bash
+   npm run dev
+   # En otra terminal
    php artisan serve
    ```
-   *Accede a [http://localhost:8000](http://localhost:8000) en tu navegador.*
 
 ---
 
 ## 👨‍💻 Contribución
 
-Este proyecto es mantenido privadamente, pero las sugerencias de mejora son bienvenidas. Por favor, asegúrate de correr los tests antes de hacer un commit:
-```bash
-php artisan test
-```
+Este proyecto es una herramienta de gestión privada. Para reportar errores o sugerir mejoras, por favor abre un issue en el repositorio.
+
+---
 
 ## 📄 Licencia
 
-Este proyecto se distribuye bajo la licencia **MIT**. Siéntete libre de modificarlo según las necesidades de tu taller.
+Distribuido bajo la Licencia **MIT**. Consulta el archivo para más detalles.
