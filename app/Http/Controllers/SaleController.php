@@ -163,7 +163,12 @@ class SaleController extends Controller
                         'total_price' => $itemTotal,
                     ]);
 
-                    $product->decrementStock($quantity, 'sale', "Venta #{$sale->id}");
+                    // ANTES:
+                    // $product->decrementStock($quantity, 'sale', "Venta #{$sale->id}");
+
+                    // DESPUÉS:
+                    $inventoryService = app(\App\Services\InventoryService::class);
+                    $inventoryService->deductStock($product->id, $quantity, "Venta #{$sale->id}");
                 }
 
                 $sale->update([
@@ -235,14 +240,19 @@ class SaleController extends Controller
                 'status' => 'anulada'
             ]);
 
+            // ANTES:
+            /*
             foreach ($sale->saleProducts as $item) {
-
                 $item->product->reverseStock(
                     $item->quantity,
                     "Anulación Venta #{$sale->id}"
                 );
-
             }
+            */
+
+            // DESPUÉS:
+            $inventoryService = app(\App\Services\InventoryService::class);
+            $inventoryService->reverseStockFromSale($sale->id);
 
         });
 
