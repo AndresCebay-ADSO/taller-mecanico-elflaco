@@ -79,7 +79,7 @@ Puedes encontrar detalles específicos sobre la arquitectura y requerimientos en
 4. **Base de Datos:**
    *(Configura tus credenciales en el archivo .env)*
    ```bash
-   php artisan migrate --seed
+   php artisan migrate
    ```
 5. **Ejecutar:**
    ```bash
