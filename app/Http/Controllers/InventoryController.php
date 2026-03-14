@@ -76,12 +76,27 @@ class InventoryController extends Controller
 
         $product = Product::findOrFail($validated['product_id']);
         
+        // ANTES:
+        /*
         $product->incrementStock(
             $validated['quantity'], 
             $validated['unit_price'], 
             $validated['supplier_id'],
             $validated['reference']
         );
+        */
+
+        // DESPUÉS:
+        $inventoryService = app(\App\Services\InventoryService::class);
+        $inventoryService->registerPurchaseBatch([
+            'product_id'    => $validated['product_id'],
+            'supplier_id'   => $validated['supplier_id'],
+            'quantity'      => $validated['quantity'],
+            'cost_price'    => $validated['unit_price'],
+            'selling_price' => $product->sale_price, // Mantener el precio de venta actual por defecto
+            'reference'     => $validated['reference'],
+            'purchased_at'  => now(),
+        ]);
 
         return redirect()->route('inventory.index')->with('success', 'Compra registrada y stock actualizado.');
     }
