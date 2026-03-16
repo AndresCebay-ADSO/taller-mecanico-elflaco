@@ -11,7 +11,7 @@
     <x-search-filter action="{{ route('suppliers.index') }}" searchPlaceholder="Buscar nombre o teléfono..." />
 
     <x-card>
-        <x-table :headers="['Nombre', 'Teléfono', 'Email', 'Dirección']">
+        <x-table :headers="['NOMBRE', 'TELÉFONO', 'EMAIL', 'DIRECCIÓN', 'ACCIONES']">
             @forelse($suppliers as $supplier)
                 <tr>
                     <td class="px-6 py-4 text-sm font-bold text-slate-900 dark:text-white">
@@ -28,13 +28,13 @@
                     </td>
                     <td class="px-6 py-4 text-right text-sm font-medium">
                         <div class="flex justify-end gap-2">
-                            <a href="{{ route('suppliers.edit', $supplier) }}" class="text-blue-600 hover:text-blue-900">
+                            <a href="{{ route('suppliers.edit', $supplier) }}" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors cursor-pointer">
                                 <i data-lucide="pencil" class="h-4 w-4"></i>
                             </a>
-                            <form action="{{ route('suppliers.destroy', $supplier) }}" method="POST" onsubmit="return confirm('¿Estás seguro?')">
+                            <form action="{{ route('suppliers.destroy', $supplier) }}" method="POST" class="inline" onsubmit="return confirm('¿Estás seguro?')">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="text-red-600 hover:text-red-900">
+                                <button type="submit" class="rounded-lg p-2 text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer">
                                     <i data-lucide="trash-2" class="h-4 w-4"></i>
                                 </button>
                             </form>
