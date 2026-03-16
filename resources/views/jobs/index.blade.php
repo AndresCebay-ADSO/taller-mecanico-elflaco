@@ -123,7 +123,8 @@
                         return this.selectedProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0);
                     },
                     get grandTotal() {
-                        return parseFloat(this.laborCost || 0) + this.totalProductsPrice;
+                        const labor = parseFloat(this.laborCost.toString().replace(/\./g, '') || 0);
+                        return labor + this.totalProductsPrice;
                     },
                     updateJobType(id) {
                         this.selectedJobType = this.jobTypes.find(t => t.id == id);
@@ -238,8 +239,7 @@
 
                     <!-- Mano de Obra -->
                     <div>
-                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Mano de Obra ($)</label>
-                        <input type="number" name="labor_cost" x-model="laborCost" required class="w-full rounded-2xl border-slate-200 px-4 py-3 text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all font-bold">
+                        <x-input label="Mano de Obra ($)" name="labor_cost" x-model="laborCost" required class="font-bold" />
                     </div>
 
                     <!-- RESUMEN FINAL -->
@@ -268,8 +268,8 @@
                                 </p>
                                 <p class="text-lg font-black text-blue-600" 
                                    x-text="'$' + (selectedJobType && selectedJobType.calculation_type === 'percentage' 
-                                            ? (parseFloat(laborCost) * (selectedJobType.mechanic_percentage/100)).toLocaleString() 
-                                            : (parseFloat(selectedJobType?.fixed_mechanic_amount) || 0).toLocaleString())">
+                                    ? (parseFloat(this.laborCost.toString().replace(/\./g, '')) * (selectedJobType.mechanic_percentage/100)).toLocaleString() 
+                                    : (parseFloat(selectedJobType?.fixed_mechanic_amount) || 0).toLocaleString())">
                                 </p>
                             </div>
                             <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm text-center">
