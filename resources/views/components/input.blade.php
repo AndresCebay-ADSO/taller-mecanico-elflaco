@@ -19,7 +19,7 @@
             type="{{ $type }}"
             id="{{ $name }}"
             name="{{ $name }}"
-            value="{{ old($name, $value) }}"
+            value="{{ old($name, $value ?? '') }}"
             placeholder="{{ $placeholder }}"
             @if($required) required @endif
             {{ $attributes->except(['class', 'label', 'name', 'type', 'value', 'required', 'placeholder']) }}
