@@ -67,7 +67,7 @@
         <form method="POST" action="{{ route('logout') }}">
             @csrf
             <button type="submit"
-                class="flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-400 transition-colors hover:bg-red-500/10 hover:text-red-400 group">
+                class="flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-400 transition-colors hover:bg-red-500/10 hover:text-red-400 group cursor-pointer">
                 <i data-lucide="log-out" class="h-4 w-4 shrink-0"></i>
                 <span>Cerrar Sesión</span>
             </button>
