@@ -7,7 +7,7 @@
         <thead class="bg-gray-50/50 dark:bg-white/[0.02]">
             <tr>
                 @foreach($headers as $header)
-                    <th scope="col" class="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                    <th scope="col" class="px-6 py-4 {{ $header === 'ACCIONES' ? 'text-right' : 'text-left' }} text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">
                         {{ $header }}
                     </th>
                 @endforeach

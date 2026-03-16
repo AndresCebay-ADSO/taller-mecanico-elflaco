@@ -18,7 +18,7 @@
                         type="tel" minlength="10" maxlength="10" pattern="[0-9]{10}"
                         title="Ingresa exactamente 10 dígitos numéricos" />
                     <x-input label="Email" name="email" type="email" :value="$mechanic->email" />
-                    <x-input label="Fecha de Contratación" name="hire_date" type="date" required :value="$mechanic->hire_date" />
+                    <x-input label="Fecha de Contratación" name="hire_date" type="date" required :value="$mechanic->hire_date ? $mechanic->hire_date->format('Y-m-d') : ''" />
 
                     <div>
                         <label for="is_active" class="block text-sm font-semibold text-slate-700 space-y-1.5">Estado</label>

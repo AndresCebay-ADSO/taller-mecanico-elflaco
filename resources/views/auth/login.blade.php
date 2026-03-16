@@ -123,7 +123,7 @@
 
                         <div class="pt-2">
                             <button type="submit"
-                                class="flex w-full justify-center rounded-2xl bg-[#3B3BF9] px-4 py-4 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3B3BF9] active:scale-[0.98]">
+                                class="flex w-full justify-center rounded-2xl bg-[#3B3BF9] px-4 py-4 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3B3BF9] active:scale-[0.98] cursor-pointer">
                                 Iniciar Sesión
                             </button>
                         </div>
@@ -197,7 +197,7 @@
                 <button 
                     @click="darkMode = !darkMode; localStorage.setItem('darkMode', darkMode)" 
                     type="button" 
-                    class="relative p-4 rounded-full border border-white/10 bg-white/5 text-white/50 shadow-2xl transition-all hover:bg-white/10 hover:scale-110 active:scale-95 hover:text-white"
+                    class="relative p-4 rounded-full border border-white/10 bg-white/5 text-white/50 shadow-2xl transition-all hover:bg-white/10 hover:scale-110 active:scale-95 hover:text-white cursor-pointer"
                     title="Alternar tema"
                 >
                     <i x-show="!darkMode" data-lucide="moon" class="h-6 w-6"></i>
