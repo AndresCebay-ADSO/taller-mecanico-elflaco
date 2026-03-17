@@ -51,4 +51,16 @@ document.addEventListener('DOMContentLoaded', () => {
             input.value = cleanMoney(input.value);
         });
     });
+
+    /**
+     * Prevent multiple form submissions
+     */
+    document.querySelectorAll("form").forEach(form => {
+        form.addEventListener("submit", function () {
+            form.querySelectorAll("button[type=submit]").forEach(btn => {
+                btn.disabled = true;
+                btn.innerText = "Guardando...";
+            });
+        });
+    });
 });

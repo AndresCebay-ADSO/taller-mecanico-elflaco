@@ -22,7 +22,7 @@ return new class extends Migration
             $table->decimal('sale_price', 10, 2); // Precio de venta
             $table->unsignedInteger('stock');
             $table->unsignedInteger('min_stock'); // Umbral para alertas de stock bajo
-            $table->string('upc')->unique(); // Código de barras (universal product code)
+            $table->string('upc')->nullable(); // Código de barras (universal product code)
             
             $table->timestamps();
         });

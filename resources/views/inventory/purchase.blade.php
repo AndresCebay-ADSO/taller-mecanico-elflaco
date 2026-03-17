@@ -85,7 +85,7 @@
 
                     <div class="space-y-2">
                         <label class="block text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Precio Compra Unitario</label>
-                        <x-input name="unit_price" type="number" step="0.01" required placeholder="0.00" />
+                        <x-input name="unit_price" type="number" step="0.01" required placeholder="0.00" isMoney="true" />
                     </div>
 
                     <div class="md:col-span-2 space-y-2">

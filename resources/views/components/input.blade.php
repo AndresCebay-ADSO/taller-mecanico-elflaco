@@ -9,8 +9,7 @@
 ])
 
 @php
-    $moneyFields = ['purchase_price', 'sale_price', 'unit_price', 'cost', 'price', 'amount', 'labor_cost', 'fixed_mechanic_amount', 'fixed_workshop_amount', 'total', 'subtotal'];
-    $isMoneyField = $isMoney || in_Array($name, $moneyFields);
+    $isMoneyField = $isMoney;
     $finalType = $isMoneyField ? 'text' : $type;
     $moneyClass = $isMoneyField ? 'money-input' : '';
 @endphp
