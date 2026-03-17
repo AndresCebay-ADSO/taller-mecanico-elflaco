@@ -46,10 +46,10 @@
                         @enderror
                     </div>
 
-                    <x-input label="Código UPC / Barcode" name="upc" required :value="$product->upc" />
+                    <x-input label="Código UPC / Barcode" name="upc" :value="$product->upc" />
                     
-                    <x-input label="Precio de Compra" name="purchase_price" type="number" step="0.01" required :value="$product->purchase_price" />
-                    <x-input label="Precio de Venta" name="sale_price" type="number" step="0.01" required :value="$product->sale_price" />
+                    <x-input label="Precio de Compra" name="purchase_price" type="number" step="0.01" required :value="$product->purchase_price" isMoney="true" />
+                    <x-input label="Precio de Venta" name="sale_price" type="number" step="0.01" required :value="$product->sale_price" isMoney="true" />
                     
                     <x-input label="Stock" name="stock" type="number" required :value="$product->stock" />
                     <x-input label="Stock Mínimo (Alerta)" name="min_stock" type="number" required :value="$product->min_stock" />

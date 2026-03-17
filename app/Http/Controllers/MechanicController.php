@@ -41,7 +41,7 @@ class MechanicController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'      => 'required|string|max:255',
+            'name'      => 'required|string|max:30',
             'phone'     => 'required|digits:10',
             'email'     => 'nullable|email|unique:mechanics,email',
             'hire_date' => 'required|date',
@@ -74,7 +74,7 @@ class MechanicController extends Controller
     public function update(Request $request, Mechanic $mechanic)
     {
         $validated = $request->validate([
-            'name'      => 'required|string|max:255',
+            'name'      => 'required|string|max:30',
             'phone'     => 'required|digits:10',
             'email'     => 'nullable|email|unique:mechanics,email,' . $mechanic->id,
             'hire_date' => 'required|date',

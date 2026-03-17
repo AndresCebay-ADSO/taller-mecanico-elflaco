@@ -5,7 +5,14 @@
     'value' => '',
     'required' => false,
     'placeholder' => '',
+    'isMoney' => false,
 ])
+
+@php
+    $isMoneyField = $isMoney;
+    $finalType = $isMoneyField ? 'text' : $type;
+    $moneyClass = $isMoneyField ? 'money-input' : '';
+@endphp
 
 <div class="space-y-2">
     @if($label)
@@ -16,14 +23,14 @@
 
     <div class="relative">
         <input
-            type="{{ $type }}"
+            type="{{ $finalType }}"
             id="{{ $name }}"
             name="{{ $name }}"
-            value="{{ old($name, $value) }}"
+            value="{{ old($name, $value ?? '') }}"
             placeholder="{{ $placeholder }}"
             @if($required) required @endif
             {{ $attributes->except(['class', 'label', 'name', 'type', 'value', 'required', 'placeholder']) }}
-            class="block w-full rounded-2xl border border-gray-300 px-4 py-3 bg-white text-gray-950 shadow-theme-xs transition-all duration-200 placeholder:text-gray-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-50 dark:bg-gray-900 dark:border-gray-700 dark:text-white dark:placeholder:text-gray-500 dark:focus:border-brand-500 dark:focus:ring-brand-500/20 sm:text-sm @error($name) border-error-500 focus:border-error-500 focus:ring-error-500/20 @enderror"
+            class="block w-full rounded-2xl border border-gray-300 px-4 py-3 bg-white text-gray-950 shadow-theme-xs transition-all duration-200 placeholder:text-gray-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-50 dark:bg-gray-900 dark:border-gray-700 dark:text-white dark:placeholder:text-gray-500 dark:focus:border-brand-500 dark:focus:ring-brand-500/20 sm:text-sm {{ $moneyClass }} @error($name) border-error-500 focus:border-error-500 focus:ring-error-500/20 @enderror"
         >
     </div>
 

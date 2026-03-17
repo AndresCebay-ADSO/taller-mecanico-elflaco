@@ -133,7 +133,7 @@ class ProductController extends Controller
             'sale_price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'min_stock' => 'required|integer|min:0',
-            'upc' => 'required|string|unique:products,upc,' . $product->id,
+            'upc' => 'nullable|string|max:50',
         ]);
 
         $supplierIds = $validated['supplier_ids'];

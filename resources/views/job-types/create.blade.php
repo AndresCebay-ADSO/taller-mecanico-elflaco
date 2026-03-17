@@ -76,8 +76,8 @@
                      x-transition:enter="transition ease-out duration-300"
                      x-transition:enter-start="opacity-0 transform -translate-y-4"
                      class="grid grid-cols-2 gap-4 bg-emerald-50/30 p-6 rounded-2xl border border-emerald-100">
-                    <x-input label="Monto Mecánico" name="fixed_mechanic_amount" type="number" step="0.01" value="{{ old('fixed_mechanic_amount', $jobType->fixed_mechanic_amount ?? 0) }}" />
-                    <x-input label="Monto Taller" name="fixed_workshop_amount" type="number" step="0.01" value="{{ old('fixed_workshop_amount', $jobType->fixed_workshop_amount ?? 0) }}" />
+                    <x-input label="Monto Mecánico" name="fixed_mechanic_amount" type="number" step="0.01" value="{{ old('fixed_mechanic_amount', $jobType->fixed_mechanic_amount ?? 0) }}" isMoney="true" />
+                    <x-input label="Monto Taller" name="fixed_workshop_amount" type="number" step="0.01" value="{{ old('fixed_workshop_amount', $jobType->fixed_workshop_amount ?? 0) }}" isMoney="true" />
                 </div>
 
                 <!-- Feature Toggles -->

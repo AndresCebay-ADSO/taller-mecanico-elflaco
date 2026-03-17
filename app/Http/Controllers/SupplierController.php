@@ -44,10 +44,10 @@ class SupplierController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'    => 'required|string|max:255',
+            'name'    => 'required|string|max:30',
             'phone'   => 'required|digits:10',
             'email'   => 'nullable|email|max:255',
-            'address' => 'nullable|string|max:255',
+            'address' => 'nullable|string|max:50',
         ], [
             'name.required'  => 'El nombre es obligatorio.',
             'phone.required' => 'El teléfono es obligatorio.',
@@ -82,10 +82,10 @@ class SupplierController extends Controller
     public function update(Request $request, Supplier $supplier)
     {
         $validated = $request->validate([
-            'name'    => 'required|string|max:255',
+            'name'    => 'required|string|max:30',
             'phone'   => 'required|digits:10',
             'email'   => 'nullable|email|max:255',
-            'address' => 'nullable|string|max:255',
+            'address' => 'nullable|string|max:50',
         ], [
             'name.required'  => 'El nombre es obligatorio.',
             'phone.required' => 'El teléfono es obligatorio.',
