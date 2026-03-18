@@ -54,8 +54,9 @@ Route::middleware('auth')->group(function () {
     Route::post('invoices/generate/{serviceOrder}', [InvoiceController::class, 'generateFromServiceOrder'])->name('invoices.generate');
     Route::resource('job-types', JobTypeController::class);
 
-    // Basic routes
-    Route::get('/settings', fn() => redirect()->route('dashboard'))->name('settings');
+    // Settings
+    Route::get('/settings', [App\Http\Controllers\SettingController::class, 'index'])->name('settings');
+    Route::put('/settings', [App\Http\Controllers\SettingController::class, 'update'])->name('settings.update');
 
 });
 // ─────────────────────────────────────────────────────────────────────────────

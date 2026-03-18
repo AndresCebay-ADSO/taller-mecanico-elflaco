@@ -53,7 +53,7 @@
                     <div class="mb-8">
                         <h2 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Iniciar Sesión</h2>
                         <p class="mt-2 text-sm text-slate-500 dark:text-gray-400 font-medium">
-                            Bienvenido de nuevo — ingresa tus credenciales para continuar.
+                            Bienvenido de nuevo — Ingresa tus credenciales para continuar.
                         </p>
                     </div>
 
@@ -91,16 +91,25 @@
                             <label for="password" class="block text-sm font-bold text-slate-700 dark:text-gray-300">
                                 Contraseña <span class="text-red-500">*</span>
                             </label>
-                            <div class="mt-2">
+                            <div class="mt-2 relative" x-data="{ showPassword: false }">
                                 <input 
                                     id="password" 
                                     name="password" 
-                                    type="password" 
+                                    :type="showPassword ? 'text' : 'password'" 
                                     autocomplete="current-password" 
                                     required 
                                     placeholder="••••••••"
                                     class="block w-full rounded-2xl border border-slate-300 px-4 py-3.5 bg-[#F8F9FA] text-slate-900 shadow-sm transition-all duration-200 placeholder:text-slate-400 focus:border-[#3B3BF9] focus:ring-4 focus:ring-[#3B3BF9]/10 sm:text-sm dark:bg-gray-900 dark:border-gray-800 dark:text-white dark:placeholder:text-gray-600 dark:focus:border-brand-500 dark:focus:ring-brand-500/20 @error('password') border-red-500 focus:border-red-500 focus:ring-red-500/10 @enderror"
                                 >
+                                <button 
+                                    type="button" 
+                                    @click="showPassword = !showPassword"
+                                    class="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-[#3B3BF9] transition-colors focus:outline-none cursor-pointer"
+                                    title="Mostrar/Ocultar contraseña"
+                                >
+                                    <i x-show="!showPassword" data-lucide="eye" class="h-5 w-5"></i>
+                                    <i x-show="showPassword" data-lucide="eye-off" class="h-5 w-5" x-cloak></i>
+                                </button>
                             </div>
                             @error('password')
                                 <p class="mt-1 text-sm font-medium text-red-600 dark:text-red-400">{{ $message }}</p>
