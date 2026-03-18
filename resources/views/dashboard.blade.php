@@ -1,10 +1,3 @@
-@php
-    $totalProducts = \App\Models\Product::count();
-    $lowStockCount = \App\Models\Product::whereRaw('stock <= min_stock')->count();
-    $lowStockProducts = \App\Models\Product::whereRaw('stock <= min_stock')->limit(3)->get();
-    $activeMechanics = \App\Models\Mechanic::where('is_active', true)->limit(3)->get();
-@endphp
-
 <x-app-layout>
     <div class="mb-8">
         <h1 class="text-3xl font-black text-slate-900 tracking-tight">Dashboard</h1>
@@ -39,8 +32,8 @@
             </div>
             <div class="relative">
                 <p class="text-sm font-bold text-slate-500 uppercase tracking-widest">Trabajos Activos</p>
-                <p class="mt-2 text-4xl font-black text-slate-900">0</p>
-                <p class="mt-1 text-sm text-slate-500 font-medium">0 total registrados</p>
+                <p class="mt-2 text-4xl font-black text-slate-900">{{ $activeJobsCount }}</p>
+                <p class="mt-1 text-sm text-slate-500 font-medium">Órdenes en curso</p>
             </div>
             <div class="absolute bottom-0 left-0 h-1.5 w-full bg-blue-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
         </div>
@@ -54,8 +47,8 @@
             </div>
             <div class="relative">
                 <p class="text-sm font-bold text-slate-500 uppercase tracking-widest">Ganancias Hoy</p>
-                <p class="mt-2 text-4xl font-black text-slate-900">$0.00</p>
-                <p class="mt-1 text-sm text-slate-500 font-medium">0 trabajo(s)</p>
+                <p class="mt-2 text-4xl font-black text-slate-900">${{ number_format($todayEarnings, 0, ',', '.') }}</p>
+                <p class="mt-1 text-sm text-slate-500 font-medium">Ventas + Mano de obra</p>
             </div>
             <div class="absolute bottom-0 left-0 h-1.5 w-full bg-emerald-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
         </div>
@@ -69,8 +62,8 @@
             </div>
             <div class="relative">
                 <p class="text-sm font-bold text-slate-500 uppercase tracking-widest">Ganancias del Mes</p>
-                <p class="mt-2 text-4xl font-black text-slate-900">$0.00</p>
-                <p class="mt-1 text-sm text-slate-500 font-medium">Taller: $0.00</p>
+                <p class="mt-2 text-4xl font-black text-slate-900">${{ number_format($monthEarnings, 0, ',', '.') }}</p>
+                <p class="mt-1 text-sm text-slate-500 font-medium">Taller: ${{ number_format($workshopEarningsMonth, 0, ',', '.') }}</p>
             </div>
             <div class="absolute bottom-0 left-0 h-1.5 w-full bg-indigo-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
         </div>
@@ -116,12 +109,12 @@
                             </div>
                             <div>
                                 <p class="font-bold text-slate-900 leading-none">{{ $mech->name }}</p>
-                                <p class="mt-1 text-xs text-slate-500">0 trabajos realizados</p>
+                                <p class="mt-1 text-xs text-slate-500">{{ $mech->total_jobs }} trabajos realizados</p>
                             </div>
                         </div>
                         <div class="text-right">
-                            <p class="font-black text-emerald-600">$0.00</p>
-                            <p class="text-[10px] text-slate-400 font-bold uppercase">acumulado</p>
+                            <p class="font-black text-emerald-600">${{ number_format($mech->monthly_earnings, 0, ',', '.') }}</p>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase">mes actual</p>
                         </div>
                     </div>
                     @empty
@@ -134,14 +127,35 @@
         <!-- Right Side: Recent Activity -->
         <x-card class="h-full">
             <x-slot name="header">
-                <h3 class="font-bold text-slate-900">Trabajos Recientes</h3>
+                <h3 class="font-bold text-slate-900">Actividad Reciente</h3>
             </x-slot>
-            <div class="flex h-[400px] flex-col items-center justify-center text-center">
-                <div class="h-20 w-20 rounded-full bg-slate-50 flex items-center justify-center mb-4">
-                    <i data-lucide="layers" class="h-10 w-10 text-slate-200"></i>
+            @if($recentJobs->count() > 0)
+                <div class="space-y-4">
+                    @foreach($recentJobs as $order)
+                        <div class="flex items-center justify-between p-4 rounded-2xl bg-slate-50 hover:bg-slate-100 transition-colors">
+                            <div class="flex items-center gap-4">
+                                <div class="h-10 w-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                                    <i data-lucide="clipboard-list" class="h-5 w-5"></i>
+                                </div>
+                                <div>
+                                    <p class="font-bold text-slate-900 leading-none">{{ $order->customer_name }}</p>
+                                    <p class="mt-1 text-xs text-slate-500">{{ $order->vehicle_info }} — {{ $order->created_at->diffForHumans() }}</p>
+                                </div>
+                            </div>
+                            <x-badge :variant="$order->status === 'completed' ? 'success' : ($order->status === 'cancelled' ? 'error' : 'warning')">
+                                {{ ucfirst($order->status) }}
+                            </x-badge>
+                        </div>
+                    @endforeach
                 </div>
-                <p class="text-slate-400 font-medium">No hay trabajos registrados</p>
-            </div>
+            @else
+                <div class="flex h-[400px] flex-col items-center justify-center text-center">
+                    <div class="h-20 w-20 rounded-full bg-slate-50 flex items-center justify-center mb-4">
+                        <i data-lucide="layers" class="h-10 w-10 text-slate-200"></i>
+                    </div>
+                    <p class="text-slate-400 font-medium">No hay actividad reciente registrada</p>
+                </div>
+            @endif
         </x-card>
     </div>
 </x-app-layout>
