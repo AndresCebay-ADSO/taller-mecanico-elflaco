@@ -14,8 +14,13 @@
         <x-table :headers="['NOMBRE', 'TELÉFONO', 'EMAIL', 'DIRECCIÓN', 'ACCIONES']">
             @forelse($suppliers as $supplier)
                 <tr>
-                    <td class="px-6 py-4 text-sm font-bold text-slate-900 dark:text-white">
-                        {{ $supplier->name }}
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/30 font-bold text-indigo-700 dark:text-indigo-400">
+                                {{ strtoupper(substr($supplier->name, 0, 1)) }}
+                            </div>
+                            <div class="text-sm font-bold text-slate-900 dark:text-white">{{ $supplier->name }}</div>
+                        </div>
                     </td>
                     <td class="px-6 py-4 text-sm text-slate-600 dark:text-gray-400">
                         {{ $supplier->phone }}

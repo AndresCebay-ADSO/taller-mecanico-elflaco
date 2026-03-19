@@ -13,7 +13,7 @@
                 @csrf
                 @method('PUT')
                 <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <x-input label="Nombre del Producto" name="name" required :value="$product->name" />
+                    <x-input label="Nombre del Producto" name="name" required :value="$product->name" maxlength="255" />
                     
                     <div>
                         <label for="category" class="block text-sm font-semibold text-slate-700 space-y-1.5">Categoría <span class="text-red-500">*</span></label>
@@ -46,7 +46,7 @@
                         @enderror
                     </div>
 
-                    <x-input label="Código UPC / Barcode" name="upc" :value="$product->upc" />
+                    <x-input label="Código UPC / Barcode" name="upc" :value="$product->upc" maxlength="50" />
                     
                     <x-input label="Precio de Compra" name="purchase_price" type="number" step="0.01" required :value="$product->purchase_price" isMoney="true" />
                     <x-input label="Precio de Venta" name="sale_price" type="number" step="0.01" required :value="$product->sale_price" isMoney="true" />
