@@ -12,12 +12,12 @@
             <form action="{{ route('suppliers.store') }}" method="POST" class="space-y-6">
                 @csrf
                 <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <x-input label="Nombre" name="name" required placeholder="Ej. Repuestos El Valle" />
+                    <x-input label="Nombre" name="name" required placeholder="Ej. Repuestos El Valle" maxlength="30" />
                     <x-input label="Teléfono" name="phone" required placeholder="Ej. 3001234567"
                         type="tel" minlength="10" maxlength="10" pattern="[0-9]{10}"
                         title="Ingresa exactamente 10 dígitos numéricos" />
-                    <x-input label="Email" name="email" type="email" placeholder="ejemplo@correo.com" />
-                    <x-input label="Dirección" name="address" placeholder="Ej. Calle 123 # 45-67" />
+                    <x-input label="Email" name="email" type="email" placeholder="ejemplo@correo.com" maxlength="255" />
+                    <x-input label="Dirección" name="address" placeholder="Ej. Calle 123 # 45-67" maxlength="50" />
                 </div>
 
                 <div class="flex justify-end pt-4">

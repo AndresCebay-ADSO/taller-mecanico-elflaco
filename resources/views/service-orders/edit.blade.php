@@ -41,8 +41,8 @@
                         Información del Cliente
                     </h3>
                     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                        <x-input label="Nombre del Cliente" name="customer_name" value="{{ $serviceOrder->customer_name }}" required placeholder="Ej. Carlos Rodríguez" />
-                        <x-input label="Teléfono de Contacto" name="customer_phone" value="{{ $serviceOrder->customer_phone }}" placeholder="Ej. 300 456 7890" />
+                        <x-input label="Nombre del Cliente" name="customer_name" value="{{ $serviceOrder->customer_name }}" required placeholder="Ej. Carlos Rodríguez" maxlength="255" />
+                        <x-input label="Teléfono de Contacto" name="customer_phone" value="{{ $serviceOrder->customer_phone }}" placeholder="Ej. 300 456 7890" maxlength="10" />
                     </div>
                 </div>
 

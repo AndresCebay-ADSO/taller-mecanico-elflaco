@@ -36,6 +36,7 @@
                         name="customer_name"
                         placeholder="Venta Mostrador"
                         value="{{ old('customer_name') }}"
+                        maxlength="255"
                     />
 
                     <div>

@@ -29,7 +29,7 @@
                 ">
                 @csrf
                 <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <x-input label="Nombre del Producto" name="name" required placeholder="Ej. Filtro de Aceite" value="{{ old('name') }}" />
+                    <x-input label="Nombre del Producto" name="name" required placeholder="Ej. Filtro de Aceite" value="{{ old('name') }}" maxlength="255" />
                     
                     <div>
                         <label for="category" class="block text-sm font-semibold text-slate-700 space-y-1.5">Categoría <span class="text-red-500">*</span></label>
@@ -63,7 +63,7 @@
                         @enderror
                     </div>
 
-                    <x-input label="Código UPC / Barcode" name="upc" placeholder="Ej. 1234567890" value="{{ old('upc') }}" />
+                    <x-input label="Código UPC / Barcode" name="upc" placeholder="Ej. 1234567890" value="{{ old('upc') }}" maxlength="50" />
                     
                     <x-input label="Precio de Compra" name="purchase_price" type="number" step="0.01" required placeholder="0.00" value="{{ old('purchase_price') }}" isMoney="true" />
                     <x-input label="Precio de Venta" name="sale_price" type="number" step="0.01" required placeholder="0.00" value="{{ old('sale_price') }}" isMoney="true" />
