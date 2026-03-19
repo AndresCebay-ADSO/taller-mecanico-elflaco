@@ -12,7 +12,7 @@
             <form action="{{ route('mechanics.store') }}" method="POST" class="space-y-6">
                 @csrf
                 <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <x-input label="Nombre Completo" name="name" required placeholder="Ej. Juan Pérez" />
+                    <x-input label="Nombre Completo" name="name" required placeholder="Ej. Juan Pérez" maxlength="30" />
                     <x-input label="Teléfono" name="phone" required placeholder="Ej. 3110000000"
                         type="tel" minlength="10" maxlength="10" pattern="[0-9]{10}"
                         title="Ingresa exactamente 10 dígitos numéricos" />
