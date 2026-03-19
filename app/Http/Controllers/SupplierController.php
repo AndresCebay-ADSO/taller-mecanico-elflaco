@@ -103,7 +103,25 @@ class SupplierController extends Controller
      */
     public function destroy(Supplier $supplier)
     {
+        $hasProducts = $supplier->products()->exists() || $supplier->productsManyToMany()->exists();
+        $hasPurchases = $supplier->productPurchases()->exists();
+
+        if ($hasProducts || $hasPurchases) {
+            $supplier->update(['active' => false]);
+            return redirect()->route('suppliers.index')
+                ->with('success', 'El proveedor tiene registros asociados y fue desactivado.');
+        }
+
         $supplier->delete();
         return redirect()->route('suppliers.index')->with('success', 'Proveedor eliminado exitosamente.');
+    }
+
+    public function toggleActive(Supplier $supplier)
+    {
+        $supplier->update(['active' => !$supplier->active]);
+        $status = $supplier->active ? 'activado' : 'desactivado';
+        
+        return redirect()->route('suppliers.index')
+            ->with('success', "Proveedor {$status} exitosamente.");
     }
 }

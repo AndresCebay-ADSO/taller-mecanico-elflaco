@@ -54,7 +54,7 @@ class ProductController extends Controller
      */
     public function create()
     {
-        $suppliers = Supplier::orderBy('name')->get();
+        $suppliers = Supplier::active()->orderBy('name')->get();
         return view('products.create', compact('suppliers'));
     }
 
@@ -114,7 +114,7 @@ class ProductController extends Controller
      */
     public function edit(Product $product)
     {
-        $suppliers = Supplier::orderBy('name')->get();
+        $suppliers = Supplier::active()->orderBy('name')->get();
         $selectedSupplierIds = $product->suppliers()->pluck('suppliers.id')->toArray();
         return view('products.edit', compact('product', 'suppliers', 'selectedSupplierIds'));
     }

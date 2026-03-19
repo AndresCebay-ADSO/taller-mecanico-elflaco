@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('inventory_movements', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained(); //Referencia al producto
-            $table->enum('movement_type', ['purchase', 'sale', 'job_usage', 'adjustment'])->index(); //Tipo de movimiento
+            $table->enum('movement_type', ['purchase', 'sale', 'job_usage', 'adjustment', 'reversal'])->index(); //Tipo de movimiento
             $table->integer('quantity');
             $table->decimal('unit_price', 8, 2)->nullable(); //Precio unitario (puede ser nulo para ciertos movimientos)
             $table->foreignId('supplier_id')->nullable()->constrained(); //Referencia al proveedor (solo para compras)

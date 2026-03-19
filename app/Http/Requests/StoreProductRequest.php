@@ -23,7 +23,7 @@ class StoreProductRequest extends FormRequest
             'name' => 'required|string|max:255',
             'category' => 'required|string|max:255',
             'supplier_ids' => 'required|array|min:1',
-            'supplier_ids.*' => 'exists:suppliers,id',
+            'supplier_ids.*' => 'exists:suppliers,id,active,1',
             'upc' => 'nullable|string|max:50',
             'sale_price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',

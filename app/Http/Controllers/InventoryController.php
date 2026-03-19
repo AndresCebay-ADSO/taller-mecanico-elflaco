@@ -49,8 +49,10 @@ class InventoryController extends Controller
 
     public function createPurchase()
     {
-        $products = Product::with('suppliers')->orderBy('name')->get();
-        $suppliers = Supplier::orderBy('name')->get();
+        $products = Product::with(['suppliers' => function($query) {
+            $query->where('active', true);
+        }])->orderBy('name')->get();
+        $suppliers = Supplier::active()->orderBy('name')->get();
         return view('inventory.purchase', compact('products', 'suppliers'));
     }
 
@@ -60,7 +62,7 @@ class InventoryController extends Controller
             'product_id' => 'required|exists:products,id',
             'supplier_id' => [
                 'required',
-                'exists:suppliers,id',
+                'exists:suppliers,id,active,1',
                 function ($attribute, $value, $fail) use ($request) {
                     $product = \App\Models\Product::find($request->product_id);
                     if ($product && !$product->suppliers()->where('suppliers.id', $value)->exists()) {
