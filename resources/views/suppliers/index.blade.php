@@ -13,13 +13,22 @@
     <x-card>
         <x-table :headers="['NOMBRE', 'TELÉFONO', 'EMAIL', 'DIRECCIÓN', 'ACCIONES']">
             @forelse($suppliers as $supplier)
-                <tr>
+                <tr class="{{ !$supplier->active ? 'opacity-60' : '' }}">
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-3">
                             <div class="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/30 font-bold text-indigo-700 dark:text-indigo-400">
                                 {{ strtoupper(substr($supplier->name, 0, 1)) }}
                             </div>
-                            <div class="text-sm font-bold text-slate-900 dark:text-white">{{ $supplier->name }}</div>
+                            <div>
+                                <div class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    {{ $supplier->name }}
+                                    @if($supplier->active)
+                                        <x-badge variant="emerald" class="px-2 py-0.5 text-[10px] uppercase">Activo</x-badge>
+                                    @else
+                                        <x-badge variant="slate" class="px-2 py-0.5 text-[10px] uppercase">Inactivo</x-badge>
+                                    @endif
+                                </div>
+                            </div>
                         </div>
                     </td>
                     <td class="px-6 py-4 text-sm text-slate-600 dark:text-gray-400">
@@ -36,11 +45,11 @@
                             <a href="{{ route('suppliers.edit', $supplier) }}" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors cursor-pointer">
                                 <i data-lucide="pencil" class="h-4 w-4"></i>
                             </a>
-                            <form action="{{ route('suppliers.destroy', $supplier) }}" method="POST" class="inline" onsubmit="return confirm('¿Estás seguro?')">
+                            <form action="{{ route('suppliers.toggleActive', $supplier) }}" method="POST" class="inline" onsubmit="return confirm('¿Desea {{ $supplier->active ? 'desactivar' : 'activar' }} este proveedor?')">
                                 @csrf
-                                @method('DELETE')
-                                <button type="submit" class="rounded-lg p-2 text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer">
-                                    <i data-lucide="trash-2" class="h-4 w-4"></i>
+                                @method('PATCH')
+                                <button type="submit" class="rounded-lg p-2 {{ $supplier->active ? 'text-emerald-500 hover:bg-emerald-50' : 'text-slate-400 hover:bg-slate-100' }} transition-colors cursor-pointer" title="{{ $supplier->active ? 'Desactivar' : 'Activar' }}">
+                                    <i data-lucide="{{ $supplier->active ? 'toggle-right' : 'toggle-left' }}" class="h-5 w-5"></i>
                                 </button>
                             </form>
                         </div>

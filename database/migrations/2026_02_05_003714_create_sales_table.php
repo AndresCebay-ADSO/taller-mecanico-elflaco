@@ -15,6 +15,9 @@ return new class extends Migration
             $table->id();
             $table->string('customer_name'); //Nombre del cliente
             $table->decimal('total_amount', 12, 2);
+            $table->string('payment_method')->default('Efectivo');
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('status')->default('completada');
             $table->date('sale_date')->index(); //Fecha de la venta 
 
             $table->timestamps();
