@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('description')->nullable();
+            $table->text('default_description')->nullable();
             $table->enum('calculation_type', ['percentage', 'fixed']); // Método de cálculo del costo
 
             // Campos para método porcentaje
@@ -32,6 +33,7 @@ return new class extends Migration
 
             // Estado del tipo de trabajo
             $table->boolean('is_active')->default(true); // Estado del tipo de trabajo
+            $table->boolean('is_system')->default(false);
             $table->timestamps();
         });
     }

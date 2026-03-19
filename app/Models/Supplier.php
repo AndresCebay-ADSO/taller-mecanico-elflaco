@@ -11,7 +11,13 @@ class Supplier extends Model
         'phone',
         'email',
         'address',
+        'active',
     ];
+
+    public function scopeActive($query)
+    {
+        return $query->where('active', true);
+    }
 
     public function products()
     {

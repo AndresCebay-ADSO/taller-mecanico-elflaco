@@ -36,6 +36,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::resource('suppliers', SupplierController::class);
+    Route::patch('suppliers/{supplier}/toggle-active', [SupplierController::class, 'toggleActive'])->name('suppliers.toggleActive');
     Route::resource('products', ProductController::class);
     Route::resource('mechanics', MechanicController::class);
 

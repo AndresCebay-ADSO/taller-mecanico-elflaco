@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('category');
             $table->foreignId('supplier_id')
+                ->nullable()
                 ->constrained()
                 ->restrictOnDelete(); // Evitar productos huérfanos si se borra proveedor
             $table->decimal('purchase_price', 10, 2); // Precio de compra
