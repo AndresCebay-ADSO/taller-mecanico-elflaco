@@ -92,6 +92,7 @@ class ProductController extends Controller
                 'supplier_id'   => $initialSupplierId,
                 'quantity'      => $stockInicial,
                 'cost_price'    => $purchasePrice,
+                'sale_price'    => $product->sale_price,
                 'selling_price' => $product->sale_price,
                 'reference'     => 'Carga Inicial',
                 'purchased_at'  => now(),
