@@ -30,13 +30,15 @@ class SupplierController extends Controller
         return view('suppliers.index', compact('suppliers'));
     }
 
+
     /**
      * Show the form for creating a new resource.
      */
     public function create()
     {
-        return view('suppliers.create');
+        abort(404);
     }
+
 
     /**
      * Store a newly created resource in storage.
@@ -68,13 +70,15 @@ class SupplierController extends Controller
         return view('suppliers.show', compact('supplier'));
     }
 
+
     /**
      * Show the form for editing the specified resource.
      */
     public function edit(Supplier $supplier)
     {
-        return view('suppliers.edit', compact('supplier'));
+        abort(404);
     }
+
 
     /**
      * Update the specified resource in storage.
