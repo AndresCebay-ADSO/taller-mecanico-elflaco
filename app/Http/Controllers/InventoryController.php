@@ -70,10 +70,11 @@ class InventoryController extends Controller
                     }
                 },
             ],
-            'quantity' => 'required|integer|min:1',
+            'quantity'   => 'required|integer|min:1',
             'unit_price' => 'required|numeric|min:0',
-            'reference' => 'nullable|string',
-            'notes' => 'nullable|string',
+            'sale_price' => 'nullable|numeric|min:0',
+            'reference'  => 'nullable|string',
+            'notes'      => 'nullable|string',
         ]);
 
         $product = Product::findOrFail($validated['product_id']);
@@ -95,7 +96,8 @@ class InventoryController extends Controller
             'supplier_id'   => $validated['supplier_id'],
             'quantity'      => $validated['quantity'],
             'cost_price'    => $validated['unit_price'],
-            'selling_price' => $product->sale_price, // Mantener el precio de venta actual por defecto
+            'sale_price'    => isset($validated['sale_price']) ? $validated['sale_price'] : $product->sale_price,
+            'selling_price' => isset($validated['sale_price']) ? $validated['sale_price'] : $product->sale_price,
             'reference'     => $validated['reference'],
             'purchased_at'  => now(),
         ]);
