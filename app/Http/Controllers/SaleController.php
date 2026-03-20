@@ -153,22 +153,19 @@ class SaleController extends Controller
 
                     }
 
-                    $itemTotal = $product->sale_price * $quantity;
+                    // Descontar stock FIFO y obtener el precio del último lote consumido (Opción B)
+                    $inventoryService = app(\App\Services\InventoryService::class);
+                    $batchSalePrice   = $inventoryService->deductStock($product->id, $quantity, "Venta #{$sale->id}");
+
+                    $itemTotal = $batchSalePrice * $quantity;
                     $totalSaleAmount += $itemTotal;
 
                     $sale->saleProducts()->create([
                         'product_id'  => $product->id,
                         'quantity'    => $quantity,
-                        'unit_price'  => $product->sale_price,
+                        'unit_price'  => $batchSalePrice,
                         'total_price' => $itemTotal,
                     ]);
-
-                    // ANTES:
-                    // $product->decrementStock($quantity, 'sale', "Venta #{$sale->id}");
-
-                    // DESPUÉS:
-                    $inventoryService = app(\App\Services\InventoryService::class);
-                    $inventoryService->deductStock($product->id, $quantity, "Venta #{$sale->id}");
                 }
 
                 $sale->update([
