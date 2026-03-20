@@ -39,9 +39,11 @@ class InventoryService
 
     /**
      * Deduct stock using FIFO logic.
+     * Returns the sale_price of the LAST batch consumed (Opción B: most expensive wins).
+     * Falls back to the batch's selling_price, then to the product's global sale_price.
      * IMPORTANT: This should be called WITHIN an existing DB transaction.
      */
-    public function deductStock(int $productId, int $quantity, ?string $notes = null): void
+    public function deductStock(int $productId, int $quantity, ?string $notes = null): float
     {
         $product = Product::findOrFail($productId);
         
@@ -50,6 +52,7 @@ class InventoryService
         }
 
         $remainingToDeduct = $quantity;
+        $usedSalePrice     = null; // Will hold price of last batch touched
 
         // Get all batches with stock ordered by FIFO
         $batches = Batch::where('product_id', $productId)
@@ -61,6 +64,9 @@ class InventoryService
             if ($remainingToDeduct <= 0) break;
 
             $deductFromThisBatch = min($batch->remaining_stock, $remainingToDeduct);
+
+            // Track the price of every batch we touch; last one wins (Opción B)
+            $usedSalePrice = $batch->sale_price ?? $batch->selling_price ?? $product->sale_price;
 
             // Update batch stock
             $batch->decrement('remaining_stock', $deductFromThisBatch);
@@ -87,6 +93,9 @@ class InventoryService
 
         // Update product total stock
         $product->decrement('stock', $quantity);
+
+        // Return the sale_price of the last batch consumed (Opción B)
+        return (float) ($usedSalePrice ?? $product->sale_price);
     }
 
     /**
@@ -143,7 +152,8 @@ class InventoryService
                 'product_id'      => $data['product_id'],
                 'supplier_id'     => $data['supplier_id'] ?? null,
                 'cost_price'      => $data['cost_price'],
-                'selling_price'   => $data['selling_price'],
+                'selling_price'   => $data['selling_price'] ?? $data['sale_price'] ?? 0,
+                'sale_price'      => $data['sale_price'] ?? $data['selling_price'] ?? null,
                 'quantity'        => $data['quantity'],
                 'remaining_stock' => $data['quantity'],
                 'purchased_at'    => $data['purchased_at'] ?? now(),
@@ -166,7 +176,7 @@ class InventoryService
             $product->increment('stock', $data['quantity']);
             $product->update([
                 'purchase_price' => $data['cost_price'],
-                'sale_price'     => $data['selling_price']
+                'sale_price'     => $data['sale_price'] ?? $data['selling_price'] ?? $product->sale_price,
             ]);
 
             return $batch;
