@@ -153,19 +153,22 @@ class SaleController extends Controller
 
                     }
 
-                    // Descontar stock FIFO y obtener el precio del último lote consumido (Opción B)
+                    // Descontar stock FIFO — retorna un tramo por cada lote consumido (Opción A)
                     $inventoryService = app(\App\Services\InventoryService::class);
-                    $batchSalePrice   = $inventoryService->deductStock($product->id, $quantity, "Venta #{$sale->id}");
+                    $tramos = $inventoryService->deductStock($product->id, $quantity, "Venta #{$sale->id}");
 
-                    $itemTotal = $batchSalePrice * $quantity;
-                    $totalSaleAmount += $itemTotal;
+                    // Crear una línea en la venta por cada tramo (lote) consumido
+                    foreach ($tramos as $tramo) {
+                        $tramoTotal       = $tramo['unit_price'] * $tramo['quantity'];
+                        $totalSaleAmount += $tramoTotal;
 
-                    $sale->saleProducts()->create([
-                        'product_id'  => $product->id,
-                        'quantity'    => $quantity,
-                        'unit_price'  => $batchSalePrice,
-                        'total_price' => $itemTotal,
-                    ]);
+                        $sale->saleProducts()->create([
+                            'product_id'  => $product->id,
+                            'quantity'    => $tramo['quantity'],
+                            'unit_price'  => $tramo['unit_price'],
+                            'total_price' => $tramoTotal,
+                        ]);
+                    }
                 }
 
                 $sale->update([
