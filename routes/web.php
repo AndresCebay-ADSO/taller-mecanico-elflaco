@@ -37,6 +37,7 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('suppliers', SupplierController::class);
     Route::patch('suppliers/{supplier}/toggle-active', [SupplierController::class, 'toggleActive'])->name('suppliers.toggleActive');
+    Route::patch('products/{id}/restore', [ProductController::class, 'restore'])->name('products.restore');
     Route::resource('products', ProductController::class);
     Route::resource('mechanics', MechanicController::class);
 
