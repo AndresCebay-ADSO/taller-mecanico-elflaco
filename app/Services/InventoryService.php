@@ -38,18 +38,25 @@ class InventoryService
     }
 
     /**
-     * Deduct stock using FIFO logic.
+     * Deduct stock using FIFO logic (Opción A).
+     * Returns an array of tramos consumed, one per batch touched:
+     *   [['quantity' => int, 'unit_price' => float], ...]
+     * Each tramo carries the batch's own sale_price as unit_price.
+     * Fallback chain per batch: sale_price → selling_price → product.sale_price.
      * IMPORTANT: This should be called WITHIN an existing DB transaction.
+     *
+     * @return array<int, array{quantity: int, unit_price: float}>
      */
-    public function deductStock(int $productId, int $quantity, ?string $notes = null): void
+    public function deductStock(int $productId, int $quantity, ?string $notes = null): array
     {
         $product = Product::findOrFail($productId);
-        
+
         if ($product->stock < $quantity) {
             throw new InsufficientStockException("Stock insuficiente para {$product->name}. Disponible: {$product->stock}. Requerido: {$quantity}.");
         }
 
         $remainingToDeduct = $quantity;
+        $tramos            = [];
 
         // Get all batches with stock ordered by FIFO
         $batches = Batch::where('product_id', $productId)
@@ -61,6 +68,7 @@ class InventoryService
             if ($remainingToDeduct <= 0) break;
 
             $deductFromThisBatch = min($batch->remaining_stock, $remainingToDeduct);
+            $batchUnitPrice      = (float) ($batch->sale_price ?? $batch->selling_price ?? $product->sale_price);
 
             // Update batch stock
             $batch->decrement('remaining_stock', $deductFromThisBatch);
@@ -77,6 +85,12 @@ class InventoryService
                 'movement_date' => now(),
             ]);
 
+            // Collect tramo for this batch
+            $tramos[] = [
+                'quantity'   => $deductFromThisBatch,
+                'unit_price' => $batchUnitPrice,
+            ];
+
             $remainingToDeduct -= $deductFromThisBatch;
         }
 
@@ -87,6 +101,8 @@ class InventoryService
 
         // Update product total stock
         $product->decrement('stock', $quantity);
+
+        return $tramos;
     }
 
     /**
@@ -143,7 +159,8 @@ class InventoryService
                 'product_id'      => $data['product_id'],
                 'supplier_id'     => $data['supplier_id'] ?? null,
                 'cost_price'      => $data['cost_price'],
-                'selling_price'   => $data['selling_price'],
+                'selling_price'   => $data['selling_price'] ?? $data['sale_price'] ?? 0,
+                'sale_price'      => $data['sale_price'] ?? $data['selling_price'] ?? null,
                 'quantity'        => $data['quantity'],
                 'remaining_stock' => $data['quantity'],
                 'purchased_at'    => $data['purchased_at'] ?? now(),
@@ -166,7 +183,7 @@ class InventoryService
             $product->increment('stock', $data['quantity']);
             $product->update([
                 'purchase_price' => $data['cost_price'],
-                'sale_price'     => $data['selling_price']
+                'sale_price'     => $data['sale_price'] ?? $data['selling_price'] ?? $product->sale_price,
             ]);
 
             return $batch;
