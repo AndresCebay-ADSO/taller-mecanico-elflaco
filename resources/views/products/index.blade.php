@@ -8,6 +8,14 @@
         </x-slot>
     </x-page-header>
 
+    {{-- Flash messages --}}
+    @if(session('info'))
+        <div class="mb-4 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700/40 px-5 py-4 text-sm font-medium text-amber-800 dark:text-amber-300">
+            <i data-lucide="info" class="h-4 w-4 mt-0.5 shrink-0"></i>
+            {{ session('info') }}
+        </div>
+    @endif
+
     <x-search-filter action="{{ route('products.index') }}" searchPlaceholder="Producto, categoría, UPC o proveedor...">
         <div>
             <label for="category" class="block text-xs font-bold text-slate-400 dark:text-gray-500 uppercase mb-2 ml-1">Categoría</label>
@@ -31,13 +39,18 @@
     <x-card class="overflow-hidden p-0">
         <x-table :headers="['PRODUCTO', 'CATEGORÍA', 'PROVEEDOR', 'PRECIO COMPRA', 'PRECIO VENTA', 'GANANCIA', 'STOCK', 'ACCIONES']">
             @forelse($products as $product)
-                <tr>
+                <tr class="{{ $product->trashed() ? 'opacity-50 bg-slate-50 dark:bg-slate-900/30' : '' }}">
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-3">
-                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-xl {{ $product->trashed() ? 'bg-slate-100 dark:bg-slate-800 text-slate-400' : 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' }}">
                                 <i data-lucide="package" class="h-5 w-5"></i>
                             </div>
-                            <div class="text-sm font-bold text-slate-900 dark:text-white">{{ $product->name }}</div>
+                            <div>
+                                <div class="text-sm font-bold text-slate-900 dark:text-white">{{ $product->name }}</div>
+                                @if($product->trashed())
+                                    <x-badge variant="slate" class="mt-1 text-[10px]">Inactivo</x-badge>
+                                @endif
+                            </div>
                         </div>
                     </td>
                     <td class="px-6 py-4">
@@ -64,22 +77,39 @@
                         @php
                             $stockVariant = ($product->stock <= $product->min_stock) ? 'red' : 'emerald';
                         @endphp
-                        <x-badge :variant="$stockVariant" class="px-3 py-1 rounded-full text-xs">
+                        <x-badge :variant="$product->trashed() ? 'slate' : $stockVariant" class="px-3 py-1 rounded-full text-xs">
                             {{ $product->stock }} unidades
                         </x-badge>
                     </td>
                     <td class="px-6 py-4 text-right text-sm font-medium">
                         <div class="flex justify-end gap-2">
-                            <a href="{{ route('products.edit', $product) }}" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
-                                <i data-lucide="pencil" class="h-4 w-4"></i>
-                            </a>
-                            <form action="{{ route('products.destroy', $product) }}" method="POST" class="inline" onsubmit="return confirm('¿Eliminar producto?')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="rounded-lg p-2 text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors">
-                                    <i data-lucide="trash-2" class="h-4 w-4"></i>
-                                </button>
-                            </form>
+                            @if($product->trashed())
+                                {{-- Reactivar --}}
+                                <form action="{{ route('products.restore', $product->id) }}" method="POST" class="inline">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit"
+                                        title="Reactivar producto"
+                                        class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold text-emerald-600 border border-emerald-200 hover:bg-emerald-50 transition-colors">
+                                        <i data-lucide="refresh-cw" class="h-3.5 w-3.5"></i>
+                                        Reactivar
+                                    </button>
+                                </form>
+                            @else
+                                {{-- Editar --}}
+                                <a href="{{ route('products.edit', $product) }}" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
+                                    <i data-lucide="pencil" class="h-4 w-4"></i>
+                                </a>
+                                {{-- Eliminar / Desactivar --}}
+                                <form action="{{ route('products.destroy', $product) }}" method="POST" class="inline"
+                                    onsubmit="return confirm('¿Eliminar producto? Si tiene historial de movimientos será desactivado en lugar de eliminado.')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="rounded-lg p-2 text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors">
+                                        <i data-lucide="trash-2" class="h-4 w-4"></i>
+                                    </button>
+                                </form>
+                            @endif
                         </div>
                     </td>
                 </tr>
@@ -98,3 +128,4 @@
         @endif
     </x-card>
 </x-app-layout>
+

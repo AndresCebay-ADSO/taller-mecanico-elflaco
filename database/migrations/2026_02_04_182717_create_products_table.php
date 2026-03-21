@@ -25,6 +25,7 @@ return new class extends Migration
             $table->unsignedInteger('min_stock'); // Umbral para alertas de stock bajo
             $table->string('upc')->nullable(); // Código de barras (universal product code)
             
+            $table->softDeletes();
             $table->timestamps();
         });
     }

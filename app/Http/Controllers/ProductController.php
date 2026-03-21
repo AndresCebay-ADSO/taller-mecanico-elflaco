@@ -16,7 +16,7 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Product::with('suppliers');
+        $query = Product::withTrashed()->with('suppliers');
 
         // Search filter
         if ($request->filled('search')) {
@@ -36,14 +36,19 @@ class ProductController extends Controller
             $query->where('category', $request->category);
         }
 
-        // Low stock filter (Optional but recommended since it was in the UI)
+        // Low stock filter (only applies to active products)
         if ($request->has('low_stock')) {
-            $query->whereColumn('stock', '<=', 'min_stock');
+            $query->whereNull('deleted_at')->whereColumn('stock', '<=', 'min_stock');
         }
 
-        $products = $query->latest()->paginate(10)->appends($request->all());
-        
-        // Get unique categories for the filter
+        // Active products first, soft-deleted at the end
+        $products = $query
+            ->orderByRaw('deleted_at IS NOT NULL ASC')
+            ->latest()
+            ->paginate(10)
+            ->appends($request->all());
+
+        // Get unique categories for the filter (active products only)
         $categories = Product::distinct()->pluck('category')->sort();
 
         return view('products.index', compact('products', 'categories'));
@@ -148,10 +153,34 @@ class ProductController extends Controller
 
     /**
      * Remove the specified resource from storage.
+     * Soft delete if the product has history, otherwise force delete.
      */
     public function destroy(Product $product)
     {
-        $product->delete();
-        return redirect()->route('products.index')->with('success', 'Producto eliminado exitosamente.');
+        $hasHistory = $product->inventoryMovements()->exists()
+                   || $product->saleProducts()->exists()
+                   || $product->batches()->exists();
+
+        if ($hasHistory) {
+            $product->delete(); // soft delete
+            return redirect()->route('products.index')
+                ->with('info', 'El producto fue desactivado porque tiene historial de movimientos. Puede reactivarlo desde el listado.');
+        }
+
+        $product->forceDelete();
+        return redirect()->route('products.index')
+            ->with('success', 'Producto eliminado exitosamente.');
+    }
+
+    /**
+     * Restore a soft-deleted product.
+     */
+    public function restore(int $id)
+    {
+        $product = Product::withTrashed()->findOrFail($id);
+        $product->restore();
+
+        return redirect()->route('products.index')
+            ->with('success', 'Producto reactivado exitosamente.');
     }
 }
