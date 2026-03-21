@@ -153,22 +153,22 @@ class SaleController extends Controller
 
                     }
 
-                    $itemTotal = $product->sale_price * $quantity;
-                    $totalSaleAmount += $itemTotal;
-
-                    $sale->saleProducts()->create([
-                        'product_id'  => $product->id,
-                        'quantity'    => $quantity,
-                        'unit_price'  => $product->sale_price,
-                        'total_price' => $itemTotal,
-                    ]);
-
-                    // ANTES:
-                    // $product->decrementStock($quantity, 'sale', "Venta #{$sale->id}");
-
-                    // DESPUÉS:
+                    // Descontar stock FIFO — retorna un tramo por cada lote consumido (Opción A)
                     $inventoryService = app(\App\Services\InventoryService::class);
-                    $inventoryService->deductStock($product->id, $quantity, "Venta #{$sale->id}");
+                    $tramos = $inventoryService->deductStock($product->id, $quantity, "Venta #{$sale->id}");
+
+                    // Crear una línea en la venta por cada tramo (lote) consumido
+                    foreach ($tramos as $tramo) {
+                        $tramoTotal       = $tramo['unit_price'] * $tramo['quantity'];
+                        $totalSaleAmount += $tramoTotal;
+
+                        $sale->saleProducts()->create([
+                            'product_id'  => $product->id,
+                            'quantity'    => $tramo['quantity'],
+                            'unit_price'  => $tramo['unit_price'],
+                            'total_price' => $tramoTotal,
+                        ]);
+                    }
                 }
 
                 $sale->update([

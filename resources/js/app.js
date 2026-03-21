@@ -53,14 +53,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     /**
-     * Prevent multiple form submissions
+     * Prevent multiple form submissions (Con delegación de eventos para formularios dinámicos)
      */
-    document.querySelectorAll("form").forEach(form => {
-        form.addEventListener("submit", function () {
+    document.addEventListener("submit", function (e) {
+        if (e.target && e.target.tagName === 'FORM') {
+            const form = e.target;
             form.querySelectorAll("button[type=submit]").forEach(btn => {
-                btn.disabled = true;
-                btn.innerText = "Guardando...";
+                // Usar un pequeño timeout permite que el envío nativo o Alpine procese la petición antes de deshabilitar el botón
+                setTimeout(() => {
+                    btn.disabled = true;
+                    btn.innerText = "Guardando...";
+                }, 10);
             });
-        });
+        }
     });
 });

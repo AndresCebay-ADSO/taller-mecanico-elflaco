@@ -13,6 +13,7 @@ class Batch extends Model
         'supplier_id',
         'cost_price',
         'selling_price',
+        'sale_price',
         'quantity',
         'remaining_stock',
         'purchased_at',
@@ -21,6 +22,7 @@ class Batch extends Model
     protected $casts = [
         'cost_price'    => 'decimal:2',
         'selling_price' => 'decimal:2',
+        'sale_price'    => 'decimal:2',
         'purchased_at'  => 'datetime',
     ];
 
