@@ -13,6 +13,7 @@ use App\Http\Controllers\JobTypeController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\WorkshopJobController;
+use App\Http\Controllers\BatchController;
 
 // Ruta raíz → redirige al dashboard (el middleware auth se encarga del resto)
 Route::get('/', function () {
@@ -34,6 +35,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/adjustment', [InventoryController::class, 'createAdjustment'])->name('adjustment');
         Route::post('/adjustment', [InventoryController::class, 'storeAdjustment'])->name('store-adjustment');
     });
+
+    Route::patch('batches/{batch}', [BatchController::class, 'update'])->name('batches.update');
 
     Route::resource('suppliers', SupplierController::class);
     Route::patch('suppliers/{supplier}/toggle-active', [SupplierController::class, 'toggleActive'])->name('suppliers.toggleActive');

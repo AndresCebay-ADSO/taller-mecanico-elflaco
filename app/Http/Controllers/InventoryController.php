@@ -18,7 +18,7 @@ class InventoryController extends Controller
             'date_end' => 'nullable|date|after_or_equal:date_start',
         ]);
 
-        $query = InventoryMovement::with(['product', 'supplier']);
+        $query = InventoryMovement::with(['product', 'supplier', 'batch']);
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -44,7 +44,8 @@ class InventoryController extends Controller
         }
 
         $movements = $query->latest('movement_date')->latest('id')->paginate(10)->appends($request->all());
-        return view('inventory.index', compact('movements'));
+        $activeSuppliers = Supplier::active()->orderBy('name')->get();
+        return view('inventory.index', compact('movements', 'activeSuppliers'));
     }
 
     public function createPurchase()
