@@ -239,7 +239,7 @@
 
                     <!-- Mano de Obra -->
                     <div>
-                        <x-input label="Mano de Obra ($)" name="labor_cost" x-model="laborCost" required class="font-bold" isMoney="true" />
+                        <x-input label="Mano de Obra ($)" name="labor_cost" type="number" step="0.01" x-model="laborCost" required class="font-bold" />
                     </div>
 
                     <!-- RESUMEN FINAL -->

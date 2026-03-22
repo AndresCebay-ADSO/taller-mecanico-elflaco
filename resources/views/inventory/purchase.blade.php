@@ -85,12 +85,12 @@
 
                     <div class="space-y-2">
                         <label class="block text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Precio Compra Unitario</label>
-                        <x-input name="unit_price" type="number" step="0.01" required placeholder="0.00" isMoney="true" />
+                        <x-input name="unit_price" type="number" step="0.01" required placeholder="0.00" value="{{ old('unit_price') }}" />
                     </div>
 
                     <div class="space-y-2">
                         <label class="block text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Precio de Venta (este lote)</label>
-                        <x-input name="sale_price" type="number" step="0.01" placeholder="0.00" isMoney="true" />
+                        <x-input name="sale_price" type="number" step="0.01" placeholder="0.00" value="{{ old('sale_price') }}" />
                         <p class="text-[10px] text-slate-400 font-medium mt-1 ml-1">Opcional — si se deja vacío, se usa el precio de venta actual del producto.</p>
                         @error('sale_price')
                             <p class="text-[10px] text-red-500 font-bold mt-1 ml-1">{{ $message }}</p>

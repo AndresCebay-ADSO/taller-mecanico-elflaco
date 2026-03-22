@@ -179,42 +179,49 @@
                         </button>
                     </div>
 
-                    <form :action="'{{ url('batches') }}/' + batch?.id" method="POST" class="p-6 space-y-4 text-left">
+                    <form :action="'{{ url('batches') }}/' + batch?.id" method="POST" class="p-6 space-y-6 text-left">
                         @csrf
                         @method('PATCH')
                         
                         <div>
-                            <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Proveedor</label>
-                            <select name="supplier_id" x-model="form.supplier_id" required class="w-full rounded-xl border-slate-200 bg-slate-50 dark:bg-slate-950/40 dark:border-slate-800 focus:ring-brand-500 focus:border-brand-500 text-sm">
-                                <option value="">Seleccione un proveedor...</option>
-                                @foreach($activeSuppliers as $supplier)
-                                    <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Costo Unitario</label>
-                                <input type="number" step="0.01" name="cost_price" x-model="form.cost_price" required class="w-full rounded-xl border-slate-200 bg-slate-50 dark:bg-slate-950/40 dark:border-slate-800 focus:ring-brand-500 focus:border-brand-500 text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Precio Venta</label>
-                                <input type="number" step="0.01" name="sale_price" x-model="form.sale_price" required class="w-full rounded-xl border-slate-200 bg-slate-50 dark:bg-slate-950/40 dark:border-slate-800 focus:ring-brand-500 focus:border-brand-500 text-sm">
+                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                                Proveedor <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <select name="supplier_id" x-model="form.supplier_id" required class="block w-full rounded-2xl border border-gray-300 px-4 py-3 bg-white text-gray-950 shadow-sm transition-all duration-200 focus:border-brand-500 focus:ring-4 focus:ring-brand-50 dark:bg-gray-900 dark:border-gray-700 dark:text-white sm:text-sm">
+                                    <option value="">Seleccione un proveedor...</option>
+                                    @foreach($activeSuppliers as $supplier)
+                                        <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
+                                    @endforeach
+                                </select>
                             </div>
                         </div>
-                        <div>
-                            <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Cantidad</label>
-                            <input type="number" name="quantity" x-model="form.quantity" :disabled="!canEditQuantity" :class="{'opacity-50 bg-slate-100 cursor-not-allowed': !canEditQuantity}" required class="w-full rounded-xl border-slate-200 bg-slate-50 dark:bg-slate-950/40 dark:border-slate-800 focus:ring-brand-500 focus:border-brand-500 text-sm">
-                            <p x-show="!canEditQuantity" class="mt-1 text-xs text-amber-600 dark:text-amber-500 font-medium whitespace-normal leading-tight">Este lote ya tiene ventas registradas. Para ajustar el stock usa Ajuste Manual.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <x-input label="Costo Unitario" type="number" step="0.01" name="cost_price" required x-model="form.cost_price" />
+                            <x-input label="Precio Venta" type="number" step="0.01" name="sale_price" required x-model="form.sale_price" />
                         </div>
                         <div>
-                            <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Motivo de corrección (Mín. 10 caracteres)</label>
-                            <textarea name="notes" x-model="form.notes" required minlength="10" rows="3" class="w-full rounded-xl border-slate-200 bg-slate-50 dark:bg-slate-950/40 dark:border-slate-800 focus:ring-brand-500 focus:border-brand-500 text-sm" placeholder="Especificar el porqué de la corrección..."></textarea>
+                            <x-input label="Cantidad" type="number" name="quantity" required x-model="form.quantity" x-bind:disabled="!canEditQuantity" x-bind:class="{'opacity-50 bg-slate-50 dark:bg-slate-800 cursor-not-allowed': !canEditQuantity}" />
+                            <p x-show="!canEditQuantity" class="mt-2 text-xs text-amber-600 dark:text-amber-500 font-bold flex gap-1 items-start">
+                                <i data-lucide="info" class="w-4 h-4 shrink-0"></i> 
+                                <span>Este lote ya tiene ventas registradas. Para modificar el stock general usa <a href="{{ route('inventory.adjustment') }}" class="underline hover:text-amber-700 dark:hover:text-amber-400">Ajuste Manual</a>.</span>
+                            </p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                                Motivo de corrección <span class="text-red-500">*</span>
+                            </label>
+                            <textarea name="notes" x-model="form.notes" required minlength="10" rows="3" class="block w-full rounded-2xl border border-gray-300 px-4 py-3 bg-white text-gray-950 shadow-sm transition-all duration-200 placeholder:text-gray-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-50 dark:bg-gray-900 dark:border-gray-700 dark:text-white dark:placeholder:text-gray-500 sm:text-sm" placeholder="Especificar el porqué de la corrección..."></textarea>
+                            <p class="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">Se requieren al menos 10 caracteres.</p>
                         </div>
                         
-                        <div class="pt-4 flex justify-end space-x-3">
-                            <button type="button" @click="showModal = false" class="px-4 py-2 text-sm font-bold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors">Cancelar</button>
-                            <button type="submit" class="px-4 py-2 text-sm font-bold text-white bg-brand-600 rounded-xl hover:bg-brand-700 transition-colors shadow-sm">Guardar Cambios</button>
+                        <div class="pt-5 flex justify-end gap-3 border-t border-slate-100 dark:border-slate-700">
+                            <button type="button" @click="showModal = false" class="inline-flex items-center justify-center font-bold rounded-2xl transition-all duration-200 active:scale-95 cursor-pointer focus:outline-none focus:ring-4 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 focus:ring-slate-100 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 px-5 py-3 text-sm">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="inline-flex items-center justify-center font-bold rounded-2xl transition-all duration-200 active:scale-95 cursor-pointer focus:outline-none focus:ring-4 bg-brand-500 text-white hover:bg-brand-600 focus:ring-brand-500/20 shadow-sm dark:bg-brand-500 dark:hover:bg-brand-600 px-5 py-3 text-sm">
+                                Guardar Cambios
+                            </button>
                         </div>
                     </form>
                 </div>

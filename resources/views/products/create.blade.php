@@ -65,8 +65,8 @@
 
                     <x-input label="Código UPC / Barcode" name="upc" placeholder="Ej. 1234567890" value="{{ old('upc') }}" maxlength="50" />
                     
-                    <x-input label="Precio de Compra" name="purchase_price" type="number" step="0.01" required placeholder="0.00" value="{{ old('purchase_price') }}" isMoney="true" />
-                    <x-input label="Precio de Venta" name="sale_price" type="number" step="0.01" required placeholder="0.00" value="{{ old('sale_price') }}" isMoney="true" />
+                    <x-input label="Precio de Compra" name="purchase_price" type="number" step="0.01" required placeholder="0.00" value="{{ old('purchase_price') }}" />
+                    <x-input label="Precio de Venta" name="sale_price" type="number" step="0.01" required placeholder="0.00" value="{{ old('sale_price') }}" />
                     
                     <x-input label="Stock Inicial" name="stock" type="number" required placeholder="0" x-model="stock" />
                     
