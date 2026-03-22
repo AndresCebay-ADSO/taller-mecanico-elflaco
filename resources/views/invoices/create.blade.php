@@ -21,7 +21,7 @@
                 </div>
 
                 <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <x-input label="Monto Total" name="amount" type="number" step="0.01" required placeholder="0.00" isMoney="true" />
+                    <x-input label="Monto Total" name="amount" type="number" step="0.01" required placeholder="0.00" value="{{ old('amount') }}" />
                     
                     <div class="space-y-1.5">
                         <label for="service_order_id" class="block text-sm font-semibold text-slate-700">Orden de Servicio <span class="text-red-500">*</span></label>
