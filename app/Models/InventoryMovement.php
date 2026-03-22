@@ -8,6 +8,7 @@ class InventoryMovement extends Model
 {
     protected $fillable = [
         'product_id',
+        'batch_id',
         'movement_type',
         'quantity',
         'unit_price',
@@ -29,5 +30,10 @@ class InventoryMovement extends Model
     public function supplier()
     {
         return $this->belongsTo(Supplier::class);
+    }
+
+    public function batch()
+    {
+        return $this->belongsTo(Batch::class);
     }
 }
