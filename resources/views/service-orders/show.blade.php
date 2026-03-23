@@ -77,7 +77,7 @@
                                     <div class="flex justify-between items-center bg-white p-2 rounded-xl border border-slate-100 shadow-sm">
                                         <div class="flex items-center gap-2">
                                             <span class="h-6 w-6 flex items-center justify-center rounded-lg bg-slate-100 text-[10px] font-bold text-slate-600">{{ $jp->quantity }}x</span>
-                                            <span class="text-xs font-bold text-slate-800">{{ $jp->product->name }}</span>
+                                            <span class="text-xs font-bold text-slate-800">{{ $jp->product?->name ?? 'Producto eliminado' }}</span>
                                         </div>
                                         <span class="text-xs font-bold text-slate-900">${{ number_format($jp->total_price, 0, ',', '.') }}</span>
                                     </div>

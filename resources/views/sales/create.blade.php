@@ -49,6 +49,8 @@
                             class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm cursor-pointer focus:ring-2 focus:ring-navy-500 focus:border-navy-500 transition-all">
 
                             <option value="Efectivo" {{ old('payment_method') == 'Efectivo' ? 'selected' : '' }}>Efectivo</option>
+                            <option value="Nequi" {{ old('payment_method') == 'Nequi' ? 'selected' : '' }}>Nequi</option>
+                            <option value="Daviplata" {{ old('payment_method') == 'Daviplata' ? 'selected' : '' }}>Daviplata</option>
                             <option value="Transferencia" {{ old('payment_method') == 'Transferencia' ? 'selected' : '' }}>Transferencia</option>
                             <option value="Tarjeta" {{ old('payment_method') == 'Tarjeta' ? 'selected' : '' }}>Tarjeta</option>
                             <option value="Otro" {{ old('payment_method') == 'Otro' ? 'selected' : '' }}>Otro</option>

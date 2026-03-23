@@ -105,7 +105,7 @@
                                     onsubmit="return confirm('¿Eliminar producto? Si tiene historial de movimientos será desactivado en lugar de eliminado.')">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="rounded-lg p-2 text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors">
+                                    <button type="submit" class="rounded-lg p-2 text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer">
                                         <i data-lucide="trash-2" class="h-4 w-4"></i>
                                     </button>
                                 </form>

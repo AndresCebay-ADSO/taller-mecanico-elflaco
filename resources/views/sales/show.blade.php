@@ -50,7 +50,7 @@
                                 <tbody class="divide-y divide-slate-100">
                                     @foreach($sale->saleProducts as $item)
                                     <tr>
-                                        <td class="px-4 py-3 text-slate-900 font-medium">{{ $item->product->name }}</td>
+                                        <td class="px-4 py-3 text-slate-900 font-medium">{{ $item->product?->name ?? 'Producto eliminado' }}</td>
                                         <td class="px-4 py-3 text-slate-600 text-center">{{ $item->quantity }}</td>
                                         <td class="px-4 py-3 text-slate-600 text-right">${{ number_format($item->unit_price, 2, ',', '.') }}</td>
                                         <td class="px-4 py-3 text-slate-900 font-bold text-right">${{ number_format($item->total_price, 2, ',', '.') }}</td>
