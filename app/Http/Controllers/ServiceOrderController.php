@@ -96,6 +96,10 @@ class ServiceOrderController extends Controller
      */
     public function show(ServiceOrder $serviceOrder)
     {
+        $serviceOrder->load(['workshopJobs.mechanic', 'workshopJobs.jobType', 'workshopJobs.jobProducts.product' => function($q) {
+            $q->withTrashed();
+        }]);
+
         $mechanics = Mechanic::where('is_active', true)->get();
         $jobTypes = \App\Models\JobType::where('is_active', true)->get();
         $products = \App\Models\Product::where('stock', '>', 0)->get();

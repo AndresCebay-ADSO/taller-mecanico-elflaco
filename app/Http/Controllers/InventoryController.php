@@ -18,7 +18,9 @@ class InventoryController extends Controller
             'date_end' => 'nullable|date|after_or_equal:date_start',
         ]);
 
-        $query = InventoryMovement::with(['product', 'supplier', 'batch']);
+        $query = InventoryMovement::with(['product' => function($q) {
+            $q->withTrashed();
+        }, 'supplier', 'batch']);
 
         if ($request->filled('search')) {
             $search = $request->input('search');

@@ -10,15 +10,52 @@
 
     <!-- Tarjeta de Resumen -->
     <div class="mb-6 bg-white dark:bg-gray-900/50 rounded-xl shadow-sm border border-slate-200 dark:border-gray-800 border-t-4 border-t-emerald-500 overflow-hidden">
-        <div class="p-6 flex justify-between items-center">
-            <div>
-                <p class="text-sm font-medium text-slate-500 mb-1">Ventas de Hoy</p>
-                <h3 class="text-3xl font-bold text-slate-900">${{ number_format($todayTotal) }}</h3>
-                <p class="text-sm text-slate-500 mt-1">{{ $todayCount }} venta(s)</p>
+        <div class="p-6">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-sm font-medium text-slate-500 mb-1">Ventas de Hoy</p>
+                    <h3 class="text-3xl font-bold text-slate-900">${{ number_format($todayTotal) }}</h3>
+                    <p class="text-sm text-slate-500 mt-1">{{ $todayCount }} venta(s)</p>
+                </div>
+                <div class="bg-emerald-100 dark:bg-emerald-900/30 p-4 rounded-xl flex items-center justify-center">
+                    <i data-lucide="shopping-cart" class="w-8 h-8 text-emerald-600 dark:text-emerald-400"></i>
+                </div>
             </div>
-            <div class="bg-emerald-100 dark:bg-emerald-900/30 p-4 rounded-xl flex items-center justify-center">
-                <i data-lucide="shopping-cart" class="w-8 h-8 text-emerald-600 dark:text-emerald-400"></i>
+            
+            @if($todayByMethod->isNotEmpty())
+            <div class="mt-5 pt-5 border-t border-slate-100 dark:border-gray-800">
+                <p class="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-widest mb-4">Desglose de Ingresos</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-5">
+                    @foreach($todayByMethod as $method)
+                    @php
+                        $percentage = $todayTotal > 0 ? round(($method->total / $todayTotal) * 100) : 0;
+                        $icon = match($method->payment_method) {
+                            'Efectivo' => 'banknotes',
+                            'Nequi' => 'smartphone',
+                            'Daviplata' => 'smartphone',
+                            'Transferencia' => 'landmark',
+                            'Tarjeta' => 'credit-card',
+                            default => 'circle-ellipsis'
+                        };
+                    @endphp
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <div class="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-gray-300">
+                                <i data-lucide="{{ $icon }}" class="w-4 h-4 text-slate-400 dark:text-gray-500"></i>
+                                {{ $method->payment_method }}
+                            </div>
+                            <div class="text-right">
+                                <span class="block text-sm font-black text-emerald-600 dark:text-emerald-400">${{ number_format($method->total) }}</span>
+                            </div>
+                        </div>
+                        <div class="w-full bg-slate-100 dark:bg-gray-800 rounded-full h-1.5 overflow-hidden">
+                            <div class="bg-emerald-500 dark:bg-emerald-400 h-1.5 rounded-full" style="width: {{ $percentage }}%"></div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
             </div>
+            @endif
         </div>
     </div>
 
@@ -36,6 +73,8 @@
             <select name="payment_method" id="payment_method" class="w-full rounded-2xl border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-950/50 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 dark:text-gray-300 transition-all">
                 <option value="">Cualquier método</option>
                 <option value="Efectivo" {{ request('payment_method') == 'Efectivo' ? 'selected' : '' }}>Efectivo</option>
+                <option value="Nequi" {{ request('payment_method') == 'Nequi' ? 'selected' : '' }}>Nequi</option>
+                <option value="Daviplata" {{ request('payment_method') == 'Daviplata' ? 'selected' : '' }}>Daviplata</option>
                 <option value="Transferencia" {{ request('payment_method') == 'Transferencia' ? 'selected' : '' }}>Transferencia</option>
                 <option value="Tarjeta" {{ request('payment_method') == 'Tarjeta' ? 'selected' : '' }}>Tarjeta</option>
                 <option value="Otro" {{ request('payment_method') == 'Otro' ? 'selected' : '' }}>Otro</option>
@@ -80,7 +119,7 @@
                                     @foreach($sale->saleProducts as $item)
                                         <div class="flex items-center text-sm text-slate-700">
                                             <i data-lucide="package" class="w-3.5 h-3.5 text-blue-500 mr-2 flex-shrink-0"></i>
-                                            <span class="truncate max-w-[200px]">{{ $item->product->name }}</span>
+                                            <span class="truncate max-w-[200px]">{{ $item->product?->name ?? 'Producto eliminado' }}</span>
                                             <span class="text-slate-500 ml-1.5 font-medium">x{{ $item->quantity }}</span>
                                         </div>
                                     @endforeach
