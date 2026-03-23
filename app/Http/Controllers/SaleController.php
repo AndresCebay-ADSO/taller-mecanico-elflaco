@@ -15,7 +15,7 @@ class SaleController extends Controller
     {
         $request->validate([
             'search' => 'nullable|string|max:255',
-            'payment_method' => 'nullable|string|in:Efectivo,Transferencia,Tarjeta,Otro',
+            'payment_method' => 'nullable|string|in:Efectivo,Nequi,Daviplata,Transferencia,Tarjeta,Otro',
             'status' => 'nullable|string|in:completada,anulada',
             'date_start' => 'nullable|date',
             'date_end' => 'nullable|date|after_or_equal:date_start',
@@ -71,7 +71,14 @@ class SaleController extends Controller
             ->where('status', '!=', 'anulada')
             ->count();
 
-        return view('sales.index', compact('sales', 'todayTotal', 'todayCount'));
+        $todayByMethod = Sale::select('payment_method', \Illuminate\Support\Facades\DB::raw('SUM(total_amount) as total'))
+            ->whereDate('sale_date', today())
+            ->where('status', '!=', 'anulada')
+            ->groupBy('payment_method')
+            ->having('total', '>', 0)
+            ->get();
+
+        return view('sales.index', compact('sales', 'todayTotal', 'todayCount', 'todayByMethod'));
     }
 
     /**
@@ -90,7 +97,7 @@ class SaleController extends Controller
     {
         $validated = $request->validate([
             'customer_name'       => 'nullable|string|max:255',
-            'payment_method'      => 'required|string|in:Efectivo,Transferencia,Tarjeta,Otro',
+            'payment_method'      => 'required|string|in:Efectivo,Nequi,Daviplata,Transferencia,Tarjeta,Otro',
             'products'            => 'required|array|min:1',
             'products.*.id'       => 'required|distinct|exists:products,id',
             'products.*.quantity' => 'required|integer|min:1',
