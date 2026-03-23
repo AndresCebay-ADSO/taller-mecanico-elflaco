@@ -35,8 +35,8 @@
                     {{ $mov->movement_date->format('d/m/Y') }}
                 </td>
                 <td class="px-6 py-4">
-                    <div class="text-sm font-bold text-slate-900">{{ $mov->product->name }}</div>
-                    <div class="text-[10px] text-slate-400 font-bold uppercase">{{ $mov->product->category }}</div>
+                    <div class="text-sm font-bold text-slate-900">{{ $mov->product?->name ?? 'Producto eliminado' }}</div>
+                    <div class="text-[10px] text-slate-400 font-bold uppercase">{{ $mov->product?->category ?? '-' }}</div>
                 </td>
                 <td class="px-6 py-4">
                     @php
@@ -134,7 +134,7 @@
                             </div>
                             <div>
                                 <span class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Producto</span>
-                                <p class="text-sm font-bold text-slate-900 dark:text-white mt-1" x-text="movement?.product?.name"></p>
+                                <p class="text-sm font-bold text-slate-900 dark:text-white mt-1" x-text="movement?.product?.name || 'Producto eliminado'"></p>
                             </div>
                             <div>
                                 <span class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Cantidad</span>

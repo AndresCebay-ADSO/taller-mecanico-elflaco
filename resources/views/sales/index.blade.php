@@ -80,7 +80,7 @@
                                     @foreach($sale->saleProducts as $item)
                                         <div class="flex items-center text-sm text-slate-700">
                                             <i data-lucide="package" class="w-3.5 h-3.5 text-blue-500 mr-2 flex-shrink-0"></i>
-                                            <span class="truncate max-w-[200px]">{{ $item->product->name }}</span>
+                                            <span class="truncate max-w-[200px]">{{ $item->product?->name ?? 'Producto eliminado' }}</span>
                                             <span class="text-slate-500 ml-1.5 font-medium">x{{ $item->quantity }}</span>
                                         </div>
                                     @endforeach

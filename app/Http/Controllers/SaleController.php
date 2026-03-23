@@ -21,7 +21,11 @@ class SaleController extends Controller
             'date_end' => 'nullable|date|after_or_equal:date_start',
         ]);
 
-        $query = Sale::with(['user', 'saleProducts.product']);
+        $query = Sale::with(['saleProducts' => function($query) {
+            $query->with(['product' => function($q) {
+                $q->withTrashed();
+            }]);
+        }, 'user']);
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -191,6 +195,10 @@ class SaleController extends Controller
      */
     public function show(Sale $sale)
     {
+        $sale->load(['saleProducts.product' => function($q) {
+            $q->withTrashed();
+        }]);
+
         return view('sales.show', compact('sale'));
     }
 
