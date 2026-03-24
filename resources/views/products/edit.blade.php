@@ -9,7 +9,11 @@
 
     <div class="max-w-4xl">
         <x-card>
-            <form action="{{ route('products.update', $product) }}" method="POST" class="space-y-6">
+            <form action="{{ route('products.update', $product) }}" method="POST" class="space-y-6"
+                x-data="{
+                    purchasePrice: '{{ old('purchase_price', (int) $product->purchase_price) }}',
+                    salePrice: '{{ old('sale_price', (int) $product->sale_price) }}'
+                }">
                 @csrf
                 @method('PUT')
                 <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -48,8 +52,18 @@
 
                     <x-input label="Código UPC / Barcode" name="upc" :value="$product->upc" maxlength="50" />
                     
-                    <x-input label="Precio de Compra" name="purchase_price" type="number" step="0.01" required value="{{ old('purchase_price', (int) $product->purchase_price) }}" />
-                    <x-input label="Precio de Venta" name="sale_price" type="number" step="0.01" required value="{{ old('sale_price', (int) $product->sale_price) }}" />
+                    <div>
+                        <x-input label="Precio de Compra" name="purchase_price" type="number" step="0.01" required x-model="purchasePrice" />
+                        <p class="text-xs text-slate-500 mt-1 font-medium" x-show="purchasePrice" x-cloak>
+                            $ <span x-text="Number(purchasePrice).toLocaleString('es-CO')"></span>
+                        </p>
+                    </div>
+                    <div>
+                        <x-input label="Precio de Venta" name="sale_price" type="number" step="0.01" required x-model="salePrice" />
+                        <p class="text-xs text-slate-500 mt-1 font-medium" x-show="salePrice" x-cloak>
+                            $ <span x-text="Number(salePrice).toLocaleString('es-CO')"></span>
+                        </p>
+                    </div>
                     
                     <x-input label="Stock" name="stock" type="number" required :value="$product->stock" />
                     <x-input label="Stock Mínimo (Alerta)" name="min_stock" type="number" required :value="$product->min_stock" />

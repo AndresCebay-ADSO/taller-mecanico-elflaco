@@ -12,6 +12,8 @@
             <form action="{{ route('products.store') }}" method="POST" class="space-y-6" 
                 x-data="{ 
                     stock: '{{ old('stock') }}', 
+                    purchasePrice: '{{ old('purchase_price') }}',
+                    salePrice: '{{ old('sale_price') }}',
                     selectedSuppliers: [],
                     allSuppliers: [
                         @foreach($suppliers as $supplier)
@@ -65,8 +67,18 @@
 
                     <x-input label="Código UPC / Barcode" name="upc" placeholder="Ej. 1234567890" value="{{ old('upc') }}" maxlength="50" />
                     
-                    <x-input label="Precio de Compra" name="purchase_price" type="number" step="0.01" required placeholder="0.00" value="{{ old('purchase_price') }}" />
-                    <x-input label="Precio de Venta" name="sale_price" type="number" step="0.01" required placeholder="0.00" value="{{ old('sale_price') }}" />
+                    <div>
+                        <x-input label="Precio de Compra" name="purchase_price" type="number" step="0.01" required placeholder="0.00" x-model="purchasePrice" />
+                        <p class="text-xs text-slate-500 mt-1 font-medium" x-show="purchasePrice" x-cloak>
+                            $ <span x-text="Number(purchasePrice).toLocaleString('es-CO')"></span>
+                        </p>
+                    </div>
+                    <div>
+                        <x-input label="Precio de Venta" name="sale_price" type="number" step="0.01" required placeholder="0.00" x-model="salePrice" />
+                        <p class="text-xs text-slate-500 mt-1 font-medium" x-show="salePrice" x-cloak>
+                            $ <span x-text="Number(salePrice).toLocaleString('es-CO')"></span>
+                        </p>
+                    </div>
                     
                     <x-input label="Stock Inicial" name="stock" type="number" required placeholder="0" x-model="stock" />
                     
