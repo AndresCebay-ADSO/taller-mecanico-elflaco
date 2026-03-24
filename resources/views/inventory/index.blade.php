@@ -197,8 +197,18 @@
                             </div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <x-input label="Costo Unitario" type="number" step="0.01" name="cost_price" required x-model="form.cost_price" />
-                            <x-input label="Precio Venta" type="number" step="0.01" name="sale_price" required x-model="form.sale_price" />
+                            <div>
+                                <x-input label="Costo Unitario" type="number" step="0.01" name="cost_price" required x-model="form.cost_price" />
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium" x-show="form.cost_price" x-cloak>
+                                    $ <span x-text="Number(form.cost_price).toLocaleString('es-CO')"></span>
+                                </p>
+                            </div>
+                            <div>
+                                <x-input label="Precio Venta" type="number" step="0.01" name="sale_price" required x-model="form.sale_price" />
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium" x-show="form.sale_price" x-cloak>
+                                    $ <span x-text="Number(form.sale_price).toLocaleString('es-CO')"></span>
+                                </p>
+                            </div>
                         </div>
                         <div>
                             <x-input label="Cantidad" type="number" name="quantity" required x-model="form.quantity" x-bind:disabled="!canEditQuantity" x-bind:class="{'opacity-50 bg-slate-50 dark:bg-slate-800 cursor-not-allowed': !canEditQuantity}" />

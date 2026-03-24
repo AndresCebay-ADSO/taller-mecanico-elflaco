@@ -51,7 +51,11 @@
 
     <div class="max-w-3xl">
         <x-card>
-            <form action="{{ route('inventory.store-purchase') }}" method="POST" class="space-y-8">
+            <form action="{{ route('inventory.store-purchase') }}" method="POST" class="space-y-8"
+                x-data="{
+                    unitPrice: '{{ old('unit_price') }}',
+                    salePrice: '{{ old('sale_price') }}'
+                }">
                 @csrf
                 <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
                     <div class="space-y-2">
@@ -85,12 +89,18 @@
 
                     <div class="space-y-2">
                         <label class="block text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Precio Compra Unitario</label>
-                        <x-input name="unit_price" type="number" step="0.01" required placeholder="0.00" value="{{ old('unit_price') }}" />
+                        <x-input name="unit_price" type="number" step="0.01" required placeholder="0.00" x-model="unitPrice" />
+                        <p class="text-xs text-slate-500 mt-1 font-medium ml-1" x-show="unitPrice" x-cloak>
+                            $ <span x-text="Number(unitPrice).toLocaleString('es-CO')"></span>
+                        </p>
                     </div>
 
                     <div class="space-y-2">
                         <label class="block text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Precio de Venta (este lote)</label>
-                        <x-input name="sale_price" type="number" step="0.01" placeholder="0.00" value="{{ old('sale_price') }}" />
+                        <x-input name="sale_price" type="number" step="0.01" placeholder="0.00" x-model="salePrice" />
+                        <p class="text-xs text-slate-500 mt-1 font-medium ml-1" x-show="salePrice" x-cloak>
+                            $ <span x-text="Number(salePrice).toLocaleString('es-CO')"></span>
+                        </p>
                         <p class="text-[10px] text-slate-400 font-medium mt-1 ml-1">Opcional — si se deja vacío, se usa el precio de venta actual del producto.</p>
                         @error('sale_price')
                             <p class="text-[10px] text-red-500 font-bold mt-1 ml-1">{{ $message }}</p>
