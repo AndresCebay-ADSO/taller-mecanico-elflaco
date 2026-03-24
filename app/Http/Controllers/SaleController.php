@@ -113,7 +113,9 @@ class SaleController extends Controller
 
         try {
 
-            DB::transaction(function () use ($validated) {
+            $hasLowStock = false;
+
+            DB::transaction(function () use ($validated, &$hasLowStock) {
 
                 $productData = [];
 
@@ -180,6 +182,11 @@ class SaleController extends Controller
                             'total_price' => $tramoTotal,
                         ]);
                     }
+
+                    $product->refresh();
+                    if ($product->stock <= $product->min_stock) {
+                        $hasLowStock = true;
+                    }
                 }
 
                 $sale->update([
@@ -192,6 +199,10 @@ class SaleController extends Controller
 
             return $e->getResponse();
 
+        }
+
+        if ($hasLowStock) {
+            session()->flash('show_low_stock_toast', true);
         }
 
         return redirect()->route('sales.index')->with('success', 'Venta registrada y stock descontado.');
