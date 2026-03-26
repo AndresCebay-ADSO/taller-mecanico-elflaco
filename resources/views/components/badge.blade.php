@@ -13,6 +13,8 @@ $variantClasses = match($variant) {
     'emerald' => 'bg-success-50 text-success-600 dark:bg-success-500/20 dark:text-success-400',
     'red' => 'bg-error-50 text-error-600 dark:bg-error-500/20 dark:text-error-400',
     'amber' => 'bg-warning-50 text-warning-600 dark:bg-warning-500/20 dark:text-warning-400',
+    'purple' => 'bg-purple-50 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400',
+    'teal' => 'bg-teal-50 text-teal-600 dark:bg-teal-500/20 dark:text-teal-400',
     default => 'bg-gray-100 text-gray-700 dark:bg-gray-500/20 dark:text-gray-400',
 };
 
