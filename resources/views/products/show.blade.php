@@ -67,18 +67,31 @@
         <div class="space-y-8">
             <x-card>
                 <x-slot name="header">
-                    <h3 class="font-bold text-slate-900">Proveedor Asignado</h3>
+                    <h3 class="font-bold text-slate-900">Proveedores</h3>
                 </x-slot>
-                <div class="flex items-start gap-4">
-                    <div class="h-12 w-12 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0">
-                        <i data-lucide="truck" class="h-6 w-6 text-slate-600"></i>
+
+                @php $lastSupplier = $product->lastSupplier(); @endphp
+
+                @if($product->suppliers->isNotEmpty())
+                    <div class="space-y-3">
+                        @foreach($product->suppliers as $supplier)
+                            <div class="flex items-center gap-3 p-3 rounded-xl {{ $lastSupplier && $lastSupplier->id === $supplier->id ? 'bg-blue-50 border border-blue-200' : 'bg-slate-50' }}">
+                                <div class="h-10 w-10 rounded-lg {{ $lastSupplier && $lastSupplier->id === $supplier->id ? 'bg-blue-100' : 'bg-slate-100' }} flex items-center justify-center flex-shrink-0">
+                                    <i data-lucide="truck" class="h-5 w-5 {{ $lastSupplier && $lastSupplier->id === $supplier->id ? 'text-blue-600' : 'text-slate-500' }}"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-bold text-slate-900">{{ $supplier->name }}</p>
+                                    @if($lastSupplier && $lastSupplier->id === $supplier->id)
+                                        <span class="text-xs text-blue-600 font-semibold">Último proveedor</span>
+                                    @endif
+                                </div>
+                                <a href="{{ route('suppliers.show', $supplier) }}" class="text-sm text-blue-600 hover:underline">Ver perfil</a>
+                            </div>
+                        @endforeach
                     </div>
-                    <div>
-                        <p class="font-bold text-slate-900">{{ $product->supplier->name ?? 'Sin proveedor' }}</p>
-                        <p class="text-xs text-slate-500">Última compra: {{ $product->updated_at->format('d/m/Y') }}</p>
-                        <a href="{{ route('suppliers.show', $product->supplier_id) }}" class="mt-2 inline-block text-sm text-blue-600 hover:underline">Ver perfil del proveedor</a>
-                    </div>
-                </div>
+                @else
+                    <p class="text-sm text-slate-500">Sin proveedores asignados.</p>
+                @endif
             </x-card>
         </div>
     </div>

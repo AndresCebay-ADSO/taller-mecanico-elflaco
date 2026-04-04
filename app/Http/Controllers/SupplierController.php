@@ -107,7 +107,7 @@ class SupplierController extends Controller
      */
     public function destroy(Supplier $supplier)
     {
-        $hasProducts = $supplier->products()->exists() || $supplier->productsManyToMany()->exists();
+        $hasProducts = $supplier->products()->exists();
         $hasPurchases = $supplier->productPurchases()->exists();
 
         if ($hasProducts || $hasPurchases) {
