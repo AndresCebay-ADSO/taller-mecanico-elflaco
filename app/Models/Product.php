@@ -11,7 +11,7 @@ class Product extends Model
     protected $fillable = [
         'name',
         'category',
-        'supplier_id',
+
         'purchase_price',
         'sale_price',
         'stock',
@@ -19,9 +19,16 @@ class Product extends Model
         'upc',
     ];
 
-    public function supplier()
+    /**
+     * Get the last supplier from the most recent batch.
+     */
+    public function lastSupplier()
     {
-        return $this->belongsTo(Supplier::class);
+        return $this->batches()
+            ->latest('created_at')
+            ->with('supplier')
+            ->first()
+            ?->supplier;
     }
 
     /**
@@ -47,7 +54,7 @@ class Product extends Model
             'movement_type' => 'purchase',
             'quantity' => $quantity,
             'unit_price' => $unitPrice ?? $this->purchase_price,
-            'supplier_id' => $supplierId ?? $this->supplier_id,
+            'supplier_id' => $supplierId,
             'reference' => $reference,
             'movement_date' => now(),
         ]);

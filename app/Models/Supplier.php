@@ -19,12 +19,10 @@ class Supplier extends Model
         return $query->where('active', true);
     }
 
+    /**
+     * Products associated through pivot table
+     */
     public function products()
-    {
-        return $this->hasMany(Product::class);
-    }
-
-    public function productsManyToMany()
     {
         return $this->belongsToMany(Product::class);
     }
