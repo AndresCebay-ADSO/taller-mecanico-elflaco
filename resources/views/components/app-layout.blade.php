@@ -53,6 +53,25 @@
         <main class="flex-1 overflow-y-auto">
             <div class="py-6">
                 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <!-- Global Notifications -->
+                    @if(session('success'))
+                        <x-alert type="success" :message="session('success')" />
+                    @endif
+
+                    @if(session('error'))
+                        <x-alert type="error" :message="session('error')" />
+                    @endif
+
+                    @if($errors->any())
+                        <x-alert type="error">
+                            <ul class="list-disc list-inside text-sm font-medium">
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </x-alert>
+                    @endif
+
                     {{ $slot }}
                 </div>
             </div>
