@@ -1,32 +1,35 @@
 <?php
 
 namespace App\Http\Controllers;
- 
-use Illuminate\Http\Request;
+
 use App\Models\Setting;
+use Illuminate\Http\Request;
 
 class SettingController extends Controller
 {
     public function index()
     {
         $settings = Setting::pluck('value', 'key')->all();
+
         return view('settings.index', compact('settings'));
     }
 
     public function update(Request $request)
     {
-        $keys = [
-            'workshop_name', 'workshop_nit', 'workshop_phone', 
-            'workshop_email', 'workshop_address', 'tax_percentage', 
-            'footer_text_invoice'
-        ];
+        $validated = $request->validate([
+            'workshop_name' => 'nullable|string|max:255',
+            'workshop_nit' => 'nullable|string|max:50',
+            'workshop_phone' => 'nullable|string|max:30',
+            'workshop_email' => 'nullable|email|max:255',
+            'workshop_address' => 'nullable|string|max:255',
+            'tax_percentage' => 'nullable|numeric|min:0|max:100',
+            'footer_text_invoice' => 'nullable|string|max:1000',
+        ]);
 
-        foreach ($keys as $key) {
-            if ($request->has($key)) {
-                Setting::updateOrCreate(['key' => $key], ['value' => $request->get($key)]);
-            }
+        foreach ($validated as $key => $value) {
+            Setting::updateOrCreate(['key' => $key], ['value' => $value]);
         }
 
-        return redirect()->back()->with('status', 'Configuración actualizada exitosamente.');
+        return redirect()->back()->with('status', 'Configuracion actualizada exitosamente.');
     }
 }

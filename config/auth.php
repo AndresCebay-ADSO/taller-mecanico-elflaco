@@ -17,6 +17,11 @@ return [
         'guard' => env('AUTH_GUARD', 'web'),
         'passwords' => env('AUTH_PASSWORD_BROKER', 'users'),
     ],
+    'admin' => [
+        'name' => env('ADMIN_NAME', 'Administrador'),
+        'email' => env('ADMIN_EMAIL', 'admin@tallerflacos.com'),
+        'password' => env('ADMIN_PASSWORD'),
+    ],
 
     /*
     |--------------------------------------------------------------------------

@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Supplier;
 use App\Http\Requests\StoreProductRequest;
+use App\Services\BranchService;
 use App\Services\InventoryService;
 
 class ProductController extends Controller
@@ -14,9 +15,10 @@ class ProductController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(Request $request, BranchService $branchService)
     {
-        $query = Product::withTrashed()->with('suppliers');
+        $branchId = $branchService->getCurrentBranch()?->id;
+        $query = Product::withTrashed()->with('suppliers')->forBranch($branchId);
 
         // Search filter
         if ($request->filled('search')) {
@@ -43,13 +45,13 @@ class ProductController extends Controller
 
         // Active products first, soft-deleted at the end
         $products = $query
-            ->orderByRaw('deleted_at IS NOT NULL ASC')
+            ->orderByRaw('CASE WHEN deleted_at IS NULL THEN 0 ELSE 1 END ASC')
             ->latest()
             ->paginate(10)
             ->appends($request->all());
 
         // Get unique categories for the filter (active products only)
-        $categories = Product::distinct()->pluck('category')->sort();
+        $categories = Product::forBranch($branchId)->distinct()->pluck('category')->sort();
 
         return view('products.index', compact('products', 'categories'));
     }
@@ -57,16 +59,17 @@ class ProductController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(BranchService $branchService)
     {
         $suppliers = Supplier::active()->orderBy('name')->get();
-        return view('products.create', compact('suppliers'));
+        $currentBranch = $branchService->getCurrentBranch();
+        return view('products.create', compact('suppliers', 'currentBranch'));
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreProductRequest $request)
+    public function store(StoreProductRequest $request, BranchService $branchService)
     {
         $validated = $request->validated();
 
@@ -79,6 +82,8 @@ class ProductController extends Controller
         $purchasePrice = $validated['purchase_price'] ?? 0;
         
         unset($validated['initial_supplier_id']);
+
+        $validated['branch_id'] = $branchService->getCurrentBranch()?->id;
 
         // Crear el producto
         $product = Product::create($validated);
@@ -137,7 +142,6 @@ class ProductController extends Controller
             'supplier_ids.*' => 'exists:suppliers,id',
             'purchase_price' => 'required|numeric|min:0',
             'sale_price' => 'required|numeric|min:0',
-            'stock' => 'required|integer|min:0',
             'min_stock' => 'required|integer|min:0',
             'upc' => 'nullable|string|max:50',
         ]);

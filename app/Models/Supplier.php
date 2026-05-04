@@ -26,9 +26,4 @@ class Supplier extends Model
     {
         return $this->belongsToMany(Product::class);
     }
-
-    public function productPurchases()
-    {
-        return $this->hasMany(ProductPurchase::class);
-    }
 }

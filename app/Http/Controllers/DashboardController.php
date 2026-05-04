@@ -1,70 +1,107 @@
 <?php
 
 namespace App\Http\Controllers;
- 
-use Illuminate\Http\Request;
-use App\Models\Product;
+
 use App\Models\Mechanic;
+use App\Models\Product;
+use App\Models\Sale;
 use App\Models\ServiceOrder;
 use App\Models\WorkshopJob;
-use App\Models\Sale;
+use App\Services\BranchService;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(BranchService $branchService)
     {
+        $branchId = $branchService->getCurrentBranch()?->id;
         $todayStart = Carbon::today();
         $monthStart = Carbon::now()->startOfMonth();
 
-        // 1. Órdenes Activas y Pendientes de entrega
-        $activeOrders = ServiceOrder::whereNotIn('status', ['completed', 'cancelled'])->count();
-        $pendingOrders = ServiceOrder::where('status', 'ready')->count();
+        $activeOrders = ServiceOrder::forBranch($branchId)
+            ->whereNotIn('status', ['completed', 'cancelled'])
+            ->count();
 
-        // 2. Ganancias de Hoy (Ventas + Órdenes completadas)
-        $todaySales = Sale::where('status', 'completed')->whereDate('created_at', $todayStart)->sum('total_amount');
-        $todayServiceOrdersEarnings = WorkshopJob::whereHas('serviceOrder', function($q) use ($todayStart) {
-            $q->where('status', 'completed')->whereDate('completed_at', $todayStart);
+        $pendingOrders = ServiceOrder::forBranch($branchId)
+            ->where('status', 'in_progress')
+            ->count();
+
+        $todaySales = Sale::forBranch($branchId)
+            ->where('status', '!=', 'anulada')
+            ->whereDate('sale_date', $todayStart)
+            ->sum('total_amount');
+
+        $todayServiceOrdersEarnings = WorkshopJob::whereHas('serviceOrder', function ($query) use ($todayStart, $branchId) {
+            $query
+                ->forBranch($branchId)
+                ->where('status', 'completed')
+                ->whereDate('completed_at', $todayStart);
         })->sum('total_amount');
+
         $todayEarnings = $todaySales + $todayServiceOrdersEarnings;
 
-        // 3. Ganancias del Mes
-        $monthSales = Sale::where('status', 'completed')->where('created_at', '>=', $monthStart)->sum('total_amount');
-        $monthServiceOrdersEarnings = WorkshopJob::whereHas('serviceOrder', function($q) use ($monthStart) {
-            $q->where('status', 'completed')->where('completed_at', '>=', $monthStart);
+        $monthSales = Sale::forBranch($branchId)
+            ->where('status', '!=', 'anulada')
+            ->whereDate('sale_date', '>=', $monthStart)
+            ->sum('total_amount');
+
+        $monthServiceOrdersEarnings = WorkshopJob::whereHas('serviceOrder', function ($query) use ($monthStart, $branchId) {
+            $query
+                ->forBranch($branchId)
+                ->where('status', 'completed')
+                ->where('completed_at', '>=', $monthStart);
         })->sum('total_amount');
+
         $monthEarnings = $monthSales + $monthServiceOrdersEarnings;
 
-        // 4. Últimas Ventas
-        $recentSales = Sale::with(['saleProducts.product', 'user'])->latest()->limit(5)->get();
+        $recentSales = Sale::with(['saleProducts.product', 'user'])
+            ->forBranch($branchId)
+            ->where('status', '!=', 'anulada')
+            ->orderByDesc('sale_date')
+            ->orderByDesc('created_at')
+            ->limit(5)
+            ->get();
 
-        // 5. Productos con Stock Bajo (No toma en cuenta is_active porque usa SoftDeletes)
-        $totalProducts = Product::count(); // Optional but we have it on layout
-        $lowStockCount = Product::whereRaw('stock <= min_stock')->count();
-        $lowStockProducts = Product::whereRaw('stock <= min_stock')->get();
+        $totalProducts = Product::forBranch($branchId)->count();
+        $lowStockProducts = Product::forBranch($branchId)->whereRaw('stock <= min_stock')->get();
+        $lowStockCount = $lowStockProducts->count();
 
-        // 6. Ventas por método de pago hoy
-        $todayByMethod = Sale::where('status', 'completed')
-            ->whereDate('created_at', $todayStart)
+        $todayByMethod = Sale::forBranch($branchId)
+            ->where('status', '!=', 'anulada')
+            ->whereDate('sale_date', $todayStart)
             ->selectRaw('payment_method, sum(total_amount) as total')
             ->groupBy('payment_method')
             ->get();
 
-        // 7. Mecánicos activos con trabajos y ganancias del mes
-        $mechanics = Mechanic::where('is_active', true)->get()->map(function($mechanic) use ($monthStart) {
-            $mechanic->total_jobs = $mechanic->workshopJobs()->where('status', 'completed')->where('completed_at', '>=', $monthStart)->count();
-            $mechanic->monthly_earnings = $mechanic->workshopJobs()
-                ->where('status', 'completed')
-                ->where('completed_at', '>=', $monthStart)
-                ->sum('mechanic_cost');
-            return $mechanic;
-        });
+        $mechanics = Mechanic::forBranch($branchId)
+            ->where('is_active', true)
+            ->withCount([
+                'workshopJobs as total_jobs' => function ($query) use ($monthStart) {
+                    $query
+                        ->where('status', 'completed')
+                        ->where('completed_at', '>=', $monthStart);
+                },
+            ])
+            ->withSum([
+                'workshopJobs as monthly_earnings' => function ($query) use ($monthStart) {
+                    $query
+                        ->where('status', 'completed')
+                        ->where('completed_at', '>=', $monthStart);
+                },
+            ], 'mechanic_cost')
+            ->get();
 
         return view('dashboard', compact(
-            'activeOrders', 'pendingOrders',
-            'todayEarnings', 'monthEarnings',
-            'recentSales', 'lowStockCount', 'lowStockProducts', 'totalProducts',
-            'todayByMethod', 'mechanics'
+            'activeOrders',
+            'pendingOrders',
+            'todayEarnings',
+            'monthEarnings',
+            'recentSales',
+            'lowStockCount',
+            'lowStockProducts',
+            'totalProducts',
+            'todayByMethod',
+            'mechanics'
         ));
     }
 }

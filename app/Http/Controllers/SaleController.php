@@ -4,15 +4,18 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\Product;
 use App\Models\Sale;
+use App\Services\BranchService;
 
 class SaleController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(Request $request, BranchService $branchService)
     {
+        $branchId = $branchService->getCurrentBranch()?->id;
         $request->validate([
             'search' => 'nullable|string|max:255',
             'payment_method' => 'nullable|string|in:Efectivo,Nequi,Daviplata,Transferencia,Tarjeta,Otro',
@@ -25,7 +28,7 @@ class SaleController extends Controller
             $query->with(['product' => function($q) {
                 $q->withTrashed();
             }]);
-        }, 'user']);
+        }, 'user'])->forBranch($branchId);
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -58,20 +61,23 @@ class SaleController extends Controller
             $query->whereDate('sale_date', '<=', $request->input('date_end'));
         }
 
-        $sales = $query->latest('sale_date')
-            ->latest()
+        $sales = $query->orderByDesc('sale_date')
+            ->orderByDesc('created_at')
             ->paginate(10)
             ->appends($request->all());
 
-        $todayTotal = Sale::whereDate('sale_date', today())
+        $todayTotal = Sale::forBranch($branchId)
+            ->whereDate('sale_date', today())
             ->where('status', '!=', 'anulada')
             ->sum('total_amount');
 
-        $todayCount = Sale::whereDate('sale_date', today())
+        $todayCount = Sale::forBranch($branchId)
+            ->whereDate('sale_date', today())
             ->where('status', '!=', 'anulada')
             ->count();
 
-        $todayByMethod = Sale::select('payment_method', \Illuminate\Support\Facades\DB::raw('SUM(total_amount) as total'))
+        $todayByMethod = Sale::forBranch($branchId)
+            ->select('payment_method', DB::raw('SUM(total_amount) as total'))
             ->whereDate('sale_date', today())
             ->where('status', '!=', 'anulada')
             ->groupBy('payment_method')
@@ -84,16 +90,17 @@ class SaleController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(BranchService $branchService)
     {
-        $products = \App\Models\Product::where('stock', '>', 0)->get();
+        $branchId = $branchService->getCurrentBranch()?->id;
+        $products = Product::forBranch($branchId)->where('stock', '>', 0)->get();
         return view('sales.create', compact('products'));
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request, BranchService $branchService)
     {
         $validated = $request->validate([
             'customer_name'       => 'nullable|string|max:255',
@@ -115,7 +122,7 @@ class SaleController extends Controller
 
             $hasLowStock = false;
 
-            DB::transaction(function () use ($validated, &$hasLowStock) {
+            DB::transaction(function () use ($validated, &$hasLowStock, $branchService) {
 
                 $productData = [];
 
@@ -137,6 +144,7 @@ class SaleController extends Controller
                 $sale = Sale::create([
                     'customer_name'  => $validated['customer_name'] ?? 'Venta Mostrador',
                     'total_amount'   => 0,
+                    'branch_id'      => $branchService->getCurrentBranch()?->id,
                     'sale_date'      => now(),
                     'payment_method' => $validated['payment_method'],
                     'user_id'        => auth()->id(),
@@ -150,7 +158,8 @@ class SaleController extends Controller
                     $quantity = $data['quantity'];
                     $index    = $data['index'];
 
-                    $product = \App\Models\Product::where('id', $productId)
+                    $product = Product::where('id', $productId)
+                        ->where('branch_id', $branchService->getCurrentBranch()?->id)
                         ->lockForUpdate()
                         ->firstOrFail();
 
@@ -230,16 +239,15 @@ class SaleController extends Controller
 
     /**
      * Update the specified resource in storage.
+     * Fix A03: Blocked direct total_amount edits to preserve financial traceability.
      */
     public function update(Request $request, Sale $sale)
     {
-        $validated = $request->validate([
-            'total_amount' => 'required|numeric|min:0',
-        ]);
+        if ($sale->status === 'anulada') {
+            return back()->with('error', 'No se puede editar una venta anulada.');
+        }
 
-        $sale->update($validated);
-
-        return redirect()->route('sales.index')->with('success', 'Venta actualizada.');
+        abort(403, 'Las ventas completadas no pueden editarse directamente. Use Anular para corregir errores.');
     }
 
     /**

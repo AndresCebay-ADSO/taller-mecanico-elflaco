@@ -19,7 +19,7 @@ return new class extends Migration
             $table->decimal('unit_price', 8, 2)->nullable(); //Precio unitario (puede ser nulo para ciertos movimientos)
             $table->foreignId('supplier_id')->nullable()->constrained(); //Referencia al proveedor (solo para compras)
             $table->string('reference')->nullable()->index(); //Referencia externa (factura, nota de venta, etc)
-            $table->string('notes')->nullable(); //Notas adicionales
+            $table->text('notes')->nullable(); //Notas adicionales
             $table->date('movement_date'); //Fecha del movimiento
             $table->timestamps();
         });

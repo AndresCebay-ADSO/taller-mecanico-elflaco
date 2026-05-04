@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Supplier;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class SupplierSeeder extends Seeder
 {
@@ -12,35 +12,34 @@ class SupplierSeeder extends Seeder
      */
     public function run(): void
     {
-        DB::table('suppliers')->insert([
-            
+        Supplier::updateOrCreate(
+            ['email' => null, 'name' => 'Eduardo'],
             [
-                'name' => 'Eduardo', // BY andres cebay
-                'phone' => '3102212260', // BY andres cebay
-                'address' => 'Pitalito, Huila', // BY andres cebay
-                'email' => null, // BY andres cebay
-                'created_at' => now(), // BY andres cebay
-                'updated_at' => now(), // BY andres cebay
-            ],
+                'phone' => '31022122600',
+                'address' => 'Pitalito, Huila',
+                'email' => null,
+                'active' => true,
+            ]
+        );
 
+        Supplier::updateOrCreate(
+            ['email' => null, 'name' => 'Johan Sebastián'],
             [
-                'name' => 'Johan Sebastián', // BY andres cebay
-                'phone' => '3102212260', // BY andres cebay
-                'address' => 'Pitalito', // BY andres cebay
-                'email' => null, // BY andres cebay
-                'created_at' => now(), // BY andres cebay
-                'updated_at' => now(), // BY andres cebay
-            ],
+                'phone' => '31022122600',
+                'address' => 'Pitalito',
+                'email' => null,
+                'active' => true,
+            ]
+        );
 
+        Supplier::updateOrCreate(
+            ['email' => null, 'name' => 'Pinajos Motos'],
             [
-                'name' => 'Pinajos Motos', // BY andres cebay
-                'phone' => '3168691236', // BY andres cebay
-                'address' => 'Calle 10 #7 -47 Sucre', // BY andres cebay
-                'email' => null, // BY andres cebay
-                'created_at' => now(), // BY andres cebay
-                'updated_at' => now(), // BY andres cebay
-            ],
-
-        ]);
+                'phone' => '31686912360',
+                'address' => 'Calle 10 #7 -47 Sucre',
+                'email' => null,
+                'active' => true,
+            ]
+        );
     }
 }

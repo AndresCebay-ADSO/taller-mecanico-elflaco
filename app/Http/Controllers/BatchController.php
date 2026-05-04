@@ -24,8 +24,11 @@ class BatchController extends Controller
 
         try {
             DB::transaction(function () use ($validated, $batch) {
+                // Store original state for M07 fix
+                $wasUntouched = $batch->remaining_stock == $batch->quantity;
+
                 // Determine if quantity can be modified
-                if (isset($validated['quantity']) && $batch->remaining_stock == $batch->quantity) {
+                if (isset($validated['quantity']) && $wasUntouched) {
                     $diff = $validated['quantity'] - $batch->quantity;
 
                     if ($diff != 0) {
@@ -42,7 +45,6 @@ class BatchController extends Controller
                 $batch->supplier_id = $validated['supplier_id'];
                 $batch->cost_price = $validated['cost_price'];
                 $batch->sale_price = $validated['sale_price'];
-                $batch->selling_price = $validated['sale_price']; // keep synced
                 $batch->save();
 
                 // Update original purchase movement
@@ -55,7 +57,7 @@ class BatchController extends Controller
                     $movement->unit_price = $validated['cost_price'];
                     $movement->notes = $validated['notes'];
                     
-                    if (isset($validated['quantity']) && $batch->remaining_stock == $batch->quantity) {
+                    if (isset($validated['quantity']) && $wasUntouched) {
                         $movement->quantity = $validated['quantity'];
                     }
                     

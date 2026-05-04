@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::create('sale_products', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('product_id')->constrained(); //Referencia al producto vendido
-            $table->foreignId('sale_id')->constrained(); //Referencia a la venta
+            $table->foreignId('product_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('sale_id')->constrained()->cascadeOnDelete();
             $table->integer('quantity');
-            $table->decimal('unit_price', 8, 2); //Precio unitario al momento de la venta
+            $table->decimal('unit_price', 10, 2); //Precio unitario al momento de la venta
             $table->decimal('total_price', 10, 2); //Precio total (quantity * unit_price)
             $table->timestamps();
         });

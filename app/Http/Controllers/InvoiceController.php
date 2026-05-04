@@ -2,18 +2,27 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-
 use App\Models\Invoice;
+use App\Models\ServiceOrder;
+use App\Services\BranchService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class InvoiceController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(BranchService $branchService)
     {
-        $invoices = Invoice::all();
+        $branchId = $branchService->getCurrentBranch()?->id;
+        $invoices = Invoice::with('serviceOrder')
+            ->whereHas('serviceOrder', function ($q) use ($branchId) {
+                $q->forBranch($branchId);
+            })
+            ->latest('invoice_date')
+            ->latest('id')
+            ->paginate(15);
         return view('invoices.index', compact('invoices'));
     }
 
@@ -75,24 +84,42 @@ class InvoiceController extends Controller
     /**
      * Generate an invoice from a Service Order.
      */
-    public function generateFromServiceOrder(\App\Models\ServiceOrder $serviceOrder)
+    public function generateFromServiceOrder(ServiceOrder $serviceOrder)
     {
-        if ($serviceOrder->invoices()->exists()) {
+        $invoice = DB::transaction(function () use ($serviceOrder) {
+            $lockedServiceOrder = ServiceOrder::whereKey($serviceOrder->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($lockedServiceOrder->invoices()->exists()) {
+                return null;
+            }
+
+            $lockedServiceOrder->load('workshopJobs.jobProducts');
+
+            $totalLabor = $lockedServiceOrder->workshopJobs->sum('labor_cost');
+            $totalProducts = $lockedServiceOrder->workshopJobs->sum(
+                fn ($job) => $job->jobProducts->sum('total_price')
+            );
+
+            $invoice = Invoice::create([
+                'invoice_number' => 'FAC-' . strtoupper(bin2hex(random_bytes(8))),
+                'service_order_id' => $lockedServiceOrder->id,
+                'amount' => $totalLabor + $totalProducts,
+                'invoice_date' => now(),
+            ]);
+
+            $lockedServiceOrder->update([
+                'status' => 'completed',
+                'completed_at' => $lockedServiceOrder->completed_at ?? now(),
+            ]);
+
+            return $invoice;
+        });
+
+        if (!$invoice) {
             return back()->with('error', 'Esta orden ya tiene una factura vinculada.');
         }
-
-        $totalLabor = $serviceOrder->workshopJobs->sum('labor_cost');
-        $totalProducts = $serviceOrder->workshopJobs->sum(fn($j) => $j->jobProducts->sum('total_price'));
-        $totalAmount = $totalLabor + $totalProducts;
-
-        $invoice = Invoice::create([
-            'invoice_number' => 'FAC-' . strtoupper(uniqid()),
-            'service_order_id' => $serviceOrder->id,
-            'amount' => $totalAmount,
-            'invoice_date' => now(),
-        ]);
-
-        $serviceOrder->update(['status' => 'completed']);
 
         return redirect()->route('invoices.show', $invoice)->with('success', 'Factura consolidada generada con éxito.');
     }

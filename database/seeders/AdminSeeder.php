@@ -2,9 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use App\Models\User;
+use Illuminate\Support\Str;
 
 class AdminSeeder extends Seeder
 {
@@ -13,14 +14,32 @@ class AdminSeeder extends Seeder
      */
     public function run(): void
     {
-        User::firstOrCreate(
-            ['email' => 'admin@tallerflacos.com'],
+        $email = config('auth.admin.email', 'admin@tallerflacos.com');
+        $password = config('auth.admin.password');
+        $generatedPassword = false;
+
+        if (!$password) {
+            $password = Str::password(16);
+            $generatedPassword = true;
+        }
+
+        User::updateOrCreate(
+            ['email' => $email],
             [
-                'name'     => 'Administrador',
-                'password' => Hash::make('password'),
+                'name' => config('auth.admin.name', 'Administrador'),
+                'password' => Hash::make($password),
+                'is_admin' => true,
             ]
         );
 
-        $this->command->info('✓ Usuario admin creado: admin@tallerflacos.com / password');
+        $message = "Usuario admin listo: {$email}";
+
+        if ($generatedPassword) {
+            $message .= " / password temporal: {$password}";
+        } else {
+            $message .= ' / password tomada desde ADMIN_PASSWORD';
+        }
+
+        $this->command?->info($message);
     }
 }

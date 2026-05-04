@@ -1,5 +1,5 @@
 <x-app-layout>
-    <x-page-header title="Editar Producto" subtitle="Modifica la información de {{ $product->name }}.">
+    <x-page-header title="Editar Producto" subtitle="Modifica la informacion de {{ $product->name }}.">
         <x-slot name="actions">
             <x-button variant="outline" onclick="window.location.href='{{ route('products.index') }}'">
                 Cancelar
@@ -18,9 +18,9 @@
                 @method('PUT')
                 <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <x-input label="Nombre del Producto" name="name" required :value="$product->name" maxlength="255" />
-                    
+
                     <div>
-                        <label for="category" class="block text-sm font-semibold text-slate-700 space-y-1.5">Categoría <span class="text-red-500">*</span></label>
+                        <label for="category" class="block text-sm font-semibold text-slate-700 space-y-1.5">Categoria <span class="text-red-500">*</span></label>
                         <select id="category" name="category" required class="mt-1.5 block w-full rounded-xl border border-slate-300 px-4 py-2.5 text-slate-900 shadow-sm transition-all duration-200 focus:border-blue-500 focus:ring-blue-500 sm:text-sm cursor-pointer">
                             <option value="Repuestos" {{ $product->category == 'Repuestos' ? 'selected' : '' }}>Repuestos</option>
                             <option value="Aceites" {{ $product->category == 'Aceites' ? 'selected' : '' }}>Aceites</option>
@@ -50,8 +50,8 @@
                         @enderror
                     </div>
 
-                    <x-input label="Código UPC / Barcode" name="upc" :value="$product->upc" maxlength="50" />
-                    
+                    <x-input label="Codigo UPC / Barcode" name="upc" :value="$product->upc" maxlength="50" />
+
                     <div>
                         <x-input label="Precio de Compra" name="purchase_price" type="number" step="0.01" required x-model="purchasePrice" />
                         <p class="text-xs text-slate-500 mt-1 font-medium" x-show="purchasePrice" x-cloak>
@@ -64,9 +64,13 @@
                             $ <span x-text="Number(salePrice).toLocaleString('es-CO')"></span>
                         </p>
                     </div>
-                    
-                    <x-input label="Stock" name="stock" type="number" required :value="$product->stock" />
-                    <x-input label="Stock Mínimo (Alerta)" name="min_stock" type="number" required :value="$product->min_stock" />
+
+                    <div class="space-y-1.5">
+                        <label class="block text-sm font-semibold text-slate-700">Stock actual</label>
+                        <input type="text" value="{{ $product->stock }}" readonly class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-500 shadow-sm">
+                        <p class="text-xs text-slate-500">El stock se modifica solo desde compras, ventas y ajustes de inventario.</p>
+                    </div>
+                    <x-input label="Stock Minimo (Alerta)" name="min_stock" type="number" required :value="$product->min_stock" />
                 </div>
 
                 <div class="flex justify-end pt-4 border-t border-slate-100">
