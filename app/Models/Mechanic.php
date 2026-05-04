@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Mechanic extends Model
 {
@@ -11,6 +12,7 @@ class Mechanic extends Model
         'phone',
         'email',
         'hire_date',
+        'branch_id',
         'is_active',
     ];
 
@@ -22,5 +24,18 @@ class Mechanic extends Model
     public function workshopJobs()
     {
         return $this->hasMany(WorkshopJob::class);
+    }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    public function scopeForBranch($query, ?int $branchId = null)
+    {
+        if ($branchId) {
+            return $query->where('branch_id', $branchId);
+        }
+        return $query;
     }
 }

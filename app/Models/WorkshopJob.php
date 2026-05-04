@@ -3,9 +3,15 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use InvalidArgumentException;
 
 class WorkshopJob extends Model
 {
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_IN_PROGRESS = 'in_progress';
+    public const STATUS_COMPLETED = 'completed';
+    public const STATUS_CANCELLED = 'cancelled';
+
     protected $fillable = [
         'service_order_id',
         'job_type_id',
@@ -27,12 +33,33 @@ class WorkshopJob extends Model
     {
         parent::boot();
 
-        static::saving(function ($job) {
+        static::saving(function (self $job) {
             if ($job->job_type_id) {
                 $calculation = $job->jobType->calculateEarnings($job->labor_cost);
                 $job->mechanic_cost = $calculation['mechanic'];
                 $job->workshop_cost = $calculation['workshop'];
                 $job->total_amount = $calculation['total'];
+            }
+        });
+
+        static::updating(function (self $job) {
+            if (!$job->isDirty('status')) {
+                return;
+            }
+
+            $originalStatus = $job->getOriginal('status');
+
+            if ($originalStatus === null || $originalStatus === $job->status) {
+                return;
+            }
+
+            $originalState = new self();
+            $originalState->status = $originalStatus;
+
+            if (!$originalState->canTransitionTo($job->status)) {
+                throw new InvalidArgumentException(
+                    "Invalid transition from {$originalStatus} to {$job->status}."
+                );
             }
         });
     }
@@ -60,5 +87,21 @@ class WorkshopJob extends Model
     public function jobProducts()
     {
         return $this->hasMany(JobProduct::class, 'job_id');
+    }
+
+    public function canTransitionTo(string $newStatus): bool
+    {
+        if ($newStatus === $this->status) {
+            return true;
+        }
+
+        $validTransitions = [
+            self::STATUS_PENDING => [self::STATUS_IN_PROGRESS, self::STATUS_COMPLETED, self::STATUS_CANCELLED],
+            self::STATUS_IN_PROGRESS => [self::STATUS_COMPLETED, self::STATUS_CANCELLED],
+            self::STATUS_COMPLETED => [],
+            self::STATUS_CANCELLED => [],
+        ];
+
+        return in_array($newStatus, $validTransitions[$this->status] ?? [], true);
     }
 }
