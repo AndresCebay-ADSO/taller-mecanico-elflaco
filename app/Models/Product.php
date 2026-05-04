@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
@@ -11,7 +12,7 @@ class Product extends Model
     protected $fillable = [
         'name',
         'category',
-
+        'branch_id',
         'purchase_price',
         'sale_price',
         'stock',
@@ -40,56 +41,36 @@ class Product extends Model
     }
 
     /**
-     * Increment stock and record movement
+     * @deprecated Use InventoryService::registerPurchaseBatch() instead.
+     * Legacy method kept as guard — throws exception if called accidentally.
      */
     public function incrementStock($quantity, $unitPrice = null, $supplierId = null, $reference = null)
     {
-        $this->increment('stock', $quantity);
-        
-        if ($unitPrice) {
-            $this->update(['purchase_price' => $unitPrice]);
-        }
-
-        return $this->inventoryMovements()->create([
-            'movement_type' => 'purchase',
-            'quantity' => $quantity,
-            'unit_price' => $unitPrice ?? $this->purchase_price,
-            'supplier_id' => $supplierId,
-            'reference' => $reference,
-            'movement_date' => now(),
-        ]);
+        throw new \BadMethodCallException(
+            'incrementStock() esta deprecado. Usar InventoryService::registerPurchaseBatch() para operaciones con trazabilidad FIFO.'
+        );
     }
 
     /**
-     * Reverse stock from a cancelled sale and record the movement as 'reversal'
+     * @deprecated Use InventoryService::reverseStockFromSale() instead.
+     * Legacy method kept as guard — throws exception if called accidentally.
      */
     public function reverseStock($quantity, $reference = null)
     {
-        $this->increment('stock', $quantity);
-
-        return $this->inventoryMovements()->create([
-            'movement_type' => 'reversal',
-            'quantity'      => $quantity,
-            'unit_price'    => $this->purchase_price,
-            'reference'     => $reference,
-            'movement_date' => now(),
-        ]);
+        throw new \BadMethodCallException(
+            'reverseStock() esta deprecado. Usar InventoryService::reverseStockFromSale() para reversas con trazabilidad FIFO.'
+        );
     }
 
     /**
-     * Decrement stock and record movement
+     * @deprecated Use InventoryService::deductStock() instead.
+     * Legacy method kept as guard — throws exception if called accidentally.
      */
     public function decrementStock($quantity, $reason = 'sale', $reference = null)
     {
-        $this->decrement('stock', $quantity);
-
-        return $this->inventoryMovements()->create([
-            'movement_type' => $reason,
-            'quantity' => -$quantity,
-            'unit_price' => $this->sale_price,
-            'reference' => $reference,
-            'movement_date' => now(),
-        ]);
+        throw new \BadMethodCallException(
+            'decrementStock() esta deprecado. Usar InventoryService::deductStock() para operaciones con trazabilidad FIFO.'
+        );
     }
 
     public function jobProducts()
@@ -115,5 +96,18 @@ class Product extends Model
     public function batches()
     {
         return $this->hasMany(Batch::class);
+    }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    public function scopeForBranch($query, ?int $branchId = null)
+    {
+        if ($branchId) {
+            return $query->where('branch_id', $branchId);
+        }
+        return $query;
     }
 }

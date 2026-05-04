@@ -3,16 +3,20 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\ServiceOrder;
 use App\Models\Mechanic;
+use App\Models\Product;
+use App\Models\ServiceOrder;
+use App\Models\JobType;
+use App\Services\BranchService;
 
 class ServiceOrderController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(Request $request, BranchService $branchService)
     {
+        $branchId = $branchService->getCurrentBranch()?->id;
         $request->validate([
             'search' => 'nullable|string|max:255',
             'status' => 'nullable|string|in:pending,in_progress,completed,cancelled',
@@ -20,7 +24,7 @@ class ServiceOrderController extends Controller
             'date_end' => 'nullable|date|after_or_equal:date_start',
         ]);
 
-        $query = ServiceOrder::query()
+        $query = ServiceOrder::forBranch($branchId)
 
             ->when($request->filled('search'), function ($q) use ($request) {
 
@@ -75,7 +79,7 @@ class ServiceOrderController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request, BranchService $branchService)
     {
         $validated = $request->validate([
             'customer_name' => 'required|string|max:255',
@@ -83,6 +87,8 @@ class ServiceOrderController extends Controller
             'vehicle_info' => 'required|string',
             'service_description' => 'required|string',
         ]);
+
+        $validated['branch_id'] = $branchService->getCurrentBranch()?->id;
 
         ServiceOrder::create($validated);
 
@@ -94,15 +100,16 @@ class ServiceOrderController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(ServiceOrder $serviceOrder)
+    public function show(ServiceOrder $serviceOrder, BranchService $branchService)
     {
+        $branchId = $branchService->getCurrentBranch()?->id;
         $serviceOrder->load(['workshopJobs.mechanic', 'workshopJobs.jobType', 'workshopJobs.jobProducts.product' => function($q) {
             $q->withTrashed();
         }]);
 
-        $mechanics = Mechanic::where('is_active', true)->get();
-        $jobTypes = \App\Models\JobType::where('is_active', true)->get();
-        $products = \App\Models\Product::where('stock', '>', 0)->get();
+        $mechanics = Mechanic::forBranch($branchId)->where('is_active', true)->get();
+        $jobTypes = JobType::where('is_active', true)->get();
+        $products = Product::forBranch($branchId)->where('stock', '>', 0)->get();
 
         return view(
             'service-orders.show',
@@ -131,6 +138,16 @@ class ServiceOrderController extends Controller
             'status' => 'required|in:pending,in_progress,completed,cancelled',
         ]);
 
+        if (!$serviceOrder->canTransitionTo($validated['status'])) {
+            return back()->withErrors([
+                'status' => 'La transicion de estado solicitada no es valida para esta orden.',
+            ])->withInput();
+        }
+
+        $validated['completed_at'] = $validated['status'] === 'completed'
+            ? ($serviceOrder->completed_at ?? now())
+            : null;
+
         $serviceOrder->update($validated);
 
         return redirect()
@@ -140,9 +157,14 @@ class ServiceOrderController extends Controller
 
     /**
      * Remove the specified resource from storage.
+     * Fix M05: Prevents deletion if jobs exist — protects stock traceability.
      */
     public function destroy(ServiceOrder $serviceOrder)
     {
+        if ($serviceOrder->workshopJobs()->exists()) {
+            return back()->with('error', 'No se puede eliminar una orden con trabajos asociados. Cancélela primero.');
+        }
+
         $serviceOrder->delete();
 
         return redirect()
