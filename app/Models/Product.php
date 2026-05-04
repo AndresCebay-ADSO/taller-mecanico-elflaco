@@ -108,6 +108,8 @@ class Product extends Model
         if ($branchId) {
             return $query->where('branch_id', $branchId);
         }
-        return $query;
+        
+        // Block leaking if branch is not explicitly passed or set
+        return $query->whereRaw('1 = 0');
     }
 }

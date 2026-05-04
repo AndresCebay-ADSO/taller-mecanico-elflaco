@@ -21,26 +21,15 @@ return new class extends Migration
             $table->unique(['branch_id', 'user_id']);
         });
 
+        // Bug 5 fix: Perform unbounded inserts at database engine level instead of RAM.
         // Assign existing users to all active branches to maintain backwards compatibility
-        // until an admin UI is built for user branch assignment.
-        $branches = DB::table('branches')->where('is_active', true)->pluck('id');
-        $users = DB::table('users')->pluck('id');
-
-        $inserts = [];
-        foreach ($users as $userId) {
-            foreach ($branches as $branchId) {
-                $inserts[] = [
-                    'branch_id' => $branchId,
-                    'user_id' => $userId,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
-            }
-        }
-        
-        if (!empty($inserts)) {
-            DB::table('branch_user')->insert($inserts);
-        }
+        DB::statement('
+            INSERT INTO branch_user (branch_id, user_id, created_at, updated_at)
+            SELECT branches.id, users.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+            FROM branches
+            CROSS JOIN users
+            WHERE branches.is_active = 1
+        ');
     }
 
     /**

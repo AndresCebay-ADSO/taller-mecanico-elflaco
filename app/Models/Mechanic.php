@@ -36,6 +36,7 @@ class Mechanic extends Model
         if ($branchId) {
             return $query->where('branch_id', $branchId);
         }
-        return $query;
+        
+        return $query->whereRaw('1 = 0');
     }
 }

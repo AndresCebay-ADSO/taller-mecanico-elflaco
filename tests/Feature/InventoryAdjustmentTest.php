@@ -6,6 +6,8 @@ use App\Models\User;
 
 it('registers positive inventory adjustments as adjustment movements', function () {
     $user = User::factory()->create();
+    $branch = \App\Models\Branch::create(['name' => 'Sede Test', 'address' => 'Dir', 'phone' => '123', 'is_active' => true]);
+    $user->branches()->attach($branch);
 
     $product = Product::create([
         'name' => 'Bujia',
@@ -14,9 +16,11 @@ it('registers positive inventory adjustments as adjustment movements', function 
         'sale_price' => 35,
         'stock' => 3,
         'min_stock' => 1,
+        'branch_id' => $branch->id,
     ]);
 
     $this->actingAs($user)
+        ->withSession(['current_branch_id' => $branch->id])
         ->post(route('inventory.store-adjustment'), [
             'product_id' => $product->id,
             'quantity' => 2,
@@ -36,6 +40,8 @@ it('registers positive inventory adjustments as adjustment movements', function 
 
 it('rejects negative inventory adjustments that exceed current stock', function () {
     $user = User::factory()->create();
+    $branch = \App\Models\Branch::create(['name' => 'Sede Test 2', 'address' => 'Dir 2', 'phone' => '1234', 'is_active' => true]);
+    $user->branches()->attach($branch);
 
     $product = Product::create([
         'name' => 'Luz led',
@@ -44,10 +50,12 @@ it('rejects negative inventory adjustments that exceed current stock', function 
         'sale_price' => 25,
         'stock' => 1,
         'min_stock' => 1,
+        'branch_id' => $branch->id,
     ]);
 
     $this->from(route('inventory.adjustment'))
         ->actingAs($user)
+        ->withSession(['current_branch_id' => $branch->id])
         ->post(route('inventory.store-adjustment'), [
             'product_id' => $product->id,
             'quantity' => -5,

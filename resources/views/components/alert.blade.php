@@ -38,7 +38,7 @@
 
 <div x-data="{ show: true }" 
      x-show="show" 
-     x-init="if('{{ $type }}' === 'success') setTimeout(() => show = false, 5000)"
+     x-init="if(@js($type) === 'success') setTimeout(() => show = false, 5000)"
      x-transition:leave="transition ease-in duration-300"
      x-transition:leave-start="opacity-100 scale-100"
      x-transition:leave-end="opacity-0 scale-95"
@@ -49,13 +49,13 @@
             <i data-lucide="{{ $colors['iconName'] }}" class="h-6 w-6"></i>
         </div>
         <div>
-            <p class="font-bold {{ $colors['text'] }} leading-tight">
+            <div class="font-bold {{ $colors['text'] }} leading-tight">
                 {{ $message ?? $slot }}
-            </p>
+            </div>
         </div>
     </div>
 
-    <button @click="show = false" class="{{ $colors['text'] }} opacity-50 hover:opacity-100 transition-opacity">
+    <button type="button" @click="show = false" class="{{ $colors['text'] }} opacity-50 hover:opacity-100 transition-opacity">
         <i data-lucide="x" class="h-5 w-5"></i>
     </button>
 </div>

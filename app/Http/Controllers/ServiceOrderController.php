@@ -103,6 +103,8 @@ class ServiceOrderController extends Controller
     public function show(ServiceOrder $serviceOrder, BranchService $branchService)
     {
         $branchId = $branchService->getCurrentBranch()?->id;
+        abort_if($serviceOrder->branch_id !== $branchId, 404);
+        
         $serviceOrder->load(['workshopJobs.mechanic', 'workshopJobs.jobType', 'workshopJobs.jobProducts.product' => function($q) {
             $q->withTrashed();
         }]);
@@ -120,16 +122,21 @@ class ServiceOrderController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(ServiceOrder $serviceOrder)
+    public function edit(ServiceOrder $serviceOrder, BranchService $branchService)
     {
+        $branchId = $branchService->getCurrentBranch()?->id;
+        abort_if($serviceOrder->branch_id !== $branchId, 404);
         return view('service-orders.edit', compact('serviceOrder'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, ServiceOrder $serviceOrder)
+    public function update(Request $request, ServiceOrder $serviceOrder, BranchService $branchService)
     {
+        $branchId = $branchService->getCurrentBranch()?->id;
+        abort_if($serviceOrder->branch_id !== $branchId, 404);
+
         $validated = $request->validate([
             'customer_name' => 'required|string|max:255',
             'customer_phone' => 'nullable|digits:10',
@@ -159,8 +166,11 @@ class ServiceOrderController extends Controller
      * Remove the specified resource from storage.
      * Fix M05: Prevents deletion if jobs exist — protects stock traceability.
      */
-    public function destroy(ServiceOrder $serviceOrder)
+    public function destroy(ServiceOrder $serviceOrder, BranchService $branchService)
     {
+        $branchId = $branchService->getCurrentBranch()?->id;
+        abort_if($serviceOrder->branch_id !== $branchId, 404);
+
         if ($serviceOrder->workshopJobs()->exists()) {
             return back()->with('error', 'No se puede eliminar una orden con trabajos asociados. Cancélela primero.');
         }

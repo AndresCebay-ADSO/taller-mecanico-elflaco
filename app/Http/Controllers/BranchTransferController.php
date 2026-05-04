@@ -145,9 +145,12 @@ class BranchTransferController extends Controller
 
             $destinationProduct = Product::where('branch_id', $transfer->to_branch_id)
                 ->where(function ($query) use ($transfer) {
-                    $query->where('upc', $transfer->product->upc)
-                        ->whereNotNull('upc')
-                        ->where('upc', '!=', '');
+                    if (!empty($transfer->product->upc)) {
+                        $query->where('upc', $transfer->product->upc);
+                    } else {
+                        $query->where('name', $transfer->product->name)
+                              ->where('category', $transfer->product->category);
+                    }
                 })
                 ->lockForUpdate()
                 ->first();
@@ -167,8 +170,20 @@ class BranchTransferController extends Controller
 
             $destinationProduct->increment('stock', $transfer->quantity);
 
+            // Bug 4: Create a Batch for the transferred stock to maintain FIFO logic
+            $batch = \App\Models\Batch::create([
+                'product_id' => $destinationProduct->id,
+                'supplier_id' => null,
+                'cost_price' => $transfer->unit_price ?? $transfer->product->purchase_price ?? 0,
+                'sale_price' => $destinationProduct->sale_price,
+                'quantity' => $transfer->quantity,
+                'remaining_stock' => $transfer->quantity,
+                'purchased_at' => now(),
+            ]);
+
             InventoryMovement::create([
                 'product_id' => $destinationProduct->id,
+                'batch_id' => $batch->id,
                 'movement_type' => 'transfer_in',
                 'quantity' => $transfer->quantity,
                 'unit_price' => $transfer->unit_price,
