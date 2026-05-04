@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\MechanicController;
@@ -14,6 +13,8 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\WorkshopJobController;
 use App\Http\Controllers\BatchController;
+use App\Http\Controllers\BranchController;
+use App\Http\Controllers\BranchTransferController;
 
 // Ruta raíz → redirige al dashboard (el middleware auth se encarga del resto)
 Route::get('/', function () {
@@ -55,11 +56,29 @@ Route::middleware('auth')->group(function () {
     Route::post('sales/{sale}/cancel', [SaleController::class, 'cancel'])->name('sales.cancel');
     Route::resource('invoices', InvoiceController::class);
     Route::post('invoices/generate/{serviceOrder}', [InvoiceController::class, 'generateFromServiceOrder'])->name('invoices.generate');
-    Route::resource('job-types', JobTypeController::class);
+    // ─── Rutas protegidas (Solo Administradores) ──────────────────────────────
+    Route::middleware('admin')->group(function () {
+        Route::resource('job-types', JobTypeController::class);
 
-    // Settings
-    Route::get('/settings', [App\Http\Controllers\SettingController::class, 'index'])->name('settings');
-    Route::put('/settings', [App\Http\Controllers\SettingController::class, 'update'])->name('settings.update');
+        // Settings
+        Route::get('/settings', [App\Http\Controllers\SettingController::class, 'index'])->name('settings');
+        Route::put('/settings', [App\Http\Controllers\SettingController::class, 'update'])->name('settings.update');
+
+        // Branches
+        Route::resource('branches', BranchController::class)->except(['show', 'edit', 'create']);
+        Route::post('branches/{branch}/toggle-active', [BranchController::class, 'toggleActive'])->name('branches.toggle-active');
+
+        // Branch Transfers (Only admins should move stock between branches)
+        Route::prefix('branch-transfers')->name('branch-transfers.')->group(function () {
+            Route::get('/', [BranchTransferController::class, 'index'])->name('index');
+            Route::get('/create', [BranchTransferController::class, 'create'])->name('create');
+            Route::post('/', [BranchTransferController::class, 'store'])->name('store');
+            Route::patch('/{transfer}/status', [BranchTransferController::class, 'updateStatus'])->name('update-status');
+        });
+    });
+
+    // Switch current branch
+    Route::post('switch-branch', [BranchController::class, 'switch'])->name('switch-branch');
 
 });
 // ─────────────────────────────────────────────────────────────────────────────

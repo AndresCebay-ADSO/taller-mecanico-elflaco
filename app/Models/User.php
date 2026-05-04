@@ -45,4 +45,25 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * The branches this user is assigned to.
+     */
+    public function branches()
+    {
+        return $this->belongsToMany(Branch::class);
+    }
+
+    /**
+     * Check if user is authorized to access a specific branch
+     */
+    public function canAccessBranch(Branch $branch): bool
+    {
+        // Admins can access all branches, standard users only assigned ones
+        if ($this->is_admin) {
+            return true;
+        }
+
+        return $this->branches()->where('branch_id', $branch->id)->exists();
+    }
 }
