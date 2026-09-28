@@ -29,7 +29,7 @@
                     </div>
                     <div class="bg-slate-50 p-6 rounded-2xl flex flex-col items-end justify-center">
                         <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Precio de Venta</span>
-                        <span class="text-4xl font-black text-blue-600">${{ number_format($product->sale_price, 2) }}</span>
+                        <span class="text-4xl font-black text-blue-600">${{ number_format($product->sale_price, 0, ',', '.') }}</span>
                     </div>
                 </div>
             </x-card>
@@ -85,7 +85,7 @@
                                         <span class="text-xs text-blue-600 font-semibold">Último proveedor</span>
                                     @endif
                                 </div>
-                                <a href="{{ route('suppliers.show', $supplier) }}" class="text-sm text-blue-600 hover:underline">Ver perfil</a>
+                                <a href="{{ route('suppliers.index', ['search' => $supplier->name]) }}" class="text-sm text-blue-600 hover:underline">Ver proveedor</a>
                             </div>
                         @endforeach
                     </div>

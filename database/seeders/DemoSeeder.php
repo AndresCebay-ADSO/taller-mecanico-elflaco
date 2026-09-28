@@ -223,7 +223,8 @@ class DemoSeeder extends Seeder
                 $date = $firstDay->addDays($day);
                 $daysAgo = self::DAYS_OF_HISTORY - $day;
 
-                if ($date->isSunday()) {
+                // Los domingos el taller cierra, salvo si hoy es domingo: el tablero de la demo necesita datos del día.
+                if ($date->isSunday() && $daysAgo > 0) {
                     continue;
                 }
 

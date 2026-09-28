@@ -55,7 +55,7 @@ class DashboardController extends Controller
 
         $monthEarnings = $monthSales + $monthServiceOrdersEarnings;
 
-        $recentSales = Sale::with(['saleProducts.product', 'user'])
+        $recentSales = Sale::with(['saleProducts.product' => fn ($query) => $query->withTrashed(), 'user'])
             ->forBranch($branchId)
             ->where('status', '!=', 'anulada')
             ->orderByDesc('sale_date')

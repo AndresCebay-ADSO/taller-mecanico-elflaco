@@ -14,7 +14,7 @@
             <div class="flex justify-between items-start">
                 <div>
                     <p class="text-sm font-medium text-slate-500 mb-1">Ventas de Hoy</p>
-                    <h3 class="text-3xl font-bold text-slate-900">${{ number_format($todayTotal) }}</h3>
+                    <h3 class="text-3xl font-bold text-slate-900">${{ number_format($todayTotal, 0, ',', '.') }}</h3>
                     <p class="text-sm text-slate-500 mt-1">{{ $todayCount }} venta(s)</p>
                 </div>
                 <div class="bg-emerald-100 dark:bg-emerald-900/30 p-4 rounded-xl flex items-center justify-center">
@@ -45,7 +45,7 @@
                                 {{ $method->payment_method }}
                             </div>
                             <div class="text-right">
-                                <span class="block text-sm font-black text-emerald-600 dark:text-emerald-400">${{ number_format($method->total) }}</span>
+                                <span class="block text-sm font-black text-emerald-600 dark:text-emerald-400">${{ number_format($method->total, 0, ',', '.') }}</span>
                             </div>
                         </div>
                         <div class="w-full bg-slate-100 dark:bg-gray-800 rounded-full h-1.5 overflow-hidden">
@@ -130,7 +130,7 @@
                             </td>
                             <td class="px-6 py-4">
                                 <span class="text-sm font-bold {{ $sale->status === 'completada' ? 'text-emerald-600' : 'text-slate-400 line-through' }}">
-                                    ${{ number_format($sale->total_amount, 2) }}
+                                    ${{ number_format($sale->total_amount, 0, ',', '.') }}
                                 </span>
                                 @if($sale->status !== 'completada')
                                     <div class="text-xs text-rose-500 font-medium mt-0.5"><i data-lucide="x-circle" class="w-3 h-3 inline mr-1"></i>Anulada</div>

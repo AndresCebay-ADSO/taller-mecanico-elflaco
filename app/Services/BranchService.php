@@ -63,6 +63,9 @@ class BranchService
         request()->attributes->set('current_branch', $branch);
     }
 
+    /**
+     * Sucursales del usuario en orden de creación: la primera (la sede principal) es la inicial.
+     */
     public function getAvailableBranches(): Collection
     {
         if (!auth()->check()) {
@@ -72,10 +75,10 @@ class BranchService
         $user = auth()->user();
 
         if ($user->is_admin) {
-            return Branch::active()->orderBy('name')->get();
+            return Branch::active()->orderBy('branches.id')->get();
         }
 
-        return $user->branches()->active()->orderBy('name')->get();
+        return $user->branches()->active()->orderBy('branches.id')->get();
     }
 
     public function hasMultipleBranches(): bool

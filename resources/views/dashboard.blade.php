@@ -15,17 +15,15 @@
                 <span class="font-bold">{{ $lowStockCount }}</span> producto(s) con stock bajo necesitan reposición
             </p>
         </div>
-        <a href="{{ route('inventory.index') }}" class="text-sm font-bold text-amber-700 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 flex items-center gap-1 transition-colors">
+        <a href="{{ route('products.index', ['low_stock' => 1]) }}" class="text-sm font-bold text-amber-700 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300 flex items-center gap-1 transition-colors">
             Ver inventario <i data-lucide="arrow-right" class="h-4 w-4"></i>
         </a>
     </div>
     @endif
 
-    <!-- 3. Accesos rápidos (3 botones) - Moved before metrics for better UX or after, wait user said "2. Tarjetas, 3. Accesos", so let's put it after cards. But typical layout is Actions below header. Let's stick to user order. -->
-
     <!-- 2. Tarjetas de métricas (4 columnas) -->
     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-        <!-- Ganancias Hoy -->
+        <!-- Ingresos Hoy -->
         <div class="relative overflow-hidden rounded-3xl bg-white dark:bg-gray-900/50 p-6 shadow-sm border border-slate-200 dark:border-gray-800 group">
             <div class="absolute top-0 right-0 p-4">
                 <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400">
@@ -33,14 +31,14 @@
                 </div>
             </div>
             <div class="relative">
-                <p class="text-sm font-bold text-slate-500 uppercase tracking-widest">Ganancias Hoy</p>
+                <p class="text-sm font-bold text-slate-500 uppercase tracking-widest">Ingresos Hoy</p>
                 <p class="mt-2 text-4xl font-black text-slate-900 dark:text-white">${{ number_format($todayEarnings, 0, ',', '.') }}</p>
-                <p class="mt-1 text-sm text-slate-500 font-medium">Ventas + órdenes hoy</p>
+                <p class="mt-1 text-sm text-slate-500 font-medium">Ventas + órdenes entregadas hoy</p>
             </div>
             <div class="absolute bottom-0 left-0 h-1.5 w-full bg-emerald-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
         </div>
 
-        <!-- Ganancias del Mes -->
+        <!-- Ingresos del Mes -->
         <div class="relative overflow-hidden rounded-3xl bg-white dark:bg-gray-900/50 p-6 shadow-sm border border-slate-200 dark:border-gray-800 group">
             <div class="absolute top-0 right-0 p-4">
                 <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400">
@@ -48,9 +46,9 @@
                 </div>
             </div>
             <div class="relative">
-                <p class="text-sm font-bold text-slate-500 uppercase tracking-widest">Ganancias del Mes</p>
+                <p class="text-sm font-bold text-slate-500 uppercase tracking-widest">Ingresos del Mes</p>
                 <p class="mt-2 text-4xl font-black text-slate-900 dark:text-white">${{ number_format($monthEarnings, 0, ',', '.') }}</p>
-                <p class="mt-1 text-sm text-slate-500 font-medium">Mes actual</p>
+                <p class="mt-1 text-sm text-slate-500 font-medium">{{ ucfirst(now()->translatedFormat('F Y')) }} · <a href="{{ route('reports') }}" class="font-bold text-indigo-600 hover:underline">ver reporte</a></p>
             </div>
             <div class="absolute bottom-0 left-0 h-1.5 w-full bg-indigo-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
         </div>
@@ -114,7 +112,7 @@
                 <div class="space-y-4">
                     @foreach($recentSales as $sale)
                         @php
-                            $badgeColor = match($sale->payment_method) {
+                            $badgeColor = match(strtolower($sale->payment_method)) {
                                 'efectivo' => 'success',
                                 'nequi' => 'blue',
                                 'transferencia' => 'amber',
@@ -162,7 +160,7 @@
             <x-slot name="header">
                 <div class="flex justify-between items-center w-full">
                     <h3 class="font-bold text-slate-900 dark:text-white">Stock Bajo</h3>
-                    <a href="{{ route('inventory.index') }}" class="text-sm font-medium text-amber-600 hover:text-amber-700 dark:text-amber-500 dark:hover:text-amber-400">Ver todo</a>
+                    <a href="{{ route('products.index', ['low_stock' => 1]) }}" class="text-sm font-medium text-amber-600 hover:text-amber-700 dark:text-amber-500 dark:hover:text-amber-400">Ver todo</a>
                 </div>
             </x-slot>
             @if($lowStockProducts->count() > 0)
@@ -170,7 +168,8 @@
                     @foreach($lowStockProducts->take(6) as $product)
                         @php
                             $percent = $product->min_stock > 0 ? min(100, round(($product->stock / $product->min_stock) * 100)) : 0;
-                            $barColor = $percent <= 20 ? 'bg-error-500' : ($percent <= 50 ? 'bg-warning-500' : 'bg-success-500');
+                            // Todos están en o bajo el mínimo: rojo si queda un tercio o menos, ámbar si no.
+                            $barColor = $percent <= 33 ? 'bg-error-500' : 'bg-warning-500';
                         @endphp
                         <div>
                             <div class="flex justify-between items-end mb-2">
@@ -199,7 +198,7 @@
         <!-- Mecánicos activos (span 2) -->
         <x-card class="lg:col-span-2">
             <x-slot name="header">
-                <h3 class="font-bold text-slate-900 dark:text-white">Mecánicos Activos del Mes</h3>
+                <h3 class="font-bold text-slate-900 dark:text-white">Comisiones de Mecánicos del Mes</h3>
             </x-slot>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @forelse($mechanics as $mech)

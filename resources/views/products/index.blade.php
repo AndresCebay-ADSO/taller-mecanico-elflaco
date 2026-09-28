@@ -9,13 +9,6 @@
     </x-page-header>
 
     {{-- Flash messages --}}
-    @if(session('info'))
-        <div class="mb-4 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700/40 px-5 py-4 text-sm font-medium text-amber-800 dark:text-amber-300">
-            <i data-lucide="info" class="h-4 w-4 mt-0.5 shrink-0"></i>
-            {{ session('info') }}
-        </div>
-    @endif
-
     <x-search-filter action="{{ route('products.index') }}" searchPlaceholder="Producto, categoría, UPC o proveedor...">
         <div>
             <label for="category" class="block text-xs font-bold text-slate-400 dark:text-gray-500 uppercase mb-2 ml-1">Categoría</label>
@@ -98,8 +91,12 @@
                                 </form>
                                 @endcan
                             @else
+                                {{-- Ver --}}
+                                <a href="{{ route('products.show', $product) }}" title="Ver detalle" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-blue-600 transition-colors">
+                                    <i data-lucide="eye" class="h-4 w-4"></i>
+                                </a>
                                 {{-- Editar --}}
-                                <a href="{{ route('products.edit', $product) }}" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
+                                <a href="{{ route('products.edit', $product) }}" title="Editar" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
                                     <i data-lucide="pencil" class="h-4 w-4"></i>
                                 </a>
                                 @can('admin')
