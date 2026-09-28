@@ -150,8 +150,6 @@
     </div>
 
     <script>
-        lucide.createIcons();
-
         function openEditBranchModal(id, name, address, phone, email) {
             document.getElementById('editBranchForm').action = `/branches/${id}`;
             document.getElementById('edit-name').value = name;

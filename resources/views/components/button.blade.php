@@ -25,6 +25,13 @@
     $classes = "{$baseClasses} {$variants[$variant]} {$sizes[$size]}";
 @endphp
 
-<button type="{{ $type }}" {{ $attributes->merge(['class' => $classes]) }}>
-    {{ $slot }}
-</button>
+@if($attributes->has('href'))
+    {{-- Con href se comporta como enlace (un <button href> no navega). --}}
+    <a {{ $attributes->merge(['class' => $classes]) }}>
+        {{ $slot }}
+    </a>
+@else
+    <button type="{{ $type }}" {{ $attributes->merge(['class' => $classes]) }}>
+        {{ $slot }}
+    </button>
+@endif

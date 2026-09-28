@@ -6,16 +6,16 @@ use App\Exceptions\BusinessRuleException;
 use App\Exceptions\InsufficientStockException;
 use App\Models\JobType;
 use App\Models\Mechanic;
-use App\Models\Product;
 use App\Models\ServiceOrder;
 use App\Models\WorkshopJob;
+use App\Services\InventoryService;
 use App\Services\WorkshopJobService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class WorkshopJobController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, InventoryService $inventoryService)
     {
         $branchId = $this->currentBranchId();
 
@@ -32,7 +32,7 @@ class WorkshopJobController extends Controller
 
         $jobTypes = JobType::where('is_active', true)->orderBy('name')->get();
         $mechanics = Mechanic::forBranch($branchId)->where('is_active', true)->orderBy('name')->get();
-        $products = Product::forBranch($branchId)->where('stock', '>', 0)->orderBy('name')->get();
+        $products = $inventoryService->sellableProducts($branchId);
 
         return view('jobs.index', compact('jobs', 'jobTypes', 'mechanics', 'products'));
     }

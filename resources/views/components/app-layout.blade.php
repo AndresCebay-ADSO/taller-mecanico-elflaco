@@ -36,8 +36,6 @@
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@1.45.0"></script>
 
     <style>
         [x-cloak] { display: none !important; }
@@ -69,6 +67,10 @@
 
                     @if(session('success'))
                         <x-alert type="success" :message="session('success')" />
+                    @endif
+
+                    @if(session('info'))
+                        <x-alert type="info" :message="session('info')" />
                     @endif
 
                     @if(session('error'))
@@ -150,8 +152,6 @@
     @endif
 
     <script>
-        lucide.createIcons();
-
         // Page transitions
         document.addEventListener('DOMContentLoaded', () => {
             // Fade in al cargar

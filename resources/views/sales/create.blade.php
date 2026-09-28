@@ -7,22 +7,14 @@
         </x-slot>
     </x-page-header>
 
-    <div class="max-w-4xl" x-data="{
-        items: {{ json_encode(
-            collect(old('products', [['id' => '', 'quantity' => 1]]))->map(fn($p) => [
-                'id' => is_array($p) ? ($p['id'] ?? '') : '',
-                'quantity' => is_array($p) ? ($p['quantity'] ?? 1) : 1
-            ])->values()
-        ) }},
-        addItem() {
-            this.items.push({ id: '', quantity: 1 });
-        },
-        removeItem(index) {
-            if (this.items.length > 1) {
-                this.items.splice(index, 1);
-            }
-        }
-    }">
+    @php
+        $oldItems = collect(old('products', []))
+            ->filter(fn ($item) => is_array($item))
+            ->map(fn ($item) => ['id' => $item['id'] ?? '', 'quantity' => (int) ($item['quantity'] ?? 1)])
+            ->values();
+    @endphp
+
+    <div class="max-w-4xl" x-data="saleForm({ products: @js($products), items: @js($oldItems) })">
 
         <x-card>
 
@@ -90,7 +82,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end p-4 rounded-xl border border-slate-200 bg-slate-50/50 relative group">
 
                                 <!-- Producto -->
-                                <div class="md:col-span-7">
+                                <div class="md:col-span-6">
 
                                     <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">
                                         Producto
@@ -105,25 +97,19 @@
                                         <option value="">Seleccione un producto</option>
 
                                         @foreach($products as $product)
-                                            <option value="{{ $product->id }}">
-                                                {{ $product->name }}
-                                                (${{ number_format($product->sale_price, 0, ',', '.') }})
-                                                - Stock: {{ $product->stock }}
+                                            <option value="{{ $product['id'] }}">
+                                                {{ $product['name'] }} — ${{ number_format($product['price'], 0, ',', '.') }} · Stock: {{ $product['stock'] }}
                                             </option>
                                         @endforeach
 
                                     </select>
 
-                                    <template x-if="$errors?.has(`products.${index}.id`)">
-                                        <p class="text-red-500 text-xs mt-1"
-                                           x-text="$errors.first(`products.${index}.id`)"></p>
-                                    </template>
 
                                 </div>
 
 
                                 <!-- Cantidad -->
-                                <div class="md:col-span-4">
+                                <div class="md:col-span-2">
 
                                     <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">
                                         Cantidad
@@ -132,20 +118,25 @@
                                     <input
                                         type="number"
                                         :name="`products[${index}][quantity]`"
-                                        x-model="item.quantity"
+                                        x-model.number="item.quantity"
                                         required
                                         min="1"
+                                        :max="product(item.id)?.stock"
                                         placeholder="1"
                                         class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-navy-500 focus:border-navy-500 transition-all bg-white"
                                     >
 
-                                    <template x-if="$errors?.has(`products.${index}.quantity`)">
-                                        <p class="text-red-500 text-xs mt-1"
-                                           x-text="$errors.first(`products.${index}.quantity`)"></p>
-                                    </template>
 
                                 </div>
 
+
+                                <!-- Subtotal -->
+                                <div class="md:col-span-3 md:text-right">
+                                    <span class="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">Subtotal</span>
+                                    <p class="py-2.5 text-sm font-black text-slate-900" x-text="money(lineTotal(item))"></p>
+                                    <p x-show="exceedsStock(item)" x-cloak class="text-xs font-semibold text-red-500"
+                                       x-text="`Solo hay ${product(item.id)?.stock} en stock`"></p>
+                                </div>
 
                                 <!-- Eliminar -->
                                 <div class="md:col-span-1 flex justify-center pb-1">
@@ -180,18 +171,12 @@
                 </div>
 
 
-                @if ($errors->any())
-                <div class="px-4 py-3 rounded-xl bg-red-50 border border-red-200">
-                    <ul class="list-disc list-inside text-sm text-red-600">
-                        @foreach (array_unique($errors->all()) as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-                @endif
-
-
-                <div class="flex justify-end pt-4">
+                <div class="flex flex-col gap-4 pt-4 border-t border-slate-200 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total a cobrar</p>
+                        <p class="text-3xl font-black text-slate-900" x-text="money(total)"></p>
+                        <p class="text-xs text-slate-400">Precios según el lote más antiguo (FIFO).</p>
+                    </div>
                     <x-button variant="primary" type="submit" class="w-full md:w-auto">
                         Registrar Venta
                     </x-button>

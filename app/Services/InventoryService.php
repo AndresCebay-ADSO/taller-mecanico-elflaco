@@ -54,6 +54,36 @@ class InventoryService
     }
 
     /**
+     * Productos con stock de la sucursal y sus tramos de precio FIFO, para calcular totales en pantalla
+     * igual que se cobrarán. Solo expone datos de venta (nunca costos).
+     *
+     * @return Collection<int, array{id: int, name: string, stock: int, price: float, tiers: array<int, array{qty: int, price: float}>}>
+     */
+    public function sellableProducts(?int $branchId): Collection
+    {
+        return Product::forBranch($branchId)
+            ->where('stock', '>', 0)
+            ->with(['batches' => fn ($query) => $query->withStock()->fifo()->orderBy('id')])
+            ->orderBy('name')
+            ->get()
+            ->map(function (Product $product) {
+                $tiers = $product->batches->map(fn (Batch $batch) => [
+                    'qty' => (int) $batch->remaining_stock,
+                    'price' => (float) ($batch->sale_price ?? $product->sale_price),
+                ])->values()->all();
+
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'stock' => (int) $product->stock,
+                    'price' => $tiers[0]['price'] ?? (float) $product->sale_price,
+                    'tiers' => $tiers ?: [['qty' => (int) $product->stock, 'price' => (float) $product->sale_price]],
+                ];
+            })
+            ->values();
+    }
+
+    /**
      * Deduct stock using FIFO logic.
      *
      * @return array<int, array{quantity: int, unit_price: float, cost_price: float, batch_id: int, supplier_id: int|null}>

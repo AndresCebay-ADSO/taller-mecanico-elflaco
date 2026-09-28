@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\BusinessRuleException;
 use App\Exceptions\InsufficientStockException;
-use App\Models\Product;
 use App\Models\Sale;
+use App\Services\InventoryService;
 use App\Services\SaleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -95,12 +95,9 @@ class SaleController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(InventoryService $inventoryService)
     {
-        $products = Product::forBranch($this->currentBranchId())
-            ->where('stock', '>', 0)
-            ->orderBy('name')
-            ->get();
+        $products = $inventoryService->sellableProducts($this->currentBranchId());
 
         return view('sales.create', compact('products'));
     }

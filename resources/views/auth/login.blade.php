@@ -22,8 +22,6 @@
     <!-- Scripts / Styles -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
         [x-cloak] { display: none !important; }
@@ -216,8 +214,5 @@
         </div>
     </div>
 
-    <script>
-        lucide.createIcons();
-    </script>
 </body>
 </html>

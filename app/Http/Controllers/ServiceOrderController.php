@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\BusinessRuleException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use App\Models\Mechanic;
-use App\Models\Product;
 use App\Models\ServiceOrder;
 use App\Models\JobType;
+use App\Models\WorkshopJob;
+use App\Services\InventoryService;
+use App\Services\WorkshopJobService;
 
 class ServiceOrderController extends Controller
 {
@@ -101,7 +105,7 @@ class ServiceOrderController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(ServiceOrder $serviceOrder)
+    public function show(ServiceOrder $serviceOrder, InventoryService $inventoryService)
     {
         $this->ensureCurrentBranch($serviceOrder->branch_id);
         $branchId = $serviceOrder->branch_id;
@@ -112,7 +116,7 @@ class ServiceOrderController extends Controller
 
         $mechanics = Mechanic::forBranch($branchId)->where('is_active', true)->orderBy('name')->get();
         $jobTypes = JobType::where('is_active', true)->orderBy('name')->get();
-        $products = Product::forBranch($branchId)->where('stock', '>', 0)->orderBy('name')->get();
+        $products = $inventoryService->sellableProducts($branchId);
 
         return view(
             'service-orders.show',
