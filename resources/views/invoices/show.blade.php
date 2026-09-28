@@ -18,17 +18,16 @@
                     <i data-lucide="clipboard-list" class="mr-2 h-4 w-4"></i>
                     Ver orden
                 </x-button>
-                @can('admin')
-                    <form action="{{ route('invoices.destroy', $invoice) }}" method="POST" class="inline"
-                        onsubmit="return confirm('¿Anular la factura {{ $invoice->invoice_number }}? La orden podrá facturarse de nuevo.')">
+                @if(!$invoice->isCancelled() && auth()->user()->can('admin'))
+                    <form action="{{ route('invoices.cancel', $invoice) }}" method="POST" class="inline"
+                        onsubmit="return confirm('¿Anular la factura {{ $invoice->invoice_number }}? Quedará registrada como anulada y la orden podrá facturarse de nuevo.')">
                         @csrf
-                        @method('DELETE')
                         <x-button variant="danger" type="submit">
                             <i data-lucide="ban" class="mr-2 h-4 w-4"></i>
                             Anular
                         </x-button>
                     </form>
-                @endcan
+                @endif
                 <x-button variant="primary" onclick="window.print()">
                     <i data-lucide="printer" class="mr-2 h-4 w-4"></i>
                     Imprimir
@@ -36,6 +35,18 @@
             </x-slot>
         </x-page-header>
     </div>
+
+    @if($invoice->isCancelled())
+        <div class="mx-auto mb-6 flex max-w-4xl items-center gap-3 rounded-2xl border-2 border-red-300 bg-red-50 px-6 py-4 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
+            <i data-lucide="ban" class="h-6 w-6 shrink-0"></i>
+            <div>
+                <p class="text-lg font-black uppercase tracking-wide">Factura anulada</p>
+                <p class="text-sm font-medium">
+                    El {{ $invoice->cancelled_at->format('d/m/Y H:i') }}{{ $invoice->cancelledBy ? ' por ' . $invoice->cancelledBy->name : '' }}. No tiene validez como comprobante.
+                </p>
+            </div>
+        </div>
+    @endif
 
     <div class="invoice-sheet mx-auto max-w-4xl rounded-2xl border border-slate-200 bg-white p-8 shadow-sm md:p-12 dark:border-gray-800 dark:bg-gray-900">
         {{-- Encabezado --}}

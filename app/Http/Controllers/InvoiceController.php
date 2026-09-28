@@ -17,7 +17,7 @@ class InvoiceController extends Controller
     {
         $branchId = $this->currentBranchId();
 
-        $invoices = Invoice::with('serviceOrder')
+        $invoices = Invoice::with(['serviceOrder', 'cancelledBy'])
             ->whereHas('serviceOrder', function ($q) use ($branchId) {
                 $q->forBranch($branchId);
             })
@@ -34,6 +34,7 @@ class InvoiceController extends Controller
     public function show(Invoice $invoice)
     {
         $invoice->load([
+            'cancelledBy',
             'serviceOrder.branch',
             'serviceOrder.workshopJobs.jobType',
             'serviceOrder.workshopJobs.mechanic',
@@ -64,14 +65,17 @@ class InvoiceController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage (solo administradores).
+     * Anula la factura sin borrarla (solo administradores).
      */
-    public function destroy(Invoice $invoice)
+    public function cancel(Invoice $invoice, InvoiceService $invoiceService)
     {
         $this->ensureCurrentBranch($invoice->serviceOrder?->branch_id);
 
-        $invoice->delete();
+        if (!$invoiceService->cancel($invoice, auth()->id())) {
+            return back()->with('error', "La factura {$invoice->invoice_number} ya estaba anulada.");
+        }
 
-        return redirect()->route('invoices.index')->with('success', 'Factura anulada.');
+        return redirect()->route('invoices.show', $invoice)
+            ->with('success', "Factura {$invoice->invoice_number} anulada. La orden puede facturarse de nuevo.");
     }
 }

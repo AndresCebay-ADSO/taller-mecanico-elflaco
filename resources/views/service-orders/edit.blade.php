@@ -22,12 +22,20 @@
                     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                         <div class="space-y-1.5">
                             <label for="status" class="block text-sm font-semibold text-slate-700">Estado <span class="text-red-500">*</span></label>
+                            @php
+                                $statusLabels = ['pending' => 'Pendiente', 'in_progress' => 'En Progreso', 'completed' => 'Completado', 'cancelled' => 'Cancelado'];
+                                $selectedStatus = old('status', $serviceOrder->status);
+                            @endphp
                             <select id="status" name="status" required class="block w-full rounded-xl border border-slate-300 px-4 py-2.5 text-slate-900 shadow-sm transition-all duration-200 focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
-                                <option value="pending" {{ $serviceOrder->status === 'pending' ? 'selected' : '' }}>Pendiente</option>
-                                <option value="in_progress" {{ $serviceOrder->status === 'in_progress' ? 'selected' : '' }}>En Progreso</option>
-                                <option value="completed" {{ $serviceOrder->status === 'completed' ? 'selected' : '' }}>Completado</option>
-                                <option value="cancelled" {{ $serviceOrder->status === 'cancelled' ? 'selected' : '' }}>Cancelado</option>
+                                @foreach($statusLabels as $value => $label)
+                                    @if($serviceOrder->canTransitionTo($value))
+                                        <option value="{{ $value }}" @selected($selectedStatus === $value)>{{ $label }}</option>
+                                    @endif
+                                @endforeach
                             </select>
+                            @if($serviceOrder->canTransitionTo('cancelled') && $serviceOrder->status !== 'cancelled')
+                                <p class="text-xs text-slate-500">Al cancelar, los repuestos usados en sus trabajos vuelven al inventario.</p>
+                            @endif
                         </div>
                     </div>
                 </div>

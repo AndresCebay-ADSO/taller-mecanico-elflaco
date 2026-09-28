@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use InvalidArgumentException;
 
 class ServiceOrder extends Model
@@ -58,9 +59,20 @@ class ServiceOrder extends Model
         return $this->hasMany(WorkshopJob::class);
     }
 
+    /**
+     * Todas las facturas de la orden, incluidas las anuladas.
+     */
     public function invoices()
     {
         return $this->hasMany(Invoice::class);
+    }
+
+    /**
+     * La factura vigente: como máximo una por orden (InvoiceService lo garantiza).
+     */
+    public function activeInvoice(): HasOne
+    {
+        return $this->hasOne(Invoice::class)->whereNull('cancelled_at');
     }
 
     public function canTransitionTo(string $newStatus): bool

@@ -115,31 +115,81 @@ class WorkshopJobService
                 ? ServiceOrder::whereKey($job->service_order_id)->lockForUpdate()->first()
                 : null;
 
-            if ($order && $order->invoices()->exists()) {
+            if ($order && $order->activeInvoice()->exists()) {
                 throw new BusinessRuleException('No se puede eliminar un trabajo de una orden ya facturada.', 'job');
             }
 
-            $reversed = $this->inventory->reverseMovements(
-                $this->legacyReferences($job),
-                ['job_usage'],
-                "Eliminacion Trabajo #{$job->id}"
-            );
+            $lockedJob = WorkshopJob::whereKey($job->id)->lockForUpdate()->firstOrFail();
 
-            // Trabajos anteriores al inventario por lotes no tienen movimientos: se devuelve lo registrado en el trabajo.
-            if ($reversed === 0) {
-                foreach ($job->jobProducts as $jobProduct) {
-                    $this->inventory->returnToStock(
-                        $jobProduct->product_id,
-                        $jobProduct->quantity,
-                        "Eliminacion Trabajo #{$job->id}",
-                        null,
-                        $jobProduct->unit_price
-                    );
-                }
+            // Un trabajo cancelado ya devolvió sus repuestos: eliminarlo los devolvería dos veces.
+            if ($lockedJob->status === WorkshopJob::STATUS_CANCELLED) {
+                throw new BusinessRuleException('Este trabajo fue cancelado y sus repuestos ya volvieron al inventario.', 'job');
             }
 
-            $job->delete();
+            $this->returnParts($lockedJob, "Eliminacion Trabajo #{$lockedJob->id}");
+
+            $lockedJob->delete();
         }, 3);
+    }
+
+    /**
+     * Cancela una orden abierta: cancela sus trabajos y devuelve los repuestos a sus lotes de origen.
+     * Si ya hay trabajos completados, la orden debe facturarse (o eliminarse esos trabajos) en lugar de cancelarse.
+     *
+     * @throws BusinessRuleException
+     */
+    public function cancelOrder(ServiceOrder $serviceOrder): void
+    {
+        DB::transaction(function () use ($serviceOrder) {
+            $order = ServiceOrder::whereKey($serviceOrder->id)->lockForUpdate()->firstOrFail();
+
+            if (!$order->canTransitionTo(ServiceOrder::STATUS_CANCELLED)) {
+                throw new BusinessRuleException('Solo se pueden cancelar órdenes pendientes o en progreso.', 'status');
+            }
+
+            $jobs = WorkshopJob::where('service_order_id', $order->id)
+                ->where('status', '!=', WorkshopJob::STATUS_CANCELLED)
+                ->lockForUpdate()
+                ->get();
+
+            if ($jobs->contains(fn (WorkshopJob $job) => $job->status === WorkshopJob::STATUS_COMPLETED)) {
+                throw new BusinessRuleException(
+                    'La orden tiene trabajos completados: genera la factura o elimina esos trabajos antes de cancelarla.',
+                    'status'
+                );
+            }
+
+            foreach ($jobs as $job) {
+                $this->returnParts($job, "Cancelacion Orden #{$order->id}");
+                $job->update(['status' => WorkshopJob::STATUS_CANCELLED]);
+            }
+
+            $order->update([
+                'status' => ServiceOrder::STATUS_CANCELLED,
+                'completed_at' => null,
+            ]);
+        }, 3);
+    }
+
+    /**
+     * Devuelve al inventario los repuestos consumidos por un trabajo, al mismo lote del que salieron.
+     */
+    private function returnParts(WorkshopJob $job, string $reference): void
+    {
+        $reversed = $this->inventory->reverseMovements($this->legacyReferences($job), ['job_usage'], $reference);
+
+        // Trabajos anteriores al inventario por lotes no tienen movimientos: se devuelve lo registrado en el trabajo.
+        if ($reversed === 0) {
+            foreach ($job->jobProducts as $jobProduct) {
+                $this->inventory->returnToStock(
+                    $jobProduct->product_id,
+                    $jobProduct->quantity,
+                    $reference,
+                    null,
+                    $jobProduct->unit_price
+                );
+            }
+        }
     }
 
     private function reference(WorkshopJob $job): string

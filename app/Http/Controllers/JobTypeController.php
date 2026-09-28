@@ -110,6 +110,14 @@ class JobTypeController extends Controller
             return back()->with('error', 'Los tipos de sistema no pueden eliminarse.');
         }
 
+        // Con trabajos registrados no se puede borrar (historial y comisiones): se desactiva.
+        if ($jobType->workshopJobs()->exists()) {
+            $jobType->update(['is_active' => false]);
+
+            return redirect()->route('job-types.index')
+                ->with('info', "\"{$jobType->name}\" tiene trabajos registrados y fue desactivado: ya no aparecerá al crear trabajos.");
+        }
+
         $jobType->delete();
         return redirect()->route('job-types.index')->with('success', 'Tipo de trabajo eliminado.');
     }

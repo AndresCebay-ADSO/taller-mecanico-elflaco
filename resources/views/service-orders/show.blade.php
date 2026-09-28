@@ -60,7 +60,7 @@
                                         </button>
                                     </form>
                                     @endif
-                                    @if($serviceOrder->invoices->isEmpty())
+                                    @if($serviceOrder->canReceiveJobs() && $serviceOrder->invoices->every(fn ($i) => $i->isCancelled()))
                                     <form action="{{ route('jobs.destroy', $job) }}" method="POST" onsubmit="return confirm('¿Eliminar este trabajo? Se devolverán los productos al stock.')">
                                         @csrf
                                         @method('DELETE')
@@ -149,7 +149,8 @@
                     $billableJobs = $serviceOrder->workshopJobs->where('status', '!=', 'cancelled');
                     $totalLabor = $billableJobs->sum('total_amount');
                     $totalProductsCost = $billableJobs->sum(fn ($j) => $j->jobProducts->sum('total_price'));
-                    $invoice = $serviceOrder->invoices->first();
+                    $invoice = $serviceOrder->invoices->first(fn ($i) => !$i->isCancelled());
+                    $cancelledInvoices = $serviceOrder->invoices->filter(fn ($i) => $i->isCancelled());
                     $canInvoice = !$invoice
                         && in_array($serviceOrder->status, ['in_progress', 'completed'], true)
                         && $billableJobs->isNotEmpty()
@@ -185,6 +186,16 @@
                     </form>
                     @elseif($billableJobs->isNotEmpty() && $serviceOrder->canReceiveJobs())
                     <p class="text-xs font-medium text-slate-500 text-center">Completa todos los trabajos para poder facturar.</p>
+                    @elseif($serviceOrder->status === 'cancelled')
+                    <p class="text-xs font-medium text-slate-500 text-center">Orden cancelada: los repuestos se devolvieron al inventario.</p>
+                    @endif
+                    @if($cancelledInvoices->isNotEmpty())
+                    <p class="text-xs font-medium text-slate-400 text-center">
+                        Anulada(s):
+                        @foreach($cancelledInvoices as $cancelled)
+                            <a href="{{ route('invoices.show', $cancelled) }}" class="font-mono line-through hover:text-blue-600">{{ $cancelled->invoice_number }}</a>@if(!$loop->last), @endif
+                        @endforeach
+                    </p>
                     @endif
                 </div>
             </x-card>

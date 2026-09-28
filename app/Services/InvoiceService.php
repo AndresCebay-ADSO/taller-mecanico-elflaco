@@ -21,7 +21,7 @@ class InvoiceService
         return DB::transaction(function () use ($serviceOrder) {
             $order = ServiceOrder::whereKey($serviceOrder->id)->lockForUpdate()->firstOrFail();
 
-            if ($order->invoices()->exists()) {
+            if ($order->activeInvoice()->exists()) {
                 throw new BusinessRuleException('Esta orden ya tiene una factura vinculada.', 'invoice');
             }
 
@@ -62,6 +62,28 @@ class InvoiceService
             }
 
             return $invoice;
+        }, 3);
+    }
+
+    /**
+     * Anula una factura conservando el registro (numeración sin huecos). La orden puede facturarse de nuevo.
+     * Devuelve false si ya estaba anulada.
+     */
+    public function cancel(Invoice $invoice, ?int $cancelledBy): bool
+    {
+        return DB::transaction(function () use ($invoice, $cancelledBy) {
+            $locked = Invoice::whereKey($invoice->id)->lockForUpdate()->firstOrFail();
+
+            if ($locked->isCancelled()) {
+                return false;
+            }
+
+            $locked->forceFill([
+                'cancelled_at' => now(),
+                'cancelled_by' => $cancelledBy,
+            ])->save();
+
+            return true;
         }, 3);
     }
 }

@@ -33,7 +33,7 @@
                         <i data-lucide="edit-3" class="h-4 w-4"></i>
                     </x-button>
                     @if(!$type->is_system)
-                    <form action="{{ route('job-types.destroy', $type) }}" method="POST" onsubmit="return confirm('¿Eliminar este tipo de trabajo?')">
+                    <form action="{{ route('job-types.destroy', $type) }}" method="POST" onsubmit="return confirm('¿Eliminar este tipo de trabajo? Si ya tiene trabajos registrados solo se desactivará.')">
                         @csrf
                         @method('DELETE')
                         <x-button variant="outline" size="sm" class="p-2 text-red-500 hover:text-red-600">
