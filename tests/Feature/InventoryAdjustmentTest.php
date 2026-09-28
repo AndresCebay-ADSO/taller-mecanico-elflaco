@@ -1,13 +1,11 @@
 <?php
 
+use App\Models\Batch;
 use App\Models\InventoryMovement;
 use App\Models\Product;
-use App\Models\User;
 
 it('registers positive inventory adjustments as adjustment movements', function () {
-    $user = User::factory()->create();
-    $branch = \App\Models\Branch::create(['name' => 'Sede Test', 'address' => 'Dir', 'phone' => '123', 'is_active' => true]);
-    $user->branches()->attach($branch);
+    [$admin, $branch] = branchUser(admin: true);
 
     $product = Product::create([
         'name' => 'Bujia',
@@ -19,7 +17,7 @@ it('registers positive inventory adjustments as adjustment movements', function 
         'branch_id' => $branch->id,
     ]);
 
-    $this->actingAs($user)
+    $this->actingAs($admin)
         ->withSession(['current_branch_id' => $branch->id])
         ->post(route('inventory.store-adjustment'), [
             'product_id' => $product->id,
@@ -35,13 +33,13 @@ it('registers positive inventory adjustments as adjustment movements', function 
         ->and($movement->movement_type)->toBe('adjustment')
         ->and($movement->quantity)->toBe(2)
         ->and($movement->reference)->toBe('ADJUSTMENT')
-        ->and($movement->notes)->toBe('Conteo fisico');
+        ->and($movement->notes)->toBe('Conteo fisico')
+        ->and($movement->batch_id)->not->toBeNull()
+        ->and((int) Batch::where('product_id', $product->id)->sum('remaining_stock'))->toBe(2);
 });
 
 it('rejects negative inventory adjustments that exceed current stock', function () {
-    $user = User::factory()->create();
-    $branch = \App\Models\Branch::create(['name' => 'Sede Test 2', 'address' => 'Dir 2', 'phone' => '1234', 'is_active' => true]);
-    $user->branches()->attach($branch);
+    [$admin, $branch] = branchUser(admin: true);
 
     $product = Product::create([
         'name' => 'Luz led',
@@ -54,7 +52,7 @@ it('rejects negative inventory adjustments that exceed current stock', function 
     ]);
 
     $this->from(route('inventory.adjustment'))
-        ->actingAs($user)
+        ->actingAs($admin)
         ->withSession(['current_branch_id' => $branch->id])
         ->post(route('inventory.store-adjustment'), [
             'product_id' => $product->id,

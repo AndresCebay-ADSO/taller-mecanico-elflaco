@@ -55,6 +55,7 @@
                                 class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors cursor-pointer" title="Editar">
                                 <i data-lucide="pencil" class="h-4 w-4"></i>
                             </button>
+                            @can('admin')
                             <form action="{{ route('suppliers.toggleActive', $supplier) }}" method="POST" class="inline" onsubmit="return confirm('¿Desea {{ $supplier->active ? 'desactivar' : 'activar' }} este proveedor?')">
                                 @csrf
                                 @method('PATCH')
@@ -62,6 +63,7 @@
                                     <i data-lucide="{{ $supplier->active ? 'toggle-right' : 'toggle-left' }}" class="h-5 w-5"></i>
                                 </button>
                             </form>
+                            @endcan
                         </div>
                     </td>
                 </tr>

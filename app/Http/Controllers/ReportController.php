@@ -15,7 +15,7 @@ class ReportController extends Controller
 {
     public function index(BranchService $branchService)
     {
-        $branchId = $branchService->getCurrentBranchId();
+        $branchId = $branchService->getCurrentBranch()?->id;
 
         // Fix M01: Ganancia real = ingresos por ventas de mostrador + ganancias del taller por trabajos
         $totalIncome = Sale::where('status', '!=', 'anulada')

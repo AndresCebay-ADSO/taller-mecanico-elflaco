@@ -7,16 +7,15 @@ use App\Models\Mechanic;
 use App\Models\Product;
 use App\Models\ServiceOrder;
 use App\Models\JobType;
-use App\Services\BranchService;
 
 class ServiceOrderController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request, BranchService $branchService)
+    public function index(Request $request)
     {
-        $branchId = $branchService->getCurrentBranch()?->id;
+        $branchId = $this->currentBranchId();
         $request->validate([
             'search' => 'nullable|string|max:255',
             'status' => 'nullable|string|in:pending,in_progress,completed,cancelled',
@@ -79,16 +78,18 @@ class ServiceOrderController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request, BranchService $branchService)
+    public function store(Request $request)
     {
+        $branchId = $this->requireCurrentBranchId();
+
         $validated = $request->validate([
             'customer_name' => 'required|string|max:255',
             'customer_phone' => 'nullable|digits:10',
-            'vehicle_info' => 'required|string',
-            'service_description' => 'required|string',
+            'vehicle_info' => 'required|string|max:255',
+            'service_description' => 'required|string|max:5000',
         ]);
 
-        $validated['branch_id'] = $branchService->getCurrentBranch()?->id;
+        $validated['branch_id'] = $branchId;
 
         ServiceOrder::create($validated);
 
@@ -100,18 +101,18 @@ class ServiceOrderController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(ServiceOrder $serviceOrder, BranchService $branchService)
+    public function show(ServiceOrder $serviceOrder)
     {
-        $branchId = $branchService->getCurrentBranch()?->id;
-        abort_if($serviceOrder->branch_id !== $branchId, 404);
-        
-        $serviceOrder->load(['workshopJobs.mechanic', 'workshopJobs.jobType', 'workshopJobs.jobProducts.product' => function($q) {
+        $this->ensureCurrentBranch($serviceOrder->branch_id);
+        $branchId = $serviceOrder->branch_id;
+
+        $serviceOrder->load(['invoices', 'workshopJobs.mechanic', 'workshopJobs.jobType', 'workshopJobs.jobProducts.product' => function ($q) {
             $q->withTrashed();
         }]);
 
-        $mechanics = Mechanic::forBranch($branchId)->where('is_active', true)->get();
-        $jobTypes = JobType::where('is_active', true)->get();
-        $products = Product::forBranch($branchId)->where('stock', '>', 0)->get();
+        $mechanics = Mechanic::forBranch($branchId)->where('is_active', true)->orderBy('name')->get();
+        $jobTypes = JobType::where('is_active', true)->orderBy('name')->get();
+        $products = Product::forBranch($branchId)->where('stock', '>', 0)->orderBy('name')->get();
 
         return view(
             'service-orders.show',
@@ -122,26 +123,25 @@ class ServiceOrderController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(ServiceOrder $serviceOrder, BranchService $branchService)
+    public function edit(ServiceOrder $serviceOrder)
     {
-        $branchId = $branchService->getCurrentBranch()?->id;
-        abort_if($serviceOrder->branch_id !== $branchId, 404);
+        $this->ensureCurrentBranch($serviceOrder->branch_id);
+
         return view('service-orders.edit', compact('serviceOrder'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, ServiceOrder $serviceOrder, BranchService $branchService)
+    public function update(Request $request, ServiceOrder $serviceOrder)
     {
-        $branchId = $branchService->getCurrentBranch()?->id;
-        abort_if($serviceOrder->branch_id !== $branchId, 404);
+        $this->ensureCurrentBranch($serviceOrder->branch_id);
 
         $validated = $request->validate([
             'customer_name' => 'required|string|max:255',
             'customer_phone' => 'nullable|digits:10',
-            'vehicle_info' => 'required|string',
-            'service_description' => 'required|string',
+            'vehicle_info' => 'required|string|max:255',
+            'service_description' => 'required|string|max:5000',
             'status' => 'required|in:pending,in_progress,completed,cancelled',
         ]);
 
@@ -164,12 +164,11 @@ class ServiceOrderController extends Controller
 
     /**
      * Remove the specified resource from storage.
-     * Fix M05: Prevents deletion if jobs exist — protects stock traceability.
+     * Prevents deletion if jobs exist — protects stock traceability.
      */
-    public function destroy(ServiceOrder $serviceOrder, BranchService $branchService)
+    public function destroy(ServiceOrder $serviceOrder)
     {
-        $branchId = $branchService->getCurrentBranch()?->id;
-        abort_if($serviceOrder->branch_id !== $branchId, 404);
+        $this->ensureCurrentBranch($serviceOrder->branch_id);
 
         if ($serviceOrder->workshopJobs()->exists()) {
             return back()->with('error', 'No se puede eliminar una orden con trabajos asociados. Cancélela primero.');

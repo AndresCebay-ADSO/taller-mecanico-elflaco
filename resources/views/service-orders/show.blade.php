@@ -9,10 +9,12 @@
                 <i data-lucide="pencil" class="mr-2 h-4 w-4"></i>
                 Editar
             </x-button>
+            @if($serviceOrder->canReceiveJobs())
             <x-button variant="primary" @click="showJobModal = true">
                 <i data-lucide="plus" class="mr-2 h-4 w-4"></i>
                 Añadir Trabajo
             </x-button>
+            @endif
         </x-slot>
     </x-page-header>
 
@@ -43,26 +45,28 @@
                                         <i data-lucide="{{ $job->jobType->calculation_type === 'percentage' ? 'percent' : 'dollar-sign' }}" class="h-5 w-5"></i>
                                     </div>
                                     <div>
-                                        <h4 class="font-bold text-slate-900 leading-none">{{ $job->jobType->name }}</h4>
-                                        <p class="mt-1 text-xs text-slate-500 font-medium italic">Responsable: {{ $job->mechanic->name }}</p>
+                                        <h4 class="font-bold text-slate-900 leading-none">{{ $job->jobType?->name ?? 'Servicio' }}</h4>
+                                        <p class="mt-1 text-xs text-slate-500 font-medium italic">Responsable: {{ $job->mechanic?->name ?? 'Sin asignar' }}</p>
                                     </div>
                                 </div>
                                 <div class="flex gap-2">
-                                    @if($job->status !== 'completed')
+                                    @if(in_array($job->status, ['pending', 'in_progress'], true))
                                     <form action="{{ route('jobs.complete', $job) }}" method="POST">
                                         @csrf
-                                        <button type="submit" class="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">
+                                        <button type="submit" class="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Marcar como completado">
                                             <i data-lucide="check-circle" class="h-4 w-4"></i>
                                         </button>
                                     </form>
                                     @endif
+                                    @if($serviceOrder->invoices->isEmpty())
                                     <form action="{{ route('jobs.destroy', $job) }}" method="POST" onsubmit="return confirm('¿Eliminar este trabajo? Se devolverán los productos al stock.')">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors">
+                                        <button type="submit" class="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors" title="Eliminar trabajo">
                                             <i data-lucide="trash-2" class="h-4 w-4"></i>
                                         </button>
                                     </form>
+                                    @endif
                                 </div>
                             </div>
                             
@@ -113,7 +117,7 @@
                                             default => 'slate'
                                         };
                                     @endphp
-                                    <x-badge :variant="$jobBadge" class="w-full justify-center py-1 uppercase text-[9px]">{{ $job->status }}</x-badge>
+                                    <x-badge :variant="$jobBadge" class="w-full justify-center py-1 uppercase text-[9px]">{{ $job->status_label }}</x-badge>
                                 </div>
                             </div>
                         </div>
@@ -125,7 +129,9 @@
                         <i data-lucide="wrench" class="h-8 w-8"></i>
                     </div>
                     <p class="text-slate-500 font-bold">No hay trabajos registrados en esta orden.</p>
+                    @if($serviceOrder->canReceiveJobs())
                     <x-button variant="outline" size="sm" class="mt-4" @click="showJobModal = true">Añadir el primero</x-button>
+                    @endif
                 </div>
                 @endforelse
             </div>
@@ -137,32 +143,46 @@
                 <x-slot name="header">
                     <h3 class="font-bold text-slate-900">Resumen Financiero</h3>
                 </x-slot>
+                @php
+                    $billableJobs = $serviceOrder->workshopJobs->where('status', '!=', 'cancelled');
+                    $totalLabor = $billableJobs->sum('total_amount');
+                    $totalProductsCost = $billableJobs->sum(fn ($j) => $j->jobProducts->sum('total_price'));
+                    $invoice = $serviceOrder->invoices->first();
+                    $canInvoice = !$invoice
+                        && in_array($serviceOrder->status, ['in_progress', 'completed'], true)
+                        && $billableJobs->isNotEmpty()
+                        && $billableJobs->every(fn ($j) => $j->status === 'completed');
+                @endphp
                 <div class="space-y-4">
                     <div class="flex justify-between items-center">
                         <span class="text-sm font-medium text-slate-500">Mano de Obra Total:</span>
-                        <span class="text-sm font-bold text-slate-900">${{ number_format($serviceOrder->workshopJobs->sum('labor_cost'), 0, ',', '.') }}</span>
+                        <span class="text-sm font-bold text-slate-900">${{ number_format($totalLabor, 0, ',', '.') }}</span>
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="text-sm font-medium text-slate-500">Repuestos Total:</span>
-                        @php
-                            $totalProductsCost = $serviceOrder->workshopJobs->sum(fn($j) => $j->jobProducts->sum('total_price'));
-                        @endphp
                         <span class="text-sm font-bold text-slate-900">${{ number_format($totalProductsCost, 0, ',', '.') }}</span>
                     </div>
                     <div class="pt-4 border-t border-slate-100">
                         <div class="bg-blue-600 rounded-2xl p-5 text-white">
                             <span class="text-[10px] font-black text-blue-200 uppercase tracking-widest">Total Orden</span>
-                            <p class="text-3xl font-black">${{ number_format($serviceOrder->workshopJobs->sum('labor_cost') + $totalProductsCost, 0, ',', '.') }}</p>
+                            <p class="text-3xl font-black">${{ number_format($totalLabor + $totalProductsCost, 0, ',', '.') }}</p>
                         </div>
                     </div>
-                    @if($serviceOrder->status === 'completed' || $serviceOrder->workshopJobs->where('status', 'completed')->count() === $serviceOrder->workshopJobs->count() && $serviceOrder->workshopJobs->count() > 0)
+                    @if($invoice)
+                    <x-button variant="outline" class="w-full py-4" onclick="window.location.href='{{ route('invoices.show', $invoice) }}'">
+                        <i data-lucide="file-text" class="mr-2 h-5 w-5"></i>
+                        Ver factura {{ $invoice->invoice_number }}
+                    </x-button>
+                    @elseif($canInvoice)
                     <form action="{{ route('invoices.generate', $serviceOrder) }}" method="POST">
                         @csrf
-                        <x-button variant="primary" class="w-full py-4 shadow-lg shadow-blue-500/25">
+                        <x-button variant="primary" type="submit" class="w-full py-4 shadow-lg shadow-blue-500/25">
                             <i data-lucide="file-text" class="mr-2 h-5 w-5"></i>
                             Generar Factura
                         </x-button>
                     </form>
+                    @elseif($billableJobs->isNotEmpty() && $serviceOrder->canReceiveJobs())
+                    <p class="text-xs font-medium text-slate-500 text-center">Completa todos los trabajos para poder facturar.</p>
                     @endif
                 </div>
             </x-card>

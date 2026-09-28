@@ -44,7 +44,18 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * Crea un usuario asignado a una sucursal (se crea una si no se indica).
+ *
+ * @return array{0: \App\Models\User, 1: \App\Models\Branch}
+ */
+function branchUser(bool $admin = false, ?\App\Models\Branch $branch = null): array
 {
-    // ..
+    $branch ??= \App\Models\Branch::create(['name' => 'Sede Test ' . uniqid(), 'is_active' => true]);
+
+    $user = \App\Models\User::factory()->create();
+    $user->forceFill(['is_admin' => $admin, 'is_active' => true])->save();
+    $user->branches()->attach($branch);
+
+    return [$user, $branch];
 }

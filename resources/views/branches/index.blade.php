@@ -36,12 +36,13 @@
                     </td>
                     <td class="px-6 py-4 text-right text-sm font-medium">
                         <div class="flex justify-end gap-2">
-                            <a href="{{ route('branches.edit', $branch) }}" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
+                            <button type="button"
+                                onclick="openEditBranchModal({{ $branch->id }}, '{{ addslashes($branch->name) }}', '{{ addslashes($branch->address ?? '') }}', '{{ addslashes($branch->phone ?? '') }}', '{{ addslashes($branch->email ?? '') }}')"
+                                class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors cursor-pointer">
                                 <i data-lucide="pencil" class="h-4 w-4"></i>
-                            </a>
-                            <form action="{{ route('branches.toggle', $branch) }}" method="POST" class="inline">
+                            </button>
+                            <form action="{{ route('branches.toggle-active', $branch) }}" method="POST" class="inline">
                                 @csrf
-                                @method('PATCH')
                                 <button type="submit"
                                     title="{{ $branch->is_active ? 'Desactivar' : 'Activar' }}"
                                     class="rounded-lg p-2 {{ $branch->is_active ? 'text-red-400 hover:bg-red-50 hover:text-red-600' : 'text-emerald-400 hover:bg-emerald-50 hover:text-emerald-600' }} transition-colors cursor-pointer">
@@ -104,7 +105,60 @@
         </div>
     </div>
 
+    <div id="editModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-black/50" onclick="document.getElementById('editModal').classList.add('hidden')"></div>
+            <div class="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Editar Sucursal</h3>
+                    <button onclick="document.getElementById('editModal').classList.add('hidden')" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                        <i data-lucide="x" class="h-5 w-5"></i>
+                    </button>
+                </div>
+                <form id="editBranchForm" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="space-y-4">
+                        <div>
+                            <label for="edit-name" class="block text-xs font-bold text-slate-400 dark:text-gray-500 uppercase mb-2 ml-1">Nombre</label>
+                            <input type="text" name="name" id="edit-name" required class="w-full rounded-2xl border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-950/50 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 dark:text-gray-300 transition-all">
+                        </div>
+                        <div>
+                            <label for="edit-address" class="block text-xs font-bold text-slate-400 dark:text-gray-500 uppercase mb-2 ml-1">Dirección</label>
+                            <input type="text" name="address" id="edit-address" class="w-full rounded-2xl border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-950/50 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 dark:text-gray-300 transition-all">
+                        </div>
+                        <div>
+                            <label for="edit-phone" class="block text-xs font-bold text-slate-400 dark:text-gray-500 uppercase mb-2 ml-1">Teléfono</label>
+                            <input type="text" name="phone" id="edit-phone" class="w-full rounded-2xl border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-950/50 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 dark:text-gray-300 transition-all">
+                        </div>
+                        <div>
+                            <label for="edit-email" class="block text-xs font-bold text-slate-400 dark:text-gray-500 uppercase mb-2 ml-1">Email</label>
+                            <input type="email" name="email" id="edit-email" class="w-full rounded-2xl border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-950/50 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 dark:text-gray-300 transition-all">
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-3 mt-6">
+                        <button type="button" onclick="document.getElementById('editModal').classList.add('hidden')" class="rounded-2xl px-4 py-2.5 text-sm font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors">
+                            Cancelar
+                        </button>
+                        <x-button variant="primary" type="submit">
+                            Guardar Cambios
+                        </x-button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
         lucide.createIcons();
+
+        function openEditBranchModal(id, name, address, phone, email) {
+            document.getElementById('editBranchForm').action = `/branches/${id}`;
+            document.getElementById('edit-name').value = name;
+            document.getElementById('edit-address').value = address;
+            document.getElementById('edit-phone').value = phone;
+            document.getElementById('edit-email').value = email;
+            document.getElementById('editModal').classList.remove('hidden');
+        }
     </script>
 </x-app-layout>

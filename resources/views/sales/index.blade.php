@@ -145,7 +145,7 @@
                                         <button onclick="window.open('{{ route('sales.show', $sale) }}?print=1', '_blank')" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors" title="Imprimir recibo">
                                             <i data-lucide="printer" class="w-4 h-4"></i>
                                         </button>
-                                        @if($sale->status === 'completada')
+                                        @if($sale->status === 'completada' && auth()->user()->can('admin'))
                                         <form action="{{ route('sales.cancel', $sale) }}" method="POST" onsubmit="return confirm('¿Estás seguro de anular esta venta? El stock será devuelto.')" class="inline">
                                             @csrf
                                             <button type="submit" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Anular venta">

@@ -37,11 +37,19 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
     <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@1.45.0"></script>
 
     <style>
         [x-cloak] { display: none !important; }
         body { opacity: 0; }
+
+        @media print {
+            aside, .no-print { display: none !important; }
+            html, body, main { height: auto !important; overflow: visible !important; background: #fff !important; }
+            body { opacity: 1 !important; }
+            .invoice-sheet { border: 0 !important; box-shadow: none !important; max-width: 100% !important; padding: 0 !important; background: #fff !important; }
+            .invoice-sheet, .invoice-sheet * { color: #0f172a !important; }
+        }
     </style>
 </head>
 <body class="h-full font-sans antialiased">
@@ -54,6 +62,11 @@
             <div class="py-6">
                 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <!-- Global Notifications -->
+                    <div class="no-print">
+                    @if(empty($currentBranch))
+                        <x-alert type="warning" message="No tienes una sucursal activa asignada. Pide a un administrador que te asigne una para poder registrar operaciones." />
+                    @endif
+
                     @if(session('success'))
                         <x-alert type="success" :message="session('success')" />
                     @endif
@@ -71,6 +84,7 @@
                             </ul>
                         </x-alert>
                     @endif
+                    </div>
 
                     {{ $slot }}
                 </div>

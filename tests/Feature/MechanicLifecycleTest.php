@@ -3,11 +3,10 @@
 use App\Models\JobType;
 use App\Models\Mechanic;
 use App\Models\ServiceOrder;
-use App\Models\User;
 use App\Models\WorkshopJob;
 
 it('deactivates mechanics with history instead of deleting them', function () {
-    $user = User::factory()->create();
+    [$admin, $branch] = branchUser(admin: true);
 
     $mechanic = Mechanic::create([
         'name' => 'Carlos Llaves',
@@ -15,6 +14,7 @@ it('deactivates mechanics with history instead of deleting them', function () {
         'email' => 'carlos@example.com',
         'hire_date' => now()->subMonths(8)->toDateString(),
         'is_active' => true,
+        'branch_id' => $branch->id,
     ]);
 
     $jobType = JobType::create([
@@ -35,6 +35,7 @@ it('deactivates mechanics with history instead of deleting them', function () {
         'service_description' => 'Revision',
         'status' => ServiceOrder::STATUS_IN_PROGRESS,
         'started_at' => now(),
+        'branch_id' => $branch->id,
     ]);
 
     WorkshopJob::create([
@@ -51,7 +52,8 @@ it('deactivates mechanics with history instead of deleting them', function () {
         'completed_at' => now(),
     ]);
 
-    $this->actingAs($user)
+    $this->actingAs($admin)
+        ->withSession(['current_branch_id' => $branch->id])
         ->delete(route('mechanics.destroy', $mechanic))
         ->assertRedirect(route('mechanics.index'));
 

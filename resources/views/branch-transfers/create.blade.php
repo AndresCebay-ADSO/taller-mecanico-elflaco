@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-page-header title="Nueva Transferencia" subtitle="Transferir inventario entre sucursales">
         <x-slot name="actions">
-            <x-button variant="slate" onclick="window.location.href='{{ route('branch-transfers.index') }}'">
+            <x-button variant="secondary" onclick="window.location.href='{{ route('branch-transfers.index') }}'">
                 <i data-lucide="arrow-left" class="mr-2 h-4 w-4"></i>
                 Volver
             </x-button>
@@ -104,7 +104,7 @@
             </div>
 
             <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
-                <x-button variant="slate" type="button" onclick="window.location.href='{{ route('branch-transfers.index') }}'">
+                <x-button variant="secondary" type="button" onclick="window.location.href='{{ route('branch-transfers.index') }}'">
                     Cancelar
                 </x-button>
                 <x-button variant="primary" type="submit">

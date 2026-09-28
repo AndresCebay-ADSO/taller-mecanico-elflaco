@@ -84,6 +84,7 @@
                     <td class="px-6 py-4 text-right text-sm font-medium">
                         <div class="flex justify-end gap-2">
                             @if($product->trashed())
+                                @can('admin')
                                 {{-- Reactivar --}}
                                 <form action="{{ route('products.restore', $product->id) }}" method="POST" class="inline">
                                     @csrf
@@ -95,11 +96,13 @@
                                         Reactivar
                                     </button>
                                 </form>
+                                @endcan
                             @else
                                 {{-- Editar --}}
                                 <a href="{{ route('products.edit', $product) }}" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
                                     <i data-lucide="pencil" class="h-4 w-4"></i>
                                 </a>
+                                @can('admin')
                                 {{-- Eliminar / Desactivar --}}
                                 <form action="{{ route('products.destroy', $product) }}" method="POST" class="inline"
                                     onsubmit="return confirm('¿Eliminar producto? Si tiene historial de movimientos será desactivado en lugar de eliminado.')">
@@ -109,6 +112,7 @@
                                         <i data-lucide="trash-2" class="h-4 w-4"></i>
                                     </button>
                                 </form>
+                                @endcan
                             @endif
                         </div>
                     </td>

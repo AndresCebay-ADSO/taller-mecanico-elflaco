@@ -1,10 +1,12 @@
 <x-app-layout>
     <x-page-header title="Movimientos de Inventario" subtitle="Trazabilidad completa de entradas y salidas.">
         <x-slot name="actions">
+            @can('admin')
             <x-button variant="secondary" onclick="window.location.href='{{ route('inventory.adjustment') }}'">
                 <i data-lucide="sliders" class="mr-2 h-4 w-4"></i>
                 Ajuste Manual
             </x-button>
+            @endcan
             <x-button variant="primary" onclick="window.location.href='{{ route('inventory.purchase') }}'">
                 <i data-lucide="shopping-cart" class="mr-2 h-4 w-4"></i>
                 Registrar Compra
@@ -22,6 +24,8 @@
                 <option value="job_usage" {{ request('type') == 'job_usage' ? 'selected' : '' }}>Uso en Orden</option>
                 <option value="adjustment" {{ request('type') == 'adjustment' ? 'selected' : '' }}>Ajuste</option>
                 <option value="reversal" {{ request('type') == 'reversal' ? 'selected' : '' }}>Anulación</option>
+                <option value="transfer_out" {{ request('type') == 'transfer_out' ? 'selected' : '' }}>Transferencia enviada</option>
+                <option value="transfer_in" {{ request('type') == 'transfer_in' ? 'selected' : '' }}>Transferencia recibida</option>
             </select>
         </div>
     </x-search-filter>
@@ -46,6 +50,7 @@
                             'job_usage' => 'amber',
                             'adjustment'=> 'slate',
                             'reversal'  => 'red',
+                            'transfer_in', 'transfer_out' => 'blue',
                             default     => 'slate'
                         };
                         $typeLabel = match($mov->movement_type) {
@@ -54,6 +59,8 @@
                             'job_usage' => 'Uso en Orden',
                             'adjustment'=> 'Ajuste',
                             'reversal'  => 'Anulación',
+                            'transfer_in' => 'Transferencia recibida',
+                            'transfer_out' => 'Transferencia enviada',
                             default     => $mov->movement_type
                         };
                     @endphp
@@ -81,7 +88,7 @@
                         </button>
                         
                         <!-- Pencil Icon -->
-                        @if($mov->movement_type === 'purchase' && $mov->batch)
+                        @if($mov->movement_type === 'purchase' && $mov->batch && auth()->user()->can('admin'))
                             <button type="button" 
                                     @click='openModal(@json($mov->batch))' 
                                     class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors cursor-pointer" 
@@ -126,7 +133,7 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <span class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Tipo</span>
-                                <p class="text-sm font-bold text-slate-900 dark:text-white mt-1" x-text="movement?.movement_type === 'purchase' ? 'Compra' : (movement?.movement_type === 'sale' ? 'Venta' : (movement?.movement_type === 'adjustment' ? 'Ajuste' : (movement?.movement_type === 'job_usage' ? 'Uso en Orden' : 'Anulación')))"></p>
+                                <p class="text-sm font-bold text-slate-900 dark:text-white mt-1" x-text="({ purchase: 'Compra', sale: 'Venta', adjustment: 'Ajuste', job_usage: 'Uso en Orden', reversal: 'Anulación', transfer_in: 'Transferencia recibida', transfer_out: 'Transferencia enviada' })[movement?.movement_type] || movement?.movement_type"></p>
                             </div>
                             <div>
                                 <span class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Fecha</span>

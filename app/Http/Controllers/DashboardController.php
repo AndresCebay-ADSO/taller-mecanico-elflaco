@@ -2,19 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\JobProduct;
 use App\Models\Mechanic;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\ServiceOrder;
 use App\Models\WorkshopJob;
-use App\Services\BranchService;
 use Carbon\Carbon;
+use Closure;
 
 class DashboardController extends Controller
 {
-    public function index(BranchService $branchService)
+    public function index()
     {
-        $branchId = $branchService->getCurrentBranch()?->id;
+        $branchId = $this->currentBranchId();
         $todayStart = Carbon::today();
         $monthStart = Carbon::now()->startOfMonth();
 
@@ -31,12 +32,12 @@ class DashboardController extends Controller
             ->whereDate('sale_date', $todayStart)
             ->sum('total_amount');
 
-        $todayServiceOrdersEarnings = WorkshopJob::whereHas('serviceOrder', function ($query) use ($todayStart, $branchId) {
+        $todayServiceOrdersEarnings = $this->serviceOrdersIncome(function ($query) use ($todayStart, $branchId) {
             $query
                 ->forBranch($branchId)
                 ->where('status', 'completed')
                 ->whereDate('completed_at', $todayStart);
-        })->sum('total_amount');
+        });
 
         $todayEarnings = $todaySales + $todayServiceOrdersEarnings;
 
@@ -45,12 +46,12 @@ class DashboardController extends Controller
             ->whereDate('sale_date', '>=', $monthStart)
             ->sum('total_amount');
 
-        $monthServiceOrdersEarnings = WorkshopJob::whereHas('serviceOrder', function ($query) use ($monthStart, $branchId) {
+        $monthServiceOrdersEarnings = $this->serviceOrdersIncome(function ($query) use ($monthStart, $branchId) {
             $query
                 ->forBranch($branchId)
                 ->where('status', 'completed')
                 ->where('completed_at', '>=', $monthStart);
-        })->sum('total_amount');
+        });
 
         $monthEarnings = $monthSales + $monthServiceOrdersEarnings;
 
@@ -103,5 +104,18 @@ class DashboardController extends Controller
             'todayByMethod',
             'mechanics'
         ));
+    }
+
+    /**
+     * Ingreso de ordenes (mano de obra + repuestos), igual al monto que se factura.
+     */
+    private function serviceOrdersIncome(Closure $orderScope): float
+    {
+        $jobIds = WorkshopJob::where('status', '!=', WorkshopJob::STATUS_CANCELLED)
+            ->whereHas('serviceOrder', $orderScope)
+            ->select('id');
+
+        return (float) WorkshopJob::whereIn('id', $jobIds)->sum('total_amount')
+            + (float) JobProduct::whereIn('job_id', $jobIds)->sum('total_price');
     }
 }

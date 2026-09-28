@@ -38,14 +38,14 @@
                         </div>
                     </td>
                     <td class="px-6 py-4 text-sm text-slate-600">
-                        {{ $job->mechanic->name }}
+                        {{ $job->mechanic?->name ?? 'Sin asignar' }}
                     </td>
                     <td class="px-6 py-4">
                         <div class="text-sm text-slate-900 font-medium">{{ $job->vehicle_info }}</div>
                         <div class="text-[10px] text-slate-400 font-bold uppercase">{{ $job->customer_name }}</div>
                     </td>
                     <td class="px-6 py-4 text-sm font-bold text-slate-900">
-                        ${{ number_format($job->labor_cost, 0, ',', '.') }}
+                        ${{ number_format($job->total_amount, 0, ',', '.') }}
                     </td>
                     <td class="px-6 py-4">
                         @php
@@ -56,14 +56,14 @@
                                 default => 'slate'
                             };
                         @endphp
-                        <x-badge :variant="$jobBadge" class="uppercase text-[9px]">{{ $job->status }}</x-badge>
+                        <x-badge :variant="$jobBadge" class="uppercase text-[9px]">{{ $job->status_label }}</x-badge>
                     </td>
                     <td class="px-6 py-4 text-right text-sm">
                         <div class="flex justify-end gap-2">
                             <a href="{{ route('service-orders.show', $job->serviceOrder) }}" class="p-2 text-slate-400 hover:text-blue-600 transition-colors" title="Ver Orden">
                                 <i data-lucide="eye" class="h-4 w-4"></i>
                             </a>
-                            @if($job->status !== 'completed')
+                            @if(in_array($job->status, ['pending', 'in_progress'], true))
                             <form action="{{ route('jobs.complete', $job) }}" method="POST">
                                 @csrf
                                 <button type="submit" class="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg" title="Completar">

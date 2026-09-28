@@ -47,6 +47,7 @@
                             <a href="{{ route('mechanics.edit', $mechanic) }}" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
                                 <i data-lucide="pencil" class="h-4 w-4"></i>
                             </a>
+                            @can('admin')
                             <form action="{{ route('mechanics.destroy', $mechanic) }}" method="POST" class="inline" onsubmit="return confirm('¿Eliminar mecánico?')">
                                 @csrf
                                 @method('DELETE')
@@ -54,6 +55,7 @@
                                     <i data-lucide="trash-2" class="h-4 w-4"></i>
                                 </button>
                             </form>
+                            @endcan
                         </div>
                     </td>
                 </tr>

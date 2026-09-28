@@ -33,12 +33,17 @@ class WorkshopJob extends Model
     {
         parent::boot();
 
-        static::saving(function (self $job) {
+        static::creating(function (self $job) {
             if ($job->job_type_id) {
                 $calculation = $job->jobType->calculateEarnings($job->labor_cost);
                 $job->mechanic_cost = $calculation['mechanic'];
                 $job->workshop_cost = $calculation['workshop'];
                 $job->total_amount = $calculation['total'];
+
+                // En tipos de monto fijo la mano de obra cobrada es la suma fija: evita totales distintos entre vistas.
+                if ($job->jobType->calculation_type === 'fixed') {
+                    $job->labor_cost = $calculation['total'];
+                }
             }
         });
 
@@ -87,6 +92,17 @@ class WorkshopJob extends Model
     public function jobProducts()
     {
         return $this->hasMany(JobProduct::class, 'job_id');
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        return match ($this->status) {
+            self::STATUS_PENDING => 'Pendiente',
+            self::STATUS_IN_PROGRESS => 'En progreso',
+            self::STATUS_COMPLETED => 'Completado',
+            self::STATUS_CANCELLED => 'Cancelado',
+            default => (string) $this->status,
+        };
     }
 
     public function canTransitionTo(string $newStatus): bool
