@@ -45,6 +45,8 @@
     --sidebar-active: #ffffff;
     --sidebar-border: #1d2939;
     --overlay: rgb(16 24 40 / 0.45);
+    /* Serie única de gráficos: validada (banda de luminosidad y contraste >= 3:1) contra card. */
+    --chart-1: #465fff;
 }
 
 .dark {
@@ -67,6 +69,7 @@
     --sidebar-accent: #1d2939;
     --sidebar-border: #1d2939;
     --overlay: rgb(0 0 0 / 0.6);
+    --chart-1: #6178ff;
 }
 
 @theme inline {
@@ -97,6 +100,7 @@
     --color-sidebar-active: var(--sidebar-active);
     --color-sidebar-border: var(--sidebar-border);
     --color-overlay: var(--overlay);
+    --color-chart-1: var(--chart-1);
 }
 
 @theme {
