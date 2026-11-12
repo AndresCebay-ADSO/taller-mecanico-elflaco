@@ -39,7 +39,7 @@ describe('pantallas de la demo', function () {
         $this->actingAs($user)->withSession(['current_branch_id' => $branch->id])
             ->get(route('service-orders.show', $order))
             ->assertOk()
-            ->assertSee('<div x-data="{ showJobModal: false }">', false)
+            ->assertSee('x-data="{ showJobModal: false }"', false)
             ->assertSee('x-data="jobForm(', false)
             ->assertSee(route('service-orders.jobs.store', $order), false);
     });
@@ -62,7 +62,7 @@ describe('pantallas de la demo', function () {
 
         $this->actingAs($user)->withSession(['current_branch_id' => $branch->id])
             ->get(route('service-orders.show', $order))
-            ->assertSee('<div x-data="{ showJobModal: true }">', false);
+            ->assertSee('x-data="{ showJobModal: true }"', false);
     });
 
     it('turns dashboard quick actions into real links', function () {
@@ -73,7 +73,7 @@ describe('pantallas de la demo', function () {
             ->assertOk()
             ->assertSee('href="' . route('sales.create') . '"', false)
             ->assertDontSee('<button type="button" href=', false)
-            ->assertSee('Ingresos del Mes');
+            ->assertSee('Ingresos del mes');
     });
 
     it('shows the product detail page with a working supplier link', function () {

@@ -20,35 +20,38 @@
         'default_description' => $type->default_description ?: $type->description,
     ])->values();
 
-    $inputClass = 'w-full rounded-2xl border-slate-200 px-4 py-3 text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm';
-    $readonlyClass = 'w-full rounded-2xl border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-500 cursor-not-allowed';
-    $labelClass = 'block text-xs font-black text-slate-400 uppercase tracking-widest mb-2';
+    $inputClass = 'block h-10 w-full rounded-md border border-input bg-card px-3 text-sm text-foreground shadow-xs placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30';
+    $readonlyClass = 'block h-10 w-full cursor-not-allowed rounded-md border border-border bg-muted px-3 text-sm text-muted-foreground';
+    $labelClass = 'mb-1.5 block text-sm font-medium text-foreground';
 @endphp
 
 <div x-show="showJobModal"
-     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
-     x-transition:enter="transition ease-out duration-300"
-     x-transition:enter-start="opacity-0"
-     x-transition:enter-end="opacity-100"
+     class="ds fixed inset-0 z-50 flex items-center justify-center p-4"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="job-modal-title"
      x-on:keydown.escape.window="showJobModal = false"
      x-cloak>
+    <div class="absolute inset-0 bg-overlay" x-show="showJobModal" x-transition.opacity></div>
 
-    <div class="bg-white rounded-3xl w-full max-w-xl shadow-2xl overflow-hidden"
+    <div class="relative flex max-h-[90vh] w-full max-w-xl flex-col overflow-hidden rounded-lg border border-border bg-card text-foreground shadow-lg"
          x-on:click.outside="showJobModal = false"
-         x-transition:enter="transition ease-out duration-300 transform"
-         x-transition:enter-start="scale-95 opacity-0"
-         x-transition:enter-end="scale-100 opacity-100">
+         x-show="showJobModal"
+         x-transition:enter="transition ease-out duration-150"
+         x-transition:enter-start="opacity-0 translate-y-1"
+         x-transition:enter-end="opacity-100 translate-y-0">
 
-        <div class="flex items-center justify-between p-6 border-b border-slate-100">
-            <h3 class="text-xl font-black text-slate-900 uppercase tracking-tight">Nuevo Trabajo</h3>
-            <button type="button" x-on:click="showJobModal = false" class="text-slate-400 hover:text-slate-600 transition-colors" title="Cerrar">
-                <i data-lucide="x" class="h-6 w-6"></i>
+        <div class="flex items-center justify-between border-b border-border px-5 py-4">
+            <h2 id="job-modal-title" class="text-base font-semibold">Nuevo trabajo</h2>
+            <button type="button" x-on:click="showJobModal = false" class="-m-1 cursor-pointer rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title="Cerrar">
+                <i data-lucide="x" class="size-4"></i>
+                <span class="sr-only">Cerrar</span>
             </button>
         </div>
 
         <form action="{{ $action }}"
               method="POST"
-              class="p-6 overflow-y-auto max-h-[80vh] custom-scrollbar"
+              class="flex min-h-0 flex-1 flex-col"
               x-data="jobForm({
                   products: @js($products),
                   jobTypes: @js($jobTypeOptions),
@@ -56,61 +59,57 @@
               })">
             @csrf
 
-            <div class="space-y-6">
+            <div class="flex-1 space-y-5 overflow-y-auto px-5 py-5 custom-scrollbar">
                 {{-- Cliente y vehículo --}}
                 @if($serviceOrder)
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
-                            <label class="{{ $labelClass }}">Cliente</label>
-                            <input type="text" value="{{ $serviceOrder->customer_name }}" readonly class="{{ $readonlyClass }}">
+                            <label for="job-customer" class="{{ $labelClass }}">Cliente</label>
+                            <input id="job-customer" type="text" value="{{ $serviceOrder->customer_name }}" readonly class="{{ $readonlyClass }}">
                         </div>
                         <div>
-                            <label class="{{ $labelClass }}">Vehículo</label>
-                            <input type="text" value="{{ $serviceOrder->vehicle_info }}" readonly class="{{ $readonlyClass }}">
+                            <label for="job-vehicle" class="{{ $labelClass }}">Vehículo</label>
+                            <input id="job-vehicle" type="text" value="{{ $serviceOrder->vehicle_info }}" readonly class="{{ $readonlyClass }}">
                         </div>
                     </div>
                 @else
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
-                            <label class="{{ $labelClass }}">Nombre del Cliente</label>
-                            <input type="text" name="customer_name" value="{{ old('customer_name') }}" required maxlength="255" placeholder="Nombre del cliente" class="{{ $inputClass }}">
+                            <label for="job-customer" class="{{ $labelClass }}">Cliente <span class="text-destructive-text">*</span></label>
+                            <input id="job-customer" type="text" name="customer_name" value="{{ old('customer_name') }}" required maxlength="255" placeholder="Nombre del cliente" class="{{ $inputClass }}">
                         </div>
                         <div>
-                            <label class="{{ $labelClass }}">Teléfono (opcional)</label>
-                            <input type="tel" name="customer_phone" value="{{ old('customer_phone') }}" maxlength="20" placeholder="3001234567" class="{{ $inputClass }}">
+                            <label for="job-phone" class="{{ $labelClass }}">Teléfono</label>
+                            <input id="job-phone" type="tel" name="customer_phone" value="{{ old('customer_phone') }}" maxlength="20" placeholder="3001234567" class="{{ $inputClass }}">
                         </div>
                     </div>
                     <div>
-                        <label class="{{ $labelClass }}">Vehículo</label>
-                        <input type="text" name="vehicle_info" value="{{ old('vehicle_info') }}" required maxlength="255" placeholder="Ej: Honda CB190R - ABC12D" class="{{ $inputClass }}">
+                        <label for="job-vehicle" class="{{ $labelClass }}">Vehículo <span class="text-destructive-text">*</span></label>
+                        <input id="job-vehicle" type="text" name="vehicle_info" value="{{ old('vehicle_info') }}" required maxlength="255" placeholder="Ej.: Honda CB190R - ABC12D" class="{{ $inputClass }}">
                     </div>
                 @endif
 
                 {{-- Tipo de trabajo --}}
                 <div>
-                    <label class="{{ $labelClass }}">Tipo de Trabajo</label>
-                    <select name="job_type_id" x-model="jobTypeId" required class="{{ $inputClass }} cursor-pointer">
-                        <option value="">Seleccionar tipo...</option>
+                    <label for="job-type" class="{{ $labelClass }}">Tipo de trabajo <span class="text-destructive-text">*</span></label>
+                    <select id="job-type" name="job_type_id" x-model="jobTypeId" required class="{{ $inputClass }} cursor-pointer pr-8">
+                        <option value="">Selecciona un tipo</option>
                         @foreach($jobTypeOptions as $type)
                             <option value="{{ $type['id'] }}">{{ $type['name'] }}</option>
                         @endforeach
                     </select>
-
-                    <div x-show="jobType?.default_description" class="mt-3 p-3 bg-blue-50 rounded-2xl border border-blue-100 flex gap-3 text-xs text-blue-700" x-cloak>
-                        <i data-lucide="info" class="h-4 w-4 shrink-0"></i>
-                        <span x-text="jobType?.default_description"></span>
-                    </div>
+                    <p x-show="jobType?.default_description" x-cloak class="mt-1.5 text-xs text-muted-foreground" x-text="jobType?.default_description"></p>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                        <label class="{{ $labelClass }}">Descripción</label>
-                        <input type="text" name="description" value="{{ old('description') }}" required maxlength="255" placeholder="Ej. Cambio de llanta trasera" class="{{ $inputClass }}">
+                        <label for="job-description" class="{{ $labelClass }}">Descripción <span class="text-destructive-text">*</span></label>
+                        <input id="job-description" type="text" name="description" value="{{ old('description') }}" required maxlength="255" placeholder="Ej.: Cambio de llanta trasera" class="{{ $inputClass }}">
                     </div>
                     <div>
-                        <label class="{{ $labelClass }}">Mecánico</label>
-                        <select name="mechanic_id" required class="{{ $inputClass }} cursor-pointer">
-                            <option value="">Seleccionar mecánico</option>
+                        <label for="job-mechanic" class="{{ $labelClass }}">Mecánico <span class="text-destructive-text">*</span></label>
+                        <select id="job-mechanic" name="mechanic_id" required class="{{ $inputClass }} cursor-pointer pr-8">
+                            <option value="">Selecciona un mecánico</option>
                             @foreach($mechanics as $mech)
                                 <option value="{{ $mech->id }}" @selected(old('mechanic_id') == $mech->id)>{{ $mech->name }}</option>
                             @endforeach
@@ -119,91 +118,101 @@
                 </div>
 
                 {{-- Repuestos --}}
-                <div class="space-y-4 pt-4 border-t border-slate-100">
-                    <div class="flex items-center justify-between gap-3">
-                        <label class="text-xs font-black text-slate-400 uppercase tracking-widest">Repuestos utilizados</label>
-                        <select x-show="allowsProducts"
+                <div class="space-y-3 border-t border-border pt-5">
+                    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <h3 class="text-sm font-medium">Repuestos utilizados</h3>
+                        <label for="job-add-product" class="sr-only">Agregar repuesto</label>
+                        <select id="job-add-product"
+                                x-show="allowsProducts"
                                 x-on:change="addProduct($event.target.value); $event.target.value = ''"
-                                class="max-w-[60%] text-xs font-bold text-blue-600 bg-blue-50 border-none rounded-xl py-1 px-3 cursor-pointer hover:bg-blue-100 transition-colors">
-                            <option value="">+ Agregar repuesto</option>
+                                class="h-9 w-full cursor-pointer rounded-md border border-input bg-card pl-3 pr-8 text-sm text-foreground shadow-xs focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30 sm:w-72">
+                            <option value="">Agregar repuesto…</option>
                             @foreach($products as $p)
-                                <option value="{{ $p['id'] }}">{{ $p['name'] }} — ${{ number_format($p['price'], 0, ',', '.') }} · Stock {{ $p['stock'] }}</option>
+                                <option value="{{ $p['id'] }}">{{ $p['name'] }} — {{ money($p['price']) }} · Stock {{ $p['stock'] }}</option>
                             @endforeach
                         </select>
                     </div>
 
-                    <p x-show="!allowsProducts" x-cloak class="text-xs font-medium text-slate-500">Este tipo de trabajo no usa repuestos.</p>
-                    <p x-show="allowsProducts && selectedProducts.length === 0" class="text-xs font-medium text-slate-400">Sin repuestos agregados.</p>
+                    <p x-show="!allowsProducts" x-cloak class="text-xs text-muted-foreground">Este tipo de trabajo no usa repuestos.</p>
+                    <p x-show="allowsProducts && selectedProducts.length === 0" class="text-xs text-muted-foreground">Sin repuestos agregados.</p>
 
-                    <div class="space-y-2">
+                    <ul class="divide-y divide-border rounded-md border border-border" x-show="selectedProducts.length > 0" x-cloak>
                         <template x-for="(p, index) in selectedProducts" :key="p.id">
-                            <div class="flex items-center justify-between gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-100">
-                                <div class="flex items-center gap-3 min-w-0">
+                            <li class="flex items-center justify-between gap-3 px-3 py-2">
+                                <div class="flex min-w-0 items-center gap-3">
                                     <input type="hidden" :name="`products[${index}][id]`" :value="p.id">
-                                    <input type="number" :name="`products[${index}][quantity]`" x-model.number="p.quantity"
-                                           min="1" :max="stockOf(p)" required
-                                           class="w-16 h-8 px-1 text-center font-black rounded-lg border-slate-200 text-xs">
+                                    <label :for="`job-qty-${index}`" class="sr-only" x-text="`Cantidad de ${p.name}`"></label>
+                                    <input :id="`job-qty-${index}`" type="text" inputmode="numeric" pattern="[0-9]*"
+                                           :name="`products[${index}][quantity]`" x-model.number="p.quantity" required
+                                           :class="p.quantity > stockOf(p) && '!border-destructive'"
+                                           class="h-8 w-14 rounded-md border border-input bg-card px-2 text-center text-sm tabular-nums text-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30">
                                     <div class="min-w-0">
-                                        <p class="text-sm font-bold text-slate-700 truncate" x-text="p.name"></p>
-                                        <p class="text-[10px] font-bold uppercase"
-                                           :class="p.quantity > stockOf(p) ? 'text-red-500' : 'text-slate-400'"
+                                        <p class="truncate text-sm" x-text="p.name"></p>
+                                        <p class="text-xs"
+                                           :class="p.quantity > stockOf(p) ? 'text-destructive-text' : 'text-muted-foreground'"
                                            x-text="p.quantity > stockOf(p) ? `Solo hay ${stockOf(p)} en stock` : `Stock: ${stockOf(p)}`"></p>
                                     </div>
                                 </div>
-                                <div class="flex items-center gap-3 shrink-0">
-                                    <span class="text-sm font-black text-slate-900" x-text="money(lineTotal(p))"></span>
-                                    <button type="button" x-on:click="removeProduct(index)" class="p-1 text-slate-400 hover:text-red-500 transition-colors" title="Quitar repuesto">
-                                        <i data-lucide="trash-2" class="h-4 w-4"></i>
+                                <div class="flex shrink-0 items-center gap-2">
+                                    <span class="text-sm tabular-nums" x-text="money(lineTotal(p))"></span>
+                                    <button type="button" x-on:click="removeProduct(index)" class="cursor-pointer rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-destructive-text" title="Quitar repuesto">
+                                        <i data-lucide="trash-2" class="size-4"></i>
+                                        <span class="sr-only">Quitar repuesto</span>
                                     </button>
                                 </div>
-                            </div>
+                            </li>
                         </template>
-                    </div>
+                    </ul>
                 </div>
 
-                {{-- Mano de obra --}}
+                {{-- Mano de obra: se ve con puntos de miles; al servidor viaja el número limpio. --}}
                 <div>
-                    <label class="{{ $labelClass }}">Mano de Obra ($)</label>
-                    <input type="number" name="labor_cost" x-model="laborCost" min="0" step="1" required
-                           :readonly="isFixed"
-                           :class="isFixed ? 'bg-slate-50 text-slate-500 cursor-not-allowed' : ''"
-                           class="{{ $inputClass }} font-bold">
-                    <p x-show="isFixed" x-cloak class="mt-1 text-xs text-slate-500">Monto fijo definido por el tipo de trabajo.</p>
+                    <label for="job-labor" class="{{ $labelClass }}">Mano de obra <span class="text-destructive-text">*</span></label>
+                    <input type="hidden" name="labor_cost" :value="labor">
+                    <div class="relative">
+                        <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
+                        <input id="job-labor" type="text" inputmode="numeric" required placeholder="0"
+                               :value="labor ? labor.toLocaleString('es-CO') : ''"
+                               x-on:input="laborCost = $event.target.value.replace(/\D/g, ''); $event.target.value = labor ? labor.toLocaleString('es-CO') : ''"
+                               :readonly="isFixed"
+                               :class="isFixed ? 'cursor-not-allowed !bg-muted !text-muted-foreground' : ''"
+                               class="{{ $inputClass }} pl-7 tabular-nums">
+                    </div>
+                    <p x-show="isFixed" x-cloak class="mt-1.5 text-xs text-muted-foreground">Monto fijo definido por el tipo de trabajo.</p>
                 </div>
 
                 {{-- Resumen --}}
-                <div class="bg-slate-50 rounded-3xl p-6 border border-slate-200">
-                    <h4 class="text-sm font-black text-slate-800 uppercase tracking-widest mb-4">Resumen del Trabajo</h4>
-                    <div class="space-y-3 mb-4">
-                        <div class="flex justify-between text-sm font-medium text-slate-500">
-                            <span>Repuestos:</span>
-                            <span class="text-slate-900" x-text="money(productsTotal)"></span>
+                <div class="rounded-md border border-border bg-muted/40 p-4">
+                    <dl class="space-y-2 text-sm">
+                        <div class="flex justify-between gap-4">
+                            <dt class="text-muted-foreground">Repuestos</dt>
+                            <dd class="tabular-nums" x-text="money(productsTotal)"></dd>
                         </div>
-                        <div class="flex justify-between text-sm font-medium text-slate-500">
-                            <span>Mano de obra:</span>
-                            <span class="text-slate-900" x-text="money(labor)"></span>
+                        <div class="flex justify-between gap-4">
+                            <dt class="text-muted-foreground">Mano de obra</dt>
+                            <dd class="tabular-nums" x-text="money(labor)"></dd>
                         </div>
-                    </div>
-                    <div class="flex justify-between items-center py-4 border-t border-slate-200">
-                        <span class="text-lg font-black text-slate-900 uppercase">Total:</span>
-                        <span class="text-2xl font-black text-blue-600" x-text="money(grandTotal)"></span>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4 mt-4">
-                        <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm text-center">
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1" x-text="mechanicLabel"></p>
-                            <p class="text-lg font-black text-blue-600" x-text="money(mechanicShare)"></p>
+                        <div class="flex items-baseline justify-between gap-4 border-t border-border pt-2">
+                            <dt class="font-medium">Total</dt>
+                            <dd class="text-lg font-semibold tabular-nums" x-text="money(grandTotal)"></dd>
                         </div>
-                        <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm text-center">
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Taller (resto + repuestos)</p>
-                            <p class="text-lg font-black text-emerald-600" x-text="money(workshopShare)"></p>
+                    </dl>
+                    <dl class="mt-3 grid grid-cols-2 gap-3 border-t border-border pt-3 text-sm">
+                        <div>
+                            <dt class="text-xs text-muted-foreground" x-text="mechanicLabel"></dt>
+                            <dd class="mt-0.5 font-medium tabular-nums" x-text="money(mechanicShare)"></dd>
                         </div>
-                    </div>
+                        <div class="text-right">
+                            <dt class="text-xs text-muted-foreground">Taller (resto + repuestos)</dt>
+                            <dd class="mt-0.5 font-medium tabular-nums" x-text="money(workshopShare)"></dd>
+                        </div>
+                    </dl>
                 </div>
+            </div>
 
-                <div class="flex gap-4 pt-4">
-                    <x-button variant="primary" type="submit" class="flex-1 py-4 shadow-lg shadow-blue-500/20">Registrar Trabajo</x-button>
-                </div>
+            <div class="flex flex-col-reverse gap-2 border-t border-border px-5 py-4 sm:flex-row sm:justify-between">
+                <x-button variant="secondary" x-on:click="showJobModal = false">Cancelar</x-button>
+                <x-button type="submit">Registrar trabajo</x-button>
             </div>
         </form>
     </div>
