@@ -252,6 +252,8 @@ php artisan migrate:fresh --seed --seeder=DemoSeeder   # borra la base configura
 
 La misma guía incluye el checklist de puesta en producción y copias de seguridad.
 
+Para instalar en una máquina Windows con XAMPP (el caso del cliente) sigue [`docs/INSTALACION_LOCAL.md`](docs/INSTALACION_LOCAL.md). En cualquier máquina, `php artisan taller:verificar` revisa que el entorno esté bien configurado.
+
 ### Script de Setup Rápido
 
 El proyecto incluye un script de Composer para setup automático:
@@ -270,7 +272,9 @@ Documentación detallada disponible en la carpeta `/docs`:
 
 | Documento | Contenido |
 |:---|:---|
+| 📄 [INSTALACION_LOCAL.md](docs/INSTALACION_LOCAL.md) | Instalar en Windows con XAMPP: php.ini, MySQL seguro, Apache, respaldos, actualización y problemas conocidos entre máquinas |
 | 📄 [PRODUCCION_Y_DEMO.md](docs/PRODUCCION_Y_DEMO.md) | Puesta en producción, respaldos, guion de demo y preguntas para el cliente |
+| 📄 [DESIGN.md](DESIGN.md) | Contrato de interfaz: colores, estados, tipografía, tablas, formularios y componentes |
 | 📄 [IEEE_830_SRS.md](docs/IEEE_830_SRS.md) | Especificación de Requerimientos del Sistema |
 | 📄 [guia_tecnica.md](docs/guia_tecnica.md) | Arquitectura: Resource Controllers, Route Model Binding, Validación |
 | 📄 [explicacion_modelos.md](docs/explicacion_modelos.md) | Modelo de Datos y relaciones Eloquent |

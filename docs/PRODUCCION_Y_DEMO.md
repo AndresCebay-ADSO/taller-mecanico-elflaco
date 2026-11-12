@@ -21,6 +21,8 @@
 
 ## 2. Checklist de despliegue
 
+> Instalación en Windows con XAMPP (máquina del cliente): ver [`INSTALACION_LOCAL.md`](INSTALACION_LOCAL.md), que incluye php.ini, seguridad de MySQL, Apache, respaldos en Windows y `php artisan taller:verificar`.
+
 Requisitos: PHP 8.2+ (extensiones `pdo_mysql`, `mbstring`, `openssl`, `intl`, `bcmath`), MySQL 8, Composer, Node 20+, HTTPS.
 
 ```bash
