@@ -91,6 +91,29 @@ class ServiceOrder extends Model
         return in_array($newStatus, $validTransitions[$this->status] ?? [], true);
     }
 
+    public function statusLabel(): string
+    {
+        return match ($this->status) {
+            self::STATUS_PENDING => 'Pendiente',
+            self::STATUS_IN_PROGRESS => 'En progreso',
+            self::STATUS_COMPLETED => 'Completada',
+            self::STATUS_CANCELLED => 'Cancelada',
+            default => (string) $this->status,
+        };
+    }
+
+    /** Tono de la píldora de estado (DESIGN.md §3). */
+    public function statusTone(): string
+    {
+        return match ($this->status) {
+            self::STATUS_PENDING => 'warning',
+            self::STATUS_IN_PROGRESS => 'info',
+            self::STATUS_COMPLETED => 'success',
+            self::STATUS_CANCELLED => 'danger',
+            default => 'neutral',
+        };
+    }
+
     public function canReceiveJobs(): bool
     {
         return in_array($this->status, [self::STATUS_PENDING, self::STATUS_IN_PROGRESS], true);

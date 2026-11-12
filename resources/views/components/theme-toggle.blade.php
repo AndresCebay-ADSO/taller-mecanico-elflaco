@@ -1,16 +1,11 @@
-<button 
-    @click="toggleTheme()" 
-    type="button" 
-    class="relative p-2 rounded-xl border border-gray-200 bg-white shadow-theme-xs transition-all hover:bg-gray-50 active:scale-95 dark:bg-white/5 dark:border-gray-800 dark:hover:bg-white/10 cursor-pointer"
-    title="Cambiar tema"
+<button
+    @click="toggleTheme()"
+    type="button"
+    class="rounded-md p-2 text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-active cursor-pointer"
+    :title="darkMode ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
 >
-    {{-- Sol (Modo Oscuro -> Pasa a Claro) --}}
-    <div x-show="darkMode" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 rotate-90 scale-50" x-transition:enter-end="opacity-100 rotate-0 scale-100">
-        <i data-lucide="sun" class="h-5 w-5 text-warning-500"></i>
-    </div>
-    
-    {{-- Luna (Modo Claro -> Pasa a Oscuro) --}}
-    <div x-show="!darkMode" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -rotate-90 scale-50" x-transition:enter-end="opacity-100 rotate-0 scale-100">
-        <i data-lucide="moon" class="h-5 w-5 text-gray-500"></i>
-    </div>
+    {{-- Envoltorio: Lucide reemplaza el <i> por un <svg>, así x-show queda en un elemento estable. --}}
+    <span x-show="darkMode" class="block"><i data-lucide="sun" class="size-4"></i></span>
+    <span x-show="!darkMode" class="block"><i data-lucide="moon" class="size-4"></i></span>
+    <span class="sr-only" x-text="darkMode ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"></span>
 </button>

@@ -49,4 +49,26 @@ class Sale extends Model
     {
         return $this->saleProducts->sum('quantity');
     }
+
+    public function isCancelled(): bool
+    {
+        return $this->status === 'anulada';
+    }
+
+    public function statusLabel(): string
+    {
+        return $this->isCancelled() ? 'Anulada' : 'Completada';
+    }
+
+    /** Tono de la píldora de estado (DESIGN.md §3). */
+    public function statusTone(): string
+    {
+        return $this->isCancelled() ? 'danger' : 'success';
+    }
+
+    /** Número visible de la venta: #S0042. */
+    public function displayNumber(): string
+    {
+        return '#S' . str_pad((string) $this->id, 4, '0', STR_PAD_LEFT);
+    }
 }

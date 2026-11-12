@@ -1,28 +1,35 @@
 @props([
-    'variant' => 'primary', // primary, secondary, danger, success, ghost, outline
-    'size' => 'md', // sm, md, lg
+    'variant' => 'primary', // primary, secondary, ghost, destructive
+    'size' => 'md', // sm, md, icon
     'type' => 'button',
 ])
 
 @php
-    $baseClasses = 'inline-flex items-center justify-center font-bold rounded-2xl transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer focus:outline-none focus:ring-4';
-    
+    // Nombres heredados de pantallas aún sin migrar (DESIGN.md §9).
+    $variant = match ($variant) {
+        'danger' => 'destructive',
+        'outline' => 'secondary',
+        'success' => 'primary',
+        default => $variant,
+    };
+
+    $baseClasses = 'ds inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-1 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50';
+
     $variants = [
-        'primary' => 'bg-brand-500 text-white hover:bg-brand-600 focus:ring-brand-500/20 shadow-theme-sm dark:bg-brand-500 dark:hover:bg-brand-600',
-        'secondary' => 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 focus:ring-gray-100 shadow-theme-xs dark:bg-white/5 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-white/10',
-        'danger' => 'bg-error-500 text-white hover:bg-error-600 focus:ring-error-500/20 shadow-theme-sm',
-        'success' => 'bg-success-500 text-white hover:bg-success-600 focus:ring-success-500/20 shadow-theme-sm',
-        'outline' => 'border-2 border-brand-500 text-brand-600 hover:bg-brand-50 focus:ring-brand-500/20 dark:border-brand-500 dark:text-brand-400 dark:hover:bg-brand-500/10',
-        'ghost' => 'text-gray-600 hover:bg-gray-100 focus:ring-gray-100 dark:text-gray-400 dark:hover:bg-white/5',
+        'primary' => 'bg-primary text-primary-foreground shadow-xs hover:bg-primary-hover',
+        'secondary' => 'border border-border bg-card text-foreground shadow-xs hover:bg-muted',
+        'ghost' => 'text-muted-foreground hover:bg-muted hover:text-foreground',
+        'destructive' => 'bg-destructive text-destructive-foreground shadow-xs hover:bg-destructive-hover',
     ];
 
     $sizes = [
-        'sm' => 'px-3 py-2 text-xs',
-        'md' => 'px-5 py-3 text-sm',
-        'lg' => 'px-8 py-4 text-base',
+        'sm' => 'h-8 px-3',
+        'md' => 'h-10 px-4',
+        'lg' => 'h-10 px-4',
+        'icon' => 'size-9',
     ];
 
-    $classes = "{$baseClasses} {$variants[$variant]} {$sizes[$size]}";
+    $classes = "{$baseClasses} " . ($variants[$variant] ?? $variants['primary']) . ' ' . ($sizes[$size] ?? $sizes['md']);
 @endphp
 
 @if($attributes->has('href'))

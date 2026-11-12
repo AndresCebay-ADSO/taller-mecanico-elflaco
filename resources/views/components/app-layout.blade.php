@@ -28,11 +28,6 @@
 
     <title>{{ config('app.name', 'MotoTaller') }}</title>
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
@@ -79,7 +74,7 @@
 
                     @if($errors->any())
                         <x-alert type="error">
-                            <ul class="list-disc list-inside text-sm font-medium">
+                            <ul class="list-inside list-disc">
                                 @foreach($errors->all() as $error)
                                     <li>{{ $error }}</li>
                                 @endforeach
@@ -100,7 +95,8 @@
     </script>
     @endif
 
-    @if(isset($lowStockCount) && $lowStockCount > 0)
+    {{-- En el dashboard el aviso ya está en la página, y en formularios taparía el botón de guardar. --}}
+    @if(isset($lowStockCount) && $lowStockCount > 0 && ! request()->routeIs('dashboard', '*.create', '*.edit', 'inventory.purchase', 'inventory.adjustment'))
         <!-- Low Stock Toast Notificaton -->
         <div x-data="{ 
                 showToast: false,
@@ -122,34 +118,29 @@
             x-transition:leave="transition ease-in duration-200"
             x-transition:leave-start="opacity-100"
             x-transition:leave-end="opacity-0"
-            class="fixed bottom-4 right-4 z-50 w-full max-w-sm rounded-2xl bg-white p-4 shadow-2xl ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700 sm:bottom-6 sm:right-6"
+            class="ds fixed bottom-4 right-4 z-40 w-full max-w-sm rounded-lg border border-border bg-card p-4 text-foreground shadow-lg sm:bottom-6 sm:right-6"
+            role="status"
             x-cloak>
-            <div class="flex items-start gap-4">
-                <div class="flex-shrink-0">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-500/20">
-                        <i data-lucide="alert-triangle" class="h-5 w-5 text-amber-600 dark:text-amber-500"></i>
-                    </div>
-                </div>
-                <div class="flex-1 pt-0.5">
-                    <p class="text-sm font-bold text-slate-900 dark:text-white">Stock bajo detectado</p>
-                    <p class="mt-1 text-sm font-medium text-slate-500 dark:text-slate-400">
-                        {{ $lowStockCount }} producto(s) necesitan reposición.
+            <div class="flex items-start gap-3">
+                <i data-lucide="alert-triangle" class="mt-0.5 size-4 shrink-0 text-warning-text"></i>
+                <div class="min-w-0 flex-1">
+                    <p class="text-sm font-medium">Stock bajo</p>
+                    <p class="mt-1 text-sm text-muted-foreground">
+                        {{ $lowStockCount }} {{ $lowStockCount === 1 ? 'producto necesita' : 'productos necesitan' }} reposición.
                     </p>
-                    <div class="mt-3 flex gap-3">
-                        <a href="{{ route('products.index', ['low_stock' => 1]) }}" class="text-sm font-bold text-brand-600 hover:text-brand-500 dark:text-brand-400 dark:hover:text-brand-300 transition-colors">
-                            Ver inventario
-                        </a>
-                    </div>
+                    <a href="{{ route('products.index', ['low_stock' => 1]) }}" class="mt-2 inline-block text-sm font-medium text-primary hover:underline">
+                        Ver inventario
+                    </a>
                 </div>
-                <div class="ml-4 flex flex-shrink-0">
-                    <button type="button" @click="closeToast" class="inline-flex rounded-md text-slate-400 hover:text-slate-500 focus:outline-none dark:text-slate-500 dark:hover:text-slate-400 cursor-pointer">
-                        <span class="sr-only">Cerrar</span>
-                        <i data-lucide="x" class="h-5 w-5"></i>
-                    </button>
-                </div>
+                <button type="button" @click="closeToast" class="-m-1 shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer" title="Cerrar">
+                    <span class="sr-only">Cerrar</span>
+                    <i data-lucide="x" class="size-4"></i>
+                </button>
             </div>
         </div>
     @endif
+
+    <x-confirm-dialog />
 
     <script>
         // Page transitions

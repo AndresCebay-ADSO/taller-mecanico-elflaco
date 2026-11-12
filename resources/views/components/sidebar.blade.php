@@ -3,45 +3,45 @@
     $activeBranch = $currentBranch ?? null;
 @endphp
 
-<aside class="flex w-72 flex-col bg-gray-950 text-gray-400 transition-all duration-300 border-r border-gray-900">
+<aside class="ds flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
     <!-- Header -->
-    <div class="flex items-center justify-between px-6 py-8">
-        <div class="flex items-center gap-3">
-            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500 shadow-lg shadow-brand-500/20">
-                <i data-lucide="bike" class="h-6 w-6 text-white"></i>
-            </div>
-            <div class="flex flex-col">
-                <span class="text-xl font-black tracking-tight text-white leading-none">MotoTaller</span>
-                <span class="mt-1 text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-none">Management</span>
-            </div>
-        </div>
+    <div class="flex items-center justify-between px-5 py-5">
+        <a href="{{ route('dashboard') }}" class="flex items-center gap-3">
+            <span class="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                <i data-lucide="bike" class="size-4"></i>
+            </span>
+            <span class="flex flex-col">
+                <span class="text-sm font-semibold leading-tight text-sidebar-active">MotoTaller</span>
+                <span class="text-xs leading-tight text-sidebar-foreground">El Flaco</span>
+            </span>
+        </a>
 
         <x-theme-toggle />
     </div>
 
     <!-- Sucursal activa -->
-    <div class="px-4 pb-4">
+    <div class="px-3 pb-3">
         @if($branchOptions->count() > 1)
             <form method="POST" action="{{ route('switch-branch') }}">
                 @csrf
-                <label for="branch-switcher" class="mb-1.5 block px-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">Sucursal</label>
+                <label for="branch-switcher" class="mb-1.5 block px-1 text-xs font-medium text-sidebar-foreground">Sucursal</label>
                 <select id="branch-switcher" name="branch_id" onchange="this.form.submit()"
-                    class="w-full cursor-pointer rounded-xl border border-gray-800 bg-gray-900 px-3 py-2.5 text-sm font-bold text-white focus:border-brand-500 focus:ring-brand-500">
+                    class="h-9 w-full cursor-pointer rounded-md border border-sidebar-border bg-sidebar-accent pl-3 pr-8 text-sm text-sidebar-active focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/40">
                     @foreach($branchOptions as $branchOption)
                         <option value="{{ $branchOption->id }}" @selected($activeBranch?->id === $branchOption->id)>{{ $branchOption->name }}</option>
                     @endforeach
                 </select>
             </form>
         @elseif($activeBranch)
-            <div class="flex items-center gap-2 rounded-xl border border-gray-800 bg-gray-900 px-3 py-2.5">
-                <i data-lucide="map-pin" class="h-4 w-4 shrink-0 text-brand-400"></i>
-                <span class="truncate text-sm font-bold text-white">{{ $activeBranch->name }}</span>
+            <div class="flex items-center gap-2 rounded-md border border-sidebar-border px-3 py-2">
+                <i data-lucide="map-pin" class="size-4 shrink-0"></i>
+                <span class="truncate text-sm text-sidebar-active">{{ $activeBranch->name }}</span>
             </div>
         @endif
     </div>
 
     <!-- Navigation -->
-    <nav class="flex-1 space-y-1.5 px-4 py-2 overflow-y-auto custom-scrollbar">
+    <nav class="flex-1 space-y-0.5 overflow-y-auto px-3 py-2 custom-scrollbar">
         <x-sidebar-link href="{{ route('dashboard') }}" icon="layout-grid" :active="request()->routeIs('dashboard')">
             Dashboard
         </x-sidebar-link>
@@ -55,7 +55,7 @@
         </x-sidebar-link>
 
         <x-sidebar-link href="{{ route('sales.index') }}" icon="shopping-cart" :active="request()->routeIs('sales*')">
-            Ventas Directas
+            Ventas directas
         </x-sidebar-link>
 
         <x-sidebar-link href="{{ route('invoices.index') }}" icon="file-text" :active="request()->routeIs('invoices*')">
@@ -83,7 +83,7 @@
         </x-sidebar-link>
 
         @can('admin')
-            <p class="px-4 pt-6 pb-2 text-[10px] font-bold uppercase tracking-widest text-gray-600">Administración</p>
+            <p class="px-3 pb-1 pt-5 text-xs font-medium text-sidebar-foreground/70">Administración</p>
 
             <x-sidebar-link href="{{ route('users.index') }}" icon="shield" :active="request()->routeIs('users*')">
                 Usuarios
@@ -98,7 +98,7 @@
             </x-sidebar-link>
 
             <x-sidebar-link href="{{ route('job-types.index') }}" icon="settings-2" :active="request()->routeIs('job-types*')">
-                Tipos de Trabajo
+                Tipos de trabajo
             </x-sidebar-link>
 
             <x-sidebar-link href="{{ route('settings') }}" icon="settings" :active="request()->routeIs('settings*')">
@@ -108,7 +108,7 @@
     </nav>
 
     <!-- Footer -->
-    <div class="border-t border-gray-900 p-4 space-y-1">
+    <div class="space-y-0.5 border-t border-sidebar-border p-3">
         <x-sidebar-link href="{{ route('profile.edit') }}" icon="user" :active="request()->routeIs('profile*')">
             {{ \Illuminate\Support\Str::limit(auth()->user()?->name, 24) }}
         </x-sidebar-link>
@@ -117,9 +117,9 @@
         <form method="POST" action="{{ route('logout') }}">
             @csrf
             <button type="submit"
-                class="flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-400 transition-colors hover:bg-red-500/10 hover:text-red-400 group cursor-pointer">
-                <i data-lucide="log-out" class="h-4 w-4 shrink-0"></i>
-                <span>Cerrar Sesión</span>
+                class="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent/60 hover:text-sidebar-active cursor-pointer">
+                <i data-lucide="log-out" class="size-4 shrink-0"></i>
+                <span>Cerrar sesión</span>
             </button>
         </form>
     </div>

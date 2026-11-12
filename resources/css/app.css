@@ -1,5 +1,10 @@
 @import 'tailwindcss';
 
+/* Fuente incluida en la app (funciona sin internet). Ver DESIGN.md §4. */
+@import '@fontsource/instrument-sans/latin-400.css';
+@import '@fontsource/instrument-sans/latin-500.css';
+@import '@fontsource/instrument-sans/latin-600.css';
+
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
@@ -7,6 +12,92 @@
 
 /* Enable class-based dark mode for Tailwind 4 */
 @variant dark (&:where(.dark, .dark *));
+
+/*
+ * Tokens del sistema de diseño (DESIGN.md §2). Cambiar un color = cambiar el token aquí.
+ * Contraste verificado (WCAG >= 4,5:1) en ambos temas.
+ */
+:root {
+    --background: #f9fafb;
+    --foreground: #101828;
+    --card: #ffffff;
+    --muted: #f2f4f7;
+    --muted-foreground: #475467;
+    --border: #e4e7ec;
+    --input: #d0d5dd;
+    --ring: #465fff;
+    --primary: #3641f5;
+    --primary-hover: #2a31d8;
+    --primary-foreground: #ffffff;
+    --destructive: #d92d20;
+    --destructive-hover: #b42318;
+    --destructive-foreground: #ffffff;
+    --success: #12b76a;
+    --warning: #f79009;
+    --info: #0ba5ec;
+    --success-text: #067647;
+    --warning-text: #b54708;
+    --info-text: #026aa2;
+    --destructive-text: #b42318;
+    --sidebar: #0c111d;
+    --sidebar-foreground: #98a2b3;
+    --sidebar-accent: #1d2939;
+    --sidebar-active: #ffffff;
+    --sidebar-border: #1d2939;
+    --overlay: rgb(16 24 40 / 0.45);
+}
+
+.dark {
+    --background: #0c111d;
+    --foreground: #f2f4f7;
+    --card: #101828;
+    --muted: #1d2939;
+    --muted-foreground: #98a2b3;
+    --border: #1d2939;
+    --input: #344054;
+    --ring: #7592ff;
+    --primary: #7592ff;
+    --primary-hover: #9cb9ff;
+    --primary-foreground: #0c111d;
+    --success-text: #32d583;
+    --warning-text: #fdb022;
+    --info-text: #36bffa;
+    --destructive-text: #f97066;
+    --sidebar: #0c111d;
+    --sidebar-accent: #1d2939;
+    --sidebar-border: #1d2939;
+    --overlay: rgb(0 0 0 / 0.6);
+}
+
+@theme inline {
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    --color-primary: var(--primary);
+    --color-primary-hover: var(--primary-hover);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-destructive: var(--destructive);
+    --color-destructive-hover: var(--destructive-hover);
+    --color-destructive-foreground: var(--destructive-foreground);
+    --color-success: var(--success);
+    --color-warning: var(--warning);
+    --color-info: var(--info);
+    --color-success-text: var(--success-text);
+    --color-warning-text: var(--warning-text);
+    --color-info-text: var(--info-text);
+    --color-destructive-text: var(--destructive-text);
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-active: var(--sidebar-active);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-overlay: var(--overlay);
+}
 
 @theme {
     /* Brand Portfolio - Electronic Blue */
@@ -52,6 +143,7 @@
 
     /* Typography & Effects */
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
     --shadow-theme-xs: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
     --shadow-theme-sm: 0px 1px 3px 0px rgba(16, 24, 40, 0.1), 0px 1px 2px 0px rgba(16, 24, 40, 0.06);
@@ -97,13 +189,17 @@
         border-color: var(--color-gray-700) !important;
     }
 
+    /*
+     * Parches heredados para las pantallas que aún no usan tokens. Las reglas genéricas
+     * (p, span, h1-h3, table) no aplican dentro de `.ds` (pantallas y componentes ya
+     * migrados a DESIGN.md), porque pisarían los colores de estado. Se eliminan cuando
+     * todas las pantallas estén migradas.
+     */
     .dark .text-slate-900,
     .dark .text-gray-900,
     .dark .text-slate-800,
     .dark .text-gray-800,
-    .dark h1,
-    .dark h2,
-    .dark h3 {
+    .dark :is(h1, h2, h3):not(.ds, .ds *) {
         color: #ffffff !important;
     }
 
@@ -111,35 +207,29 @@
     .dark .text-gray-500,
     .dark .text-slate-400,
     .dark .text-gray-400,
-    .dark p,
-    .dark span:not(.text-white) {
+    .dark :is(p, span:not(.text-white)):not(.ds, .ds *) {
         color: #94a3b8 !important;
         /* Lighter subtext */
     }
 
     /* Table Specific Dark Mode Overrides */
-    .dark table thead th,
-    .dark table thead {
+    .dark :is(table thead th, table thead):not(.ds, .ds *) {
         background-color: var(--color-gray-900) !important;
         border-color: var(--color-gray-800) !important;
         color: var(--color-gray-300) !important;
     }
 
-    .dark table tbody tr {
+    .dark :is(table tbody tr, table tbody td):not(.ds, .ds *) {
         border-color: var(--color-gray-800) !important;
     }
 
-    .dark table tbody td {
-        border-color: var(--color-gray-800) !important;
-    }
-
-    .dark table tbody tr:hover {
+    .dark table tbody tr:not(.ds, .ds *):hover {
         background-color: var(--color-gray-800) !important;
     }
 
     body {
-        background-color: var(--body-bg);
-        color: var(--body-text);
+        background-color: var(--background);
+        color: var(--foreground);
         @apply transition-colors duration-500;
     }
 }

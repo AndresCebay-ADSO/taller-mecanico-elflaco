@@ -174,6 +174,60 @@ Alpine.data('jobForm', ({ products, jobTypes, old = {} }) => ({
     money: formatCurrency,
 }));
 
+/**
+ * Diálogo de confirmación de la app (<x-confirm-dialog>), en lugar de window.confirm().
+ * Un <form data-confirm="…"> se detiene al enviarse, pregunta y, si se acepta, se reenvía.
+ */
+Alpine.data('confirmDialog', () => ({
+    open: false,
+    title: '',
+    description: '',
+    confirmLabel: 'Confirmar',
+    destructive: false,
+    form: null,
+    submitter: null,
+
+    ask({ form, submitter }) {
+        this.form = form;
+        this.submitter = submitter;
+        this.title = form.dataset.confirm;
+        this.description = form.dataset.confirmDescription ?? '';
+        this.confirmLabel = form.dataset.confirmLabel ?? 'Confirmar';
+        this.destructive = form.hasAttribute('data-confirm-destructive');
+        this.open = true;
+        // Foco en «Cancelar»: Enter por accidente no anula nada.
+        this.$nextTick(() => this.$refs.cancelButton?.focus());
+    },
+    cancel() {
+        this.open = false;
+        this.form = null;
+    },
+    accept() {
+        const form = this.form;
+        const submitter = this.submitter;
+        this.open = false;
+        this.form = null;
+        if (!form) return;
+        form.dataset.confirmed = '1';
+        form.requestSubmit(submitter && form.contains(submitter) ? submitter : undefined);
+    },
+}));
+
+// Fase de captura: corre antes que el formateo de dinero y el bloqueo de doble envío.
+document.addEventListener('submit', (e) => {
+    const form = e.target;
+    if (!(form instanceof HTMLFormElement) || !form.dataset.confirm) return;
+
+    if (form.dataset.confirmed === '1') {
+        delete form.dataset.confirmed;
+        return;
+    }
+
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    window.dispatchEvent(new CustomEvent('confirm-dialog', { detail: { form, submitter: e.submitter ?? null } }));
+}, true);
+
 window.lucide.createIcons();
 
 Alpine.start();
