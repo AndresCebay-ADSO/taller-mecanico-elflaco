@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\BranchService;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -26,6 +27,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::define('admin', fn (User $user) => (bool) $user->is_admin);
+
+        // Paginación con los tokens de la app (resources/views/pagination/app.blade.php).
+        Paginator::defaultView('pagination.app');
+        Paginator::defaultSimpleView('pagination.app');
 
         View::composer('components.app-layout', function ($view) {
             try {
