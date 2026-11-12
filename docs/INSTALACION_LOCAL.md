@@ -154,6 +154,24 @@ php artisan taller:verificar
 
 > **Nunca** en la máquina del cliente: `migrate:fresh`, `db:wipe` ni `--seeder=DemoSeeder`. Borran todo.
 
+### 4.1 Carga inicial de datos reales
+
+Los seeders de demostración traen datos **inventados**: no se usan en el cliente. Los datos reales se cargan así:
+
+1. En la app, como administrador: **Administración → Importar datos → Descargar plantilla**.
+2. El cliente llena el Excel (proveedores, productos con su stock actual, mecánicos, tipos de trabajo). Las hojas vienen
+   vacías; los ejemplos están en la hoja «Instrucciones».
+3. Se sube el archivo: el sistema lo **revisa sin guardar nada** y muestra los errores fila por fila.
+4. Con el archivo sin errores, **Importar**. El stock de cada producto entra como primer lote (queda en trazabilidad).
+   Lo que ya exista con el mismo nombre se omite, así que se puede importar por partes.
+
+Productos y mecánicos entran en la **sucursal activa** (selector del menú); proveedores y tipos de trabajo son
+globales.
+
+> Para cambiar las columnas de la plantilla: editar `resources/templates/generar_plantilla.py` **y**
+> `app/Services/DataImport/ImportSchema.php`, y regenerar con `python resources/templates/generar_plantilla.py`
+> (requiere `pip install openpyxl`, solo en la máquina de desarrollo). Una prueba falla si no coinciden.
+
 ---
 
 ## 5. Servir la app con Apache (arranca solo con Windows)

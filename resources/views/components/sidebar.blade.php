@@ -109,6 +109,10 @@
                 Tipos de trabajo
             </x-sidebar-link>
 
+            <x-sidebar-link href="{{ route('imports.index') }}" icon="file-spreadsheet" :active="request()->routeIs('imports*')">
+                Importar datos
+            </x-sidebar-link>
+
             <x-sidebar-link href="{{ route('settings') }}" icon="settings" :active="request()->routeIs('settings*')">
                 Configuración
             </x-sidebar-link>

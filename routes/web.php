@@ -17,6 +17,7 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorkshopJobController;
+use App\Http\Controllers\DataImportController;
 use App\Http\Controllers\DocumentController;
 use Illuminate\Support\Facades\Route;
 
@@ -73,6 +74,13 @@ Route::middleware('auth')->group(function () {
         Route::get('inventory/adjustment', [InventoryController::class, 'createAdjustment'])->name('inventory.adjustment');
         Route::post('inventory/adjustment', [InventoryController::class, 'storeAdjustment'])->name('inventory.store-adjustment');
         Route::patch('batches/{batch}', [BatchController::class, 'update'])->name('batches.update');
+
+        // Carga inicial desde la plantilla de Excel: revisar primero, importar después.
+        Route::get('imports', [DataImportController::class, 'index'])->name('imports.index');
+        Route::get('imports/template', [DataImportController::class, 'template'])->name('imports.template');
+        Route::post('imports/preview', [DataImportController::class, 'preview'])->name('imports.preview');
+        Route::post('imports/confirm', [DataImportController::class, 'confirm'])->name('imports.confirm');
+        Route::post('imports/discard', [DataImportController::class, 'discard'])->name('imports.discard');
 
         Route::delete('products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
         Route::patch('products/{id}/restore', [ProductController::class, 'restore'])->name('products.restore');

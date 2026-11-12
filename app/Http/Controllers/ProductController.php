@@ -63,7 +63,9 @@ class ProductController extends Controller
     {
         $suppliers = Supplier::active()->orderBy('name')->get();
         $currentBranch = $branchService->getCurrentBranch();
-        return view('products.create', compact('suppliers', 'currentBranch'));
+        $categories = $this->categories();
+
+        return view('products.create', compact('suppliers', 'currentBranch', 'categories'));
     }
 
     /**
@@ -126,7 +128,9 @@ class ProductController extends Controller
 
         $suppliers = Supplier::active()->orderBy('name')->get();
         $selectedSupplierIds = $product->suppliers()->pluck('suppliers.id')->toArray();
-        return view('products.edit', compact('product', 'suppliers', 'selectedSupplierIds'));
+        $categories = $this->categories();
+
+        return view('products.edit', compact('product', 'suppliers', 'selectedSupplierIds', 'categories'));
     }
 
     /**
@@ -190,5 +194,16 @@ class ProductController extends Controller
 
         return redirect()->route('products.index')
             ->with('success', 'Producto reactivado exitosamente.');
+    }
+
+    /**
+     * Categorías ya usadas en la sucursal, para sugerirlas. La categoría es texto libre: cada taller usa las suyas.
+     *
+     * @return \Illuminate\Support\Collection<int, string>
+     */
+    private function categories()
+    {
+        return Product::forBranch($this->currentBranchId())->whereNotNull('category')
+            ->distinct()->orderBy('category')->pluck('category');
     }
 }

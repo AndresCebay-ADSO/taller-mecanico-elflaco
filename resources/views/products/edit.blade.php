@@ -10,11 +10,15 @@
         <x-card title="Producto">
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <x-input label="Nombre" name="name" required :value="$product->name" maxlength="255" />
-                <x-select label="Categoría" name="category" required>
-                    @foreach(['Repuestos', 'Aceites', 'Accesorios', 'Otros'] as $category)
-                        <option value="{{ $category }}" @selected(old('category', $product->category) === $category)>{{ $category }}</option>
-                    @endforeach
-                </x-select>
+                <div>
+                    <x-input label="Categoría" name="category" required maxlength="255" list="category-options" autocomplete="off"
+                             :value="$product->category" placeholder="Ej.: Filtros" help="Escribe una nueva o elige una de las que ya usas." />
+                    <datalist id="category-options">
+                        @foreach($categories as $category)
+                            <option value="{{ $category }}"></option>
+                        @endforeach
+                    </datalist>
+                </div>
                 <x-input label="Código / UPC" name="upc" :value="$product->upc" maxlength="50" placeholder="Opcional" />
             </div>
         </x-card>
