@@ -3,7 +3,7 @@
     $activeBranch = $currentBranch ?? null;
 @endphp
 
-<aside class="ds flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
+<aside class="ds app-sidebar flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
     <!-- Header -->
     <div class="flex items-center justify-between px-5 py-5">
         <a href="{{ route('dashboard') }}" class="flex items-center gap-3">
@@ -41,7 +41,7 @@
     </div>
 
     <!-- Navigation -->
-    <nav class="flex-1 space-y-0.5 overflow-y-auto px-3 py-2 custom-scrollbar">
+    <nav id="sidebar-nav" class="flex-1 space-y-0.5 overflow-y-auto px-3 py-2 custom-scrollbar">
         <x-sidebar-link href="{{ route('dashboard') }}" icon="layout-grid" :active="request()->routeIs('dashboard')">
             Dashboard
         </x-sidebar-link>
@@ -123,6 +123,16 @@
             </button>
         </form>
     </div>
+    {{-- El menú recuerda dónde quedó su scroll: al cambiar de página no salta arriba. Va al final del <aside>: así el menú ya tiene su alto real al restaurarlo. --}}
+    <script>
+        (() => {
+            const nav = document.getElementById('sidebar-nav');
+            try { nav.scrollTop = Number(sessionStorage.getItem('sidebarScroll')) || 0; } catch (e) {}
+            window.addEventListener('pagehide', () => {
+                try { sessionStorage.setItem('sidebarScroll', nav.scrollTop); } catch (e) {}
+            });
+        })();
+    </script>
 </aside>
 
 <style>

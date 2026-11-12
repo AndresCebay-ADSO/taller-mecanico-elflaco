@@ -34,12 +34,10 @@
 
     <style>
         [x-cloak] { display: none !important; }
-        body { opacity: 0; }
 
         @media print {
             aside, .no-print { display: none !important; }
             html, body, main { height: auto !important; overflow: visible !important; background: #fff !important; }
-            body { opacity: 1 !important; }
             .invoice-sheet { border: 0 !important; box-shadow: none !important; max-width: 100% !important; padding: 0 !important; background: #fff !important; }
             .invoice-sheet, .invoice-sheet * { color: #0f172a !important; }
         }
@@ -142,39 +140,5 @@
 
     <x-confirm-dialog />
 
-    <script>
-        // Page transitions
-        document.addEventListener('DOMContentLoaded', () => {
-            // Fade in al cargar
-            document.body.style.transition = 'opacity 0.15s ease';
-            document.body.style.opacity = '1';
-        });
-
-        document.addEventListener('click', e => {
-            const link = e.target.closest('a[href]');
-            if (!link) return;
-            
-            const href = link.getAttribute('href');
-            
-            // Ignorar: links externos, anclas, target blank, links de logout/forms
-            if (!href || 
-                href.startsWith('#') || 
-                href.startsWith('http') || 
-                href.startsWith('mailto') ||
-                link.target === '_blank' ||
-                link.closest('form')) return;
-
-            e.preventDefault();
-            document.body.style.transition = 'opacity 0.15s ease';
-            document.body.style.opacity = '0';
-            setTimeout(() => { window.location.href = href; }, 150);
-        });
-
-        // Fade in también al usar botón atrás del navegador
-        window.addEventListener('pageshow', () => {
-            document.body.style.transition = 'opacity 0.15s ease';
-            document.body.style.opacity = '1';
-        });
-    </script>
 </body>
 </html>
