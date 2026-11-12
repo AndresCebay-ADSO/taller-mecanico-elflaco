@@ -87,8 +87,9 @@ Una sola forma de píldora: `rounded-full px-2 py-0.5 text-xs font-medium` + el 
 | Movimiento de inventario | entrada success · salida warning · transferencia info · ajuste neutral |
 | Método de pago (Efectivo, Nequi…) | siempre neutral |
 
-- **Una sola fuente de verdad, en PHP.** Cada modelo con estado expone `statusLabel()` y `statusTone()` (hoy:
-  `ServiceOrder`, `WorkshopJob`, `Sale`; el resto al migrar su pantalla), y las vistas pintan con `<x-status-badge :tone="$order->statusTone()">{{ $order->statusLabel() }}</x-status-badge>`.
+- **Una sola fuente de verdad, en PHP.** Cada modelo con estado expone `statusLabel()` y `statusTone()` (`ServiceOrder`,
+  `WorkshopJob`, `Sale`, `Invoice`, `BranchTransfer`; `Product` con `stockLabel()`/`stockTone()` e `InventoryMovement` con
+  `typeLabel()`/`directionTone()`/`directionIcon()`), y las vistas pintan con `<x-status-badge :tone="$order->statusTone()">{{ $order->statusLabel() }}</x-status-badge>`.
   **Nada de mapas de color en las vistas** (`match($status) { 'pending' => 'amber' … }`). El único mapa tono → clases es
   `App\Support\Tone` (píldora, aviso y texto).
 - **Nunca solo color.** Un movimiento lleva icono y signo: entrada `arrow-down` `+5`, salida `arrow-up` `−5`. El tono va
@@ -185,12 +186,18 @@ Una sola forma de píldora: `rounded-full px-2 py-0.5 text-xs font-medium` + el 
 | `<x-alert>` | Mensajes flash y avisos fijos, con los tonos de §3. El de éxito se cierra solo a los 5 s. |
 | `<x-empty-state>` | §7. `icon` opcional y slot `action`. |
 | `<x-confirm-dialog>` | §8. Ya está en el layout; las vistas no lo incluyen. |
+| `<x-textarea>` | §8. Igual que `<x-input>`, para texto largo. |
+| `<x-checkbox>` | Casilla con su texto al lado y `help` debajo. Desmarcada no se envía: el controlador usa `$request->boolean()`. |
+| `<x-active-badge>` | Activo success / inactivo neutral. `feminine` dice «Activa». |
+| Paginación | `$items->links()` usa `resources/views/pagination/app.blade.php` (registrada en `AppServiceProvider`). |
+| Menú lateral | Fijo desde `lg`; en pantallas chicas se abre con ☰ desde la barra superior (`navOpen` en el layout). |
 
-## 10. Transición
+## 10. Diálogos con datos de una fila
 
-Mientras haya pantallas sin migrar, `app.css` conserva unos parches de modo oscuro (`.dark p`, `.dark span`, tablas…)
-que pintan de gris todo el texto. No aplican dentro de `.ds`: cada pantalla migrada envuelve su contenido en
-`<div class="ds">`, y los componentes ya lo traen. Los parches se borran cuando la última pantalla esté migrada.
+Para abrir un diálogo con los datos de un registro, el botón es un `<button>` normal con
+`x-on:click="edit({{ \Illuminate\Support\Js::from($data) }})"`. **Nunca** `addslashes` ni `@json` dentro de un
+atributo: un nombre con comillas o un salto de línea rompe el botón. Crear y editar comparten un solo diálogo
+(proveedores, sucursales).
 
 ## 11. Cómo se hace un cambio de interfaz
 
@@ -208,5 +215,5 @@ Checklist:
 - [ ] Sin `confirm()`/`alert()` ni `type="number"`; el botón principal evita el doble envío.
 - [ ] Se lee bien en ambos temas; el foco se ve.
 - [ ] Sin scroll horizontal de la página a 390 px.
-- [ ] `php artisan test` en verde. _(pendiente)_ `DesignContractTest` (Pest) revisa las vistas y falla si aparece algo
-      prohibido de este documento.
+- [ ] `php artisan test` en verde. `tests/Feature/DesignContractTest.php` revisa todas las vistas y falla si aparece algo
+      prohibido de este documento (cada excepción lleva su motivo en el mismo archivo).
