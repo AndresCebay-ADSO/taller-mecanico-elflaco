@@ -3,7 +3,9 @@
     $activeBranch = $currentBranch ?? null;
 @endphp
 
-<aside class="ds app-sidebar flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
+<aside id="app-sidebar"
+       class="ds app-sidebar fixed inset-y-0 left-0 z-40 flex w-64 shrink-0 -translate-x-full flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-transform duration-200 lg:static lg:translate-x-0"
+       :class="navOpen && 'translate-x-0'">
     <!-- Header -->
     <div class="flex items-center justify-between px-5 py-5">
         <a href="{{ route('dashboard') }}" class="flex items-center gap-3">
@@ -16,7 +18,13 @@
             </span>
         </a>
 
-        <x-theme-toggle />
+        <div class="flex items-center">
+            <x-theme-toggle />
+            <button type="button" x-on:click="navOpen = false" class="cursor-pointer rounded-md p-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-active lg:hidden">
+                <i data-lucide="x" class="size-4"></i>
+                <span class="sr-only">Cerrar menú</span>
+            </button>
+        </div>
     </div>
 
     <!-- Sucursal activa -->

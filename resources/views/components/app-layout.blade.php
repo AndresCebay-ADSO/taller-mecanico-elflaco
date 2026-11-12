@@ -44,12 +44,22 @@
     </style>
 </head>
 <body class="h-full font-sans antialiased">
-    <div class="flex h-full overflow-hidden">
+    {{-- navOpen: menú lateral abierto en pantallas chicas (desde lg siempre está visible). --}}
+    <div class="flex h-full overflow-hidden" x-data="{ navOpen: false }" x-on:keydown.escape.window="navOpen = false">
+        <div x-show="navOpen" x-cloak x-transition.opacity class="fixed inset-0 z-30 bg-overlay lg:hidden" x-on:click="navOpen = false"></div>
         <!-- Sidebar -->
         <x-sidebar />
 
         <!-- Main Content -->
-        <main class="flex-1 overflow-y-auto">
+        <main class="flex min-w-0 flex-1 flex-col overflow-y-auto">
+            {{-- Barra superior solo en pantallas chicas: abre el menú. --}}
+            <div class="ds sticky top-0 z-20 flex items-center gap-3 border-b border-border bg-background/95 px-4 py-2 backdrop-blur lg:hidden">
+                <button type="button" x-on:click="navOpen = true" class="-ml-2 cursor-pointer rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground" :aria-expanded="navOpen.toString()" aria-controls="app-sidebar">
+                    <i data-lucide="menu" class="size-5"></i>
+                    <span class="sr-only">Abrir menú</span>
+                </button>
+                <span class="text-sm font-semibold">MotoTaller El Flaco</span>
+            </div>
             <div class="py-6">
                 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <!-- Global Notifications -->
@@ -116,7 +126,7 @@
             x-transition:leave="transition ease-in duration-200"
             x-transition:leave-start="opacity-100"
             x-transition:leave-end="opacity-0"
-            class="ds fixed bottom-4 right-4 z-40 w-full max-w-sm rounded-lg border border-border bg-card p-4 text-foreground shadow-lg sm:bottom-6 sm:right-6"
+            class="ds fixed bottom-4 right-4 z-30 w-[calc(100%-2rem)] max-w-sm rounded-lg border border-border bg-card p-4 text-foreground shadow-lg sm:bottom-6 sm:right-6"
             role="status"
             x-cloak>
             <div class="flex items-start gap-3">

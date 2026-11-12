@@ -9,7 +9,7 @@
     'flush' => false,
 ])
 
-<section {{ $attributes->merge(['class' => 'ds overflow-hidden rounded-lg border border-border bg-card text-foreground shadow-xs']) }}>
+<section {{ $attributes->merge(['class' => 'ds relative overflow-hidden rounded-lg border border-border bg-card text-foreground shadow-xs']) }}>
     @if($title)
         <header class="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
             <div class="min-w-0">

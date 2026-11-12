@@ -7,7 +7,7 @@
     'headers' => [],
 ])
 
-<div {{ $attributes->merge(['class' => 'ds overflow-x-auto']) }}>
+<div {{ $attributes->merge(['class' => 'ds relative overflow-x-auto']) }}>
     {{-- Primera y última columna alineadas con el relleno de <x-card> (px-5). --}}
     <table class="min-w-full text-sm [&_td:first-child]:pl-5 [&_td:last-child]:pr-5 [&_th:first-child]:pl-5 [&_th:last-child]:pr-5">
         <thead class="border-b border-border">
