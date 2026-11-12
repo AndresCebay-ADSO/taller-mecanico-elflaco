@@ -56,7 +56,8 @@ class JobTypeController extends Controller
 
         $validated['allow_products'] = $request->has('allow_products');
         $validated['allow_custom_labor'] = $request->has('allow_custom_labor');
-        $validated['is_active'] = $request->boolean('is_active', true); // Default to active true if not present
+        // Casilla desmarcada = el formulario no la envía = inactivo (igual que al actualizar).
+        $validated['is_active'] = $request->boolean('is_active');
 
         JobType::create($validated);
 

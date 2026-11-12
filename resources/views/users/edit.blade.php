@@ -1,24 +1,18 @@
 <x-app-layout>
-    <x-page-header title="Editar Usuario" subtitle="{{ $user->email }}">
-        <x-slot name="actions">
-            <x-button variant="outline" onclick="window.location.href='{{ route('users.index') }}'">
-                Cancelar
-            </x-button>
-        </x-slot>
+<div class="ds mx-auto max-w-3xl">
+    <x-page-header :title="'Editar ' . $user->name" :subtitle="$user->email"
+                   :back="route('users.index')" back-label="Usuarios">
+        <x-slot name="badge"><x-active-badge :active="$user->is_active" /></x-slot>
     </x-page-header>
 
-    <div class="max-w-3xl">
-        <x-card>
-            <form action="{{ route('users.update', $user) }}" method="POST" class="space-y-6">
-                @method('PUT')
-                @include('users.partials.form')
+    <form action="{{ route('users.update', $user) }}" method="POST" class="space-y-6">
+        @method('PUT')
+        @include('users.partials.form')
 
-                <div class="flex justify-end pt-4">
-                    <x-button variant="primary" type="submit" class="w-full md:w-auto">
-                        Guardar Cambios
-                    </x-button>
-                </div>
-            </form>
-        </x-card>
-    </div>
+        <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
+            <x-button variant="secondary" href="{{ route('users.index') }}">Cancelar</x-button>
+            <x-button type="submit">Guardar cambios</x-button>
+        </div>
+    </form>
+</div>
 </x-app-layout>

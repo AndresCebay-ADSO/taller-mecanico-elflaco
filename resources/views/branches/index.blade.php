@@ -1,162 +1,98 @@
+@php
+    // Tras un error de validación, el diálogo se reabre en el modo y con los datos que se enviaron.
+    $initial = [
+        'id' => old('id', ''),
+        'name' => old('name', ''),
+        'address' => old('address', ''),
+        'phone' => old('phone', ''),
+        'email' => old('email', ''),
+    ];
+@endphp
+
 <x-app-layout>
-    <x-page-header title="Sucursales" subtitle="Gestión de sucursales">
+<div class="ds" x-data="{
+        open: @js($errors->any()),
+        branch: @js($initial),
+        get editing() { return this.branch.id !== '' && this.branch.id !== null; },
+        create() { this.branch = { id: '', name: '', address: '', phone: '', email: '' }; this.open = true; },
+        edit(data) { this.branch = { ...data, address: data.address ?? '', phone: data.phone ?? '', email: data.email ?? '' }; this.open = true; },
+     }">
+    <x-page-header title="Sucursales" subtitle="Sedes del taller. Cada una tiene su propio inventario, ventas y órdenes">
         <x-slot name="actions">
-            <x-button variant="primary" onclick="document.getElementById('createModal').classList.remove('hidden')">
-                <i data-lucide="plus" class="mr-2 h-4 w-4"></i>
-                Nueva Sucursal
-            </x-button>
+            <x-button x-on:click="create()">Nueva sucursal</x-button>
         </x-slot>
     </x-page-header>
 
-    <x-card class="overflow-hidden p-0">
-        <x-table :headers="['NOMBRE', 'DIRECCIÓN', 'TELÉFONO', 'EMAIL', 'ESTADO', 'ACCIONES']">
-            @forelse($branches as $branch)
-                <tr>
-                    <td class="px-6 py-4">
-                        <div class="flex items-center gap-3">
-                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
-                                <i data-lucide="building" class="h-5 w-5"></i>
-                            </div>
-                            <div class="text-sm font-bold text-slate-900 dark:text-white">{{ $branch->name }}</div>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-400">
-                        {{ $branch->address ?: 'N/A' }}
-                    </td>
-                    <td class="px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-400">
-                        {{ $branch->phone ?: 'N/A' }}
-                    </td>
-                    <td class="px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-400">
-                        {{ $branch->email ?: 'N/A' }}
-                    </td>
-                    <td class="px-6 py-4">
-                        <x-badge :variant="$branch->is_active ? 'emerald' : 'red'">
-                            {{ $branch->is_active ? 'Activa' : 'Inactiva' }}
-                        </x-badge>
-                    </td>
-                    <td class="px-6 py-4 text-right text-sm font-medium">
-                        <div class="flex justify-end gap-2">
-                            <button type="button"
-                                onclick="openEditBranchModal({{ $branch->id }}, '{{ addslashes($branch->name) }}', '{{ addslashes($branch->address ?? '') }}', '{{ addslashes($branch->phone ?? '') }}', '{{ addslashes($branch->email ?? '') }}')"
-                                class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors cursor-pointer">
-                                <i data-lucide="pencil" class="h-4 w-4"></i>
-                            </button>
-                            <form action="{{ route('branches.toggle-active', $branch) }}" method="POST" class="inline">
+    <x-card flush>
+        @if($branches->isNotEmpty())
+            <x-table :headers="['Sucursal', 'Dirección', 'Teléfono', 'Correo', 'Estado', ['label' => '', 'align' => 'right']]">
+                @foreach($branches as $branch)
+                    @php $data = ['id' => $branch->id, 'name' => $branch->name, 'address' => $branch->address, 'phone' => $branch->phone, 'email' => $branch->email]; @endphp
+                    <tr @class(['transition-colors hover:bg-muted/50', 'text-muted-foreground' => ! $branch->is_active])>
+                        <td class="px-4 py-3">
+                            <button type="button" x-on:click="edit({{ \Illuminate\Support\Js::from($data) }})" class="cursor-pointer text-left font-medium text-primary hover:underline">{{ $branch->name }}</button>
+                        </td>
+                        <td class="px-4 py-3 text-muted-foreground">{{ $branch->address ?: '—' }}</td>
+                        <td class="whitespace-nowrap px-4 py-3 tabular-nums">{{ $branch->phone ?: '—' }}</td>
+                        <td class="px-4 py-3 text-muted-foreground">{{ $branch->email ?: '—' }}</td>
+                        <td class="px-4 py-3"><x-active-badge :active="$branch->is_active" feminine /></td>
+                        <td class="whitespace-nowrap px-4 py-2 text-right">
+                            <form action="{{ route('branches.toggle-active', $branch) }}" method="POST"
+                                  data-confirm="¿{{ $branch->is_active ? 'Desactivar' : 'Activar' }} {{ $branch->name }}?"
+                                  data-confirm-description="{{ $branch->is_active ? 'Nadie podrá trabajar en esta sede hasta reactivarla. Sus datos se conservan.' : 'Vuelve a estar disponible para los usuarios asignados.' }}"
+                                  data-confirm-label="{{ $branch->is_active ? 'Desactivar' : 'Activar' }}"
+                                  @if($branch->is_active) data-confirm-destructive @endif>
                                 @csrf
-                                <button type="submit"
-                                    title="{{ $branch->is_active ? 'Desactivar' : 'Activar' }}"
-                                    class="rounded-lg p-2 {{ $branch->is_active ? 'text-red-400 hover:bg-red-50 hover:text-red-600' : 'text-emerald-400 hover:bg-emerald-50 hover:text-emerald-600' }} transition-colors cursor-pointer">
-                                    <i data-lucide="{{ $branch->is_active ? 'eye-off' : 'eye' }}" class="h-4 w-4"></i>
-                                </button>
+                                <x-button type="submit" variant="secondary" size="sm">{{ $branch->is_active ? 'Desactivar' : 'Activar' }}</x-button>
                             </form>
-                        </div>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="6" class="px-6 py-12 text-center text-slate-500">
-                        No hay sucursales registradas.
-                    </td>
-                </tr>
-            @endforelse
-        </x-table>
+                        </td>
+                    </tr>
+                @endforeach
+            </x-table>
+        @else
+            <div class="p-5">
+                <x-empty-state icon="building-2">Aún no hay sucursales.</x-empty-state>
+            </div>
+        @endif
     </x-card>
 
-    <div id="createModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
-        <div class="flex items-center justify-center min-h-screen px-4">
-            <div class="fixed inset-0 bg-black/50" onclick="document.getElementById('createModal').classList.add('hidden')"></div>
-            <div class="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-6">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Nueva Sucursal</h3>
-                    <button onclick="document.getElementById('createModal').classList.add('hidden')" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                        <i data-lucide="x" class="h-5 w-5"></i>
+    <template x-if="open">
+        <div class="ds fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="branch-title"
+             x-on:keydown.escape.window="open = false">
+            <div class="absolute inset-0 bg-overlay" x-on:click="open = false"></div>
+            <form method="POST" :action="editing ? '{{ url('branches') }}/' + branch.id : '{{ route('branches.store') }}'"
+                  class="relative w-full max-w-lg overflow-hidden rounded-lg border border-border bg-card text-foreground shadow-lg">
+                @csrf
+                <template x-if="editing">
+                    <input type="hidden" name="_method" value="PUT">
+                </template>
+                <input type="hidden" name="id" :value="branch.id">
+
+                <div class="flex items-center justify-between border-b border-border px-5 py-4">
+                    <h2 id="branch-title" class="text-base font-semibold" x-text="editing ? 'Editar sucursal' : 'Nueva sucursal'"></h2>
+                    <button type="button" x-on:click="open = false" class="-m-1 cursor-pointer rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground" title="Cerrar">
+                        <i data-lucide="x" class="size-4"></i>
+                        <span class="sr-only">Cerrar</span>
                     </button>
                 </div>
-                <form action="{{ route('branches.store') }}" method="POST">
-                    @csrf
-                    <div class="space-y-4">
-                        <div>
-                            <label for="name" class="block text-xs font-bold text-slate-400 dark:text-gray-500 uppercase mb-2 ml-1">Nombre</label>
-                            <input type="text" name="name" id="name" required class="w-full rounded-2xl border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-950/50 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 dark:text-gray-300 transition-all">
-                        </div>
-                        <div>
-                            <label for="address" class="block text-xs font-bold text-slate-400 dark:text-gray-500 uppercase mb-2 ml-1">Dirección</label>
-                            <input type="text" name="address" id="address" class="w-full rounded-2xl border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-950/50 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 dark:text-gray-300 transition-all">
-                        </div>
-                        <div>
-                            <label for="phone" class="block text-xs font-bold text-slate-400 dark:text-gray-500 uppercase mb-2 ml-1">Teléfono</label>
-                            <input type="text" name="phone" id="phone" class="w-full rounded-2xl border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-950/50 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 dark:text-gray-300 transition-all">
-                        </div>
-                        <div>
-                            <label for="email" class="block text-xs font-bold text-slate-400 dark:text-gray-500 uppercase mb-2 ml-1">Email</label>
-                            <input type="email" name="email" id="email" class="w-full rounded-2xl border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-950/50 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 dark:text-gray-300 transition-all">
-                        </div>
-                    </div>
-                    <div class="flex justify-end gap-3 mt-6">
-                        <button type="button" onclick="document.getElementById('createModal').classList.add('hidden')" class="rounded-2xl px-4 py-2.5 text-sm font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors">
-                            Cancelar
-                        </button>
-                        <x-button variant="primary" type="submit">
-                            Crear Sucursal
-                        </x-button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
 
-    <div id="editModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
-        <div class="flex items-center justify-center min-h-screen px-4">
-            <div class="fixed inset-0 bg-black/50" onclick="document.getElementById('editModal').classList.add('hidden')"></div>
-            <div class="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-6">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Editar Sucursal</h3>
-                    <button onclick="document.getElementById('editModal').classList.add('hidden')" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                        <i data-lucide="x" class="h-5 w-5"></i>
-                    </button>
+                <div class="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2">
+                    <div class="sm:col-span-2">
+                        <x-input label="Nombre" name="name" required maxlength="255" placeholder="Ej.: Sede Principal" x-model="branch.name" />
+                    </div>
+                    <div class="sm:col-span-2">
+                        <x-input label="Dirección" name="address" maxlength="255" placeholder="Opcional" x-model="branch.address" />
+                    </div>
+                    <x-input label="Teléfono" name="phone" type="tel" maxlength="20" placeholder="Opcional" x-model="branch.phone" />
+                    <x-input label="Correo" name="email" type="email" maxlength="255" placeholder="Opcional" x-model="branch.email" />
                 </div>
-                <form id="editBranchForm" method="POST">
-                    @csrf
-                    @method('PUT')
-                    <div class="space-y-4">
-                        <div>
-                            <label for="edit-name" class="block text-xs font-bold text-slate-400 dark:text-gray-500 uppercase mb-2 ml-1">Nombre</label>
-                            <input type="text" name="name" id="edit-name" required class="w-full rounded-2xl border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-950/50 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 dark:text-gray-300 transition-all">
-                        </div>
-                        <div>
-                            <label for="edit-address" class="block text-xs font-bold text-slate-400 dark:text-gray-500 uppercase mb-2 ml-1">Dirección</label>
-                            <input type="text" name="address" id="edit-address" class="w-full rounded-2xl border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-950/50 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 dark:text-gray-300 transition-all">
-                        </div>
-                        <div>
-                            <label for="edit-phone" class="block text-xs font-bold text-slate-400 dark:text-gray-500 uppercase mb-2 ml-1">Teléfono</label>
-                            <input type="text" name="phone" id="edit-phone" class="w-full rounded-2xl border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-950/50 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 dark:text-gray-300 transition-all">
-                        </div>
-                        <div>
-                            <label for="edit-email" class="block text-xs font-bold text-slate-400 dark:text-gray-500 uppercase mb-2 ml-1">Email</label>
-                            <input type="email" name="email" id="edit-email" class="w-full rounded-2xl border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-950/50 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 dark:text-gray-300 transition-all">
-                        </div>
-                    </div>
-                    <div class="flex justify-end gap-3 mt-6">
-                        <button type="button" onclick="document.getElementById('editModal').classList.add('hidden')" class="rounded-2xl px-4 py-2.5 text-sm font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors">
-                            Cancelar
-                        </button>
-                        <x-button variant="primary" type="submit">
-                            Guardar Cambios
-                        </x-button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
 
-    <script>
-        function openEditBranchModal(id, name, address, phone, email) {
-            document.getElementById('editBranchForm').action = `/branches/${id}`;
-            document.getElementById('edit-name').value = name;
-            document.getElementById('edit-address').value = address;
-            document.getElementById('edit-phone').value = phone;
-            document.getElementById('edit-email').value = email;
-            document.getElementById('editModal').classList.remove('hidden');
-        }
-    </script>
+                <div class="flex flex-col-reverse gap-2 border-t border-border px-5 py-4 sm:flex-row sm:justify-between">
+                    <x-button variant="secondary" x-on:click="open = false">Cancelar</x-button>
+                    <x-button type="submit"><span x-text="editing ? 'Guardar cambios' : 'Crear sucursal'"></span></x-button>
+                </div>
+            </form>
+        </div>
+    </template>
+</div>
 </x-app-layout>

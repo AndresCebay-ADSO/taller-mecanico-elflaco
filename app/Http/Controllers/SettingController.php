@@ -30,6 +30,6 @@ class SettingController extends Controller
             Setting::updateOrCreate(['key' => $key], ['value' => $value]);
         }
 
-        return redirect()->back()->with('status', 'Configuracion actualizada exitosamente.');
+        return redirect()->back()->with('success', 'Configuración guardada.');
     }
 }

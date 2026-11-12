@@ -1,23 +1,15 @@
 <x-app-layout>
-    <x-page-header title="Nuevo Usuario" subtitle="Crea un acceso para un empleado o administrador.">
-        <x-slot name="actions">
-            <x-button variant="outline" onclick="window.location.href='{{ route('users.index') }}'">
-                Cancelar
-            </x-button>
-        </x-slot>
-    </x-page-header>
+<div class="ds mx-auto max-w-3xl">
+    <x-page-header title="Nuevo usuario" subtitle="Acceso para un empleado o un administrador"
+                   :back="route('users.index')" back-label="Usuarios" />
 
-    <div class="max-w-3xl">
-        <x-card>
-            <form action="{{ route('users.store') }}" method="POST" class="space-y-6">
-                @include('users.partials.form')
+    <form action="{{ route('users.store') }}" method="POST" class="space-y-6">
+        @include('users.partials.form')
 
-                <div class="flex justify-end pt-4">
-                    <x-button variant="primary" type="submit" class="w-full md:w-auto">
-                        Crear Usuario
-                    </x-button>
-                </div>
-            </form>
-        </x-card>
-    </div>
+        <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
+            <x-button variant="secondary" href="{{ route('users.index') }}">Cancelar</x-button>
+            <x-button type="submit">Crear usuario</x-button>
+        </div>
+    </form>
+</div>
 </x-app-layout>
