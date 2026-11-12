@@ -32,9 +32,6 @@ $rules = [
 
 // Archivo (relativo a resources/views) => [regla => motivo].
 $exceptions = [
-    'components/app-layout.blade.php' => [
-        'colores hex en vistas (usar tokens)' => 'La hoja de impresión fuerza negro sobre blanco (@media print).',
-    ],
     'pagination/app.blade.php' => [
         'number_format en vistas (usar money())' => 'Cuenta registros, no es dinero.',
     ],

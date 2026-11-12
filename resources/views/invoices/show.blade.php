@@ -27,7 +27,7 @@
                         <x-button type="submit" variant="secondary" class="!text-destructive-text">Anular</x-button>
                     </form>
                 @endif
-                <x-button onclick="window.print()">
+                <x-button href="{{ route('documents.invoice', ['invoice' => $invoice, 'auto' => 1]) }}" target="_blank">
                     <i data-lucide="printer" class="size-4"></i>
                     Imprimir
                 </x-button>
@@ -47,8 +47,8 @@
         </div>
     @endif
 
-    {{-- Hoja imprimible: `invoice-sheet` la pasa a negro sobre blanco al imprimir (ver app-layout). --}}
-    <article class="invoice-sheet mx-auto max-w-4xl rounded-lg border border-border bg-card p-6 shadow-xs md:p-10">
+    {{-- Vista en pantalla. Lo impreso sale de documents/invoice (botón «Imprimir»). --}}
+    <article class="mx-auto max-w-4xl rounded-lg border border-border bg-card p-6 shadow-xs md:p-10">
         <header class="flex flex-col gap-6 border-b border-border pb-6 md:flex-row md:items-start md:justify-between">
             <div>
                 <h2 class="text-xl font-semibold">{{ $settings['workshop_name'] ?? config('app.name') }}</h2>

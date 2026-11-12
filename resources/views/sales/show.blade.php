@@ -17,7 +17,7 @@
                     <x-button type="submit" variant="secondary" class="!text-destructive-text">Anular</x-button>
                 </form>
             @endif
-            <x-button variant="secondary" class="no-print" onclick="window.print()">
+            <x-button variant="secondary" href="{{ route('documents.sale', ['sale' => $sale, 'auto' => 1]) }}" target="_blank">
                 <i data-lucide="printer" class="size-4"></i>
                 Imprimir
             </x-button>
@@ -75,8 +75,3 @@
 </div>
 </x-app-layout>
 
-@if(request('print') == '1')
-<script>
-    window.addEventListener('load', function () { window.print(); });
-</script>
-@endif

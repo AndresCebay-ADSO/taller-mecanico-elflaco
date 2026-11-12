@@ -35,11 +35,10 @@
     <style>
         [x-cloak] { display: none !important; }
 
+        /* Los documentos se imprimen desde su propia página (componente document); aquí solo se ocultan menús. */
         @media print {
             aside, .no-print { display: none !important; }
-            html, body, main { height: auto !important; overflow: visible !important; background: #fff !important; }
-            .invoice-sheet { border: 0 !important; box-shadow: none !important; max-width: 100% !important; padding: 0 !important; background: #fff !important; }
-            .invoice-sheet, .invoice-sheet * { color: #0f172a !important; }
+            html, body, main { height: auto !important; overflow: visible !important; }
         }
     </style>
 </head>

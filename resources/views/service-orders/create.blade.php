@@ -10,6 +10,8 @@
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <x-input label="Nombre" name="customer_name" required placeholder="Ej.: Carlos Rodríguez" maxlength="255" />
                 <x-input label="Teléfono" name="customer_phone" type="tel" inputmode="tel" placeholder="Ej.: 3004567890" maxlength="10" />
+                <x-input label="C.C. o NIT" name="customer_document" placeholder="Opcional" maxlength="20"
+                         help="Sale en el comprobante y en la orden de ingreso." />
             </div>
         </x-card>
 

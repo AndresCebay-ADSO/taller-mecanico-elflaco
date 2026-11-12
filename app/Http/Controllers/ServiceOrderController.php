@@ -88,6 +88,7 @@ class ServiceOrderController extends Controller
 
         $validated = $request->validate([
             'customer_name' => 'required|string|max:255',
+            'customer_document' => 'nullable|string|max:20',
             'customer_phone' => 'nullable|digits:10',
             'vehicle_info' => 'required|string|max:255',
             'service_description' => 'required|string|max:5000',
@@ -143,6 +144,7 @@ class ServiceOrderController extends Controller
 
         $validated = $request->validate([
             'customer_name' => 'required|string|max:255',
+            'customer_document' => 'nullable|string|max:20',
             'customer_phone' => 'nullable|digits:10',
             'vehicle_info' => 'required|string|max:255',
             'service_description' => 'required|string|max:5000',

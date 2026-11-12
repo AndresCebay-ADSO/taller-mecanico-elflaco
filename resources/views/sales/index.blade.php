@@ -80,9 +80,9 @@
                         </td>
                         <td class="whitespace-nowrap px-4 py-2 text-right align-top">
                             <div class="flex items-center justify-end gap-1">
-                                <x-button variant="ghost" size="icon" href="{{ route('sales.show', $sale) }}?print=1" target="_blank" title="Imprimir recibo">
+                                <x-button variant="ghost" size="icon" href="{{ route('documents.sale', ['sale' => $sale, 'auto' => 1]) }}" target="_blank" title="Imprimir comprobante">
                                     <i data-lucide="printer" class="size-4"></i>
-                                    <span class="sr-only">Imprimir recibo de la venta {{ $sale->displayNumber() }}</span>
+                                    <span class="sr-only">Imprimir comprobante de la venta {{ $sale->displayNumber() }}</span>
                                 </x-button>
                                 @if(! $sale->isCancelled() && auth()->user()->can('admin'))
                                     <form action="{{ route('sales.cancel', $sale) }}" method="POST"

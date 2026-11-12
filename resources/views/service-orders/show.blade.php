@@ -22,6 +22,11 @@
             <x-status-badge :tone="$serviceOrder->statusTone()">{{ $serviceOrder->statusLabel() }}</x-status-badge>
         </x-slot>
         <x-slot name="actions">
+            <x-button variant="secondary" href="{{ route('documents.intake', ['serviceOrder' => $serviceOrder, 'auto' => 1]) }}" target="_blank"
+                      title="Para que el cliente la firme al dejar la moto">
+                <i data-lucide="printer" class="size-4"></i>
+                Orden de ingreso
+            </x-button>
             <x-button variant="secondary" href="{{ route('service-orders.edit', $serviceOrder) }}">Editar</x-button>
             @if($serviceOrder->canReceiveJobs())
                 <x-button @click="showJobModal = true">Añadir trabajo</x-button>

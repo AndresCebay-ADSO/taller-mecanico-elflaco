@@ -28,6 +28,11 @@
                             {{ money($invoice->amount) }}
                         </td>
                         <td class="whitespace-nowrap px-4 py-2 text-right">
+                            <div class="flex items-center justify-end gap-1">
+                            <x-button variant="ghost" size="icon" href="{{ route('documents.invoice', ['invoice' => $invoice, 'auto' => 1]) }}" target="_blank" title="Imprimir comprobante">
+                                <i data-lucide="printer" class="size-4"></i>
+                                <span class="sr-only">Imprimir {{ $invoice->invoice_number }}</span>
+                            </x-button>
                             @if(! $invoice->isCancelled() && auth()->user()->can('admin'))
                                 <form action="{{ route('invoices.cancel', $invoice) }}" method="POST"
                                       data-confirm="¿Anular la factura {{ $invoice->invoice_number }}?"
@@ -41,6 +46,7 @@
                                     </x-button>
                                 </form>
                             @endif
+                            </div>
                         </td>
                     </tr>
                 @endforeach

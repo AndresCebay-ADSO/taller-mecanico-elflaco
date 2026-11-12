@@ -17,6 +17,7 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorkshopJobController;
+use App\Http\Controllers\DocumentController;
 use Illuminate\Support\Facades\Route;
 
 // Ruta raíz → redirige al dashboard (el middleware auth se encarga del resto)
@@ -60,6 +61,12 @@ Route::middleware('auth')->group(function () {
     Route::resource('sales', SaleController::class)->only(['index', 'create', 'store', 'show']);
     Route::resource('invoices', InvoiceController::class)->only(['index', 'show']);
     Route::post('invoices/generate/{serviceOrder}', [InvoiceController::class, 'generateFromServiceOrder'])->name('invoices.generate');
+
+    // Documentos imprimibles (página aparte, tamaño carta) y logo del taller.
+    Route::get('invoices/{invoice}/print', [DocumentController::class, 'invoice'])->name('documents.invoice');
+    Route::get('sales/{sale}/print', [DocumentController::class, 'sale'])->name('documents.sale');
+    Route::get('service-orders/{serviceOrder}/intake', [DocumentController::class, 'serviceOrderIntake'])->name('documents.intake');
+    Route::get('branding/logo', [DocumentController::class, 'logo'])->name('branding.logo');
 
     // ─── Solo Administradores: acciones que alteran dinero, stock o permisos ──
     Route::middleware('admin')->group(function () {

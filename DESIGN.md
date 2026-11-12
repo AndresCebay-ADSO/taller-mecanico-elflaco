@@ -207,7 +207,21 @@ Para abrir un diálogo con los datos de un registro, el botón es un `<button>` 
 atributo: un nombre con comillas o un salto de línea rompe el botón. Crear y editar comparten un solo diálogo
 (proveedores, sucursales).
 
-## 11. Cómo se hace un cambio de interfaz
+## 11. Documentos imprimibles
+
+Comprobante de servicio, comprobante de venta y orden de ingreso usan `<x-document>`: una página aparte (sin el menú
+de la app), tamaño carta y **siempre en tema claro**, que se abre en otra pestaña con `?auto=1` y lanza la impresión.
+Nunca se imprime una pantalla de la app con `window.print()`.
+
+- Mismos tokens y componentes; las piezas propias son `<x-document.party>`, `.meta`, `.lines` y `.signature`.
+- Excepción de este archivo: títulos y rótulos del documento van en mayúsculas con `tracking-wide`, como un
+  documento comercial.
+- Lleva solo la marca del taller (logo opcional desde Configuración, guardado fuera de `public/`).
+- El título es «Comprobante», no «Factura»: el sistema no emite factura electrónica DIAN. La nota legal es
+  configurable; la orden de ingreso no la lleva.
+- `@page { margin: 0 }` y el espacio lo da la hoja: así el navegador no imprime la URL ni la fecha.
+
+## 12. Cómo se hace un cambio de interfaz
 
 1. Primero los tokens y los componentes, con 2–3 pantallas de ejemplo (dashboard, ventas, detalle de orden), revisadas
    en el navegador.
