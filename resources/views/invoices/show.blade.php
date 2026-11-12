@@ -3,33 +3,32 @@
     $jobs = $order->workshopJobs->where('status', '!=', 'cancelled');
     $laborTotal = $jobs->sum('total_amount');
     $partsTotal = $jobs->sum(fn ($job) => $job->jobProducts->sum('total_price'));
-    $money = fn ($value) => '$' . number_format((float) $value, 0, ',', '.');
+    $orderNumber = '#' . str_pad($order->id, 4, '0', STR_PAD_LEFT);
 @endphp
 
 <x-app-layout>
+<div class="ds">
     <div class="no-print">
-        <x-page-header title="Factura {{ $invoice->invoice_number }}" subtitle="Orden #{{ str_pad($order->id, 4, '0', STR_PAD_LEFT) }} · {{ $order->customer_name }}">
+        <x-page-header :title="'Factura ' . $invoice->invoice_number"
+                       :subtitle="'Orden ' . $orderNumber . ' · ' . $order->customer_name"
+                       :back="route('invoices.index')" back-label="Facturas">
+            <x-slot name="badge">
+                <x-status-badge :tone="$invoice->statusTone()">{{ $invoice->statusLabel() }}</x-status-badge>
+            </x-slot>
             <x-slot name="actions">
-                <x-button variant="outline" onclick="window.location.href='{{ route('invoices.index') }}'">
-                    <i data-lucide="arrow-left" class="mr-2 h-4 w-4"></i>
-                    Volver
-                </x-button>
-                <x-button variant="outline" onclick="window.location.href='{{ route('service-orders.show', $order) }}'">
-                    <i data-lucide="clipboard-list" class="mr-2 h-4 w-4"></i>
-                    Ver orden
-                </x-button>
-                @if(!$invoice->isCancelled() && auth()->user()->can('admin'))
-                    <form action="{{ route('invoices.cancel', $invoice) }}" method="POST" class="inline"
-                        onsubmit="return confirm('¿Anular la factura {{ $invoice->invoice_number }}? Quedará registrada como anulada y la orden podrá facturarse de nuevo.')">
+                <x-button variant="secondary" href="{{ route('service-orders.show', $order) }}">Ver orden</x-button>
+                @if(! $invoice->isCancelled() && auth()->user()->can('admin'))
+                    <form action="{{ route('invoices.cancel', $invoice) }}" method="POST"
+                          data-confirm="¿Anular la factura {{ $invoice->invoice_number }}?"
+                          data-confirm-description="Queda registrada como anulada y la orden se puede facturar de nuevo con el siguiente número."
+                          data-confirm-label="Anular factura"
+                          data-confirm-destructive>
                         @csrf
-                        <x-button variant="danger" type="submit">
-                            <i data-lucide="ban" class="mr-2 h-4 w-4"></i>
-                            Anular
-                        </x-button>
+                        <x-button type="submit" variant="secondary" class="!text-destructive-text">Anular</x-button>
                     </form>
                 @endif
-                <x-button variant="primary" onclick="window.print()">
-                    <i data-lucide="printer" class="mr-2 h-4 w-4"></i>
+                <x-button onclick="window.print()">
+                    <i data-lucide="printer" class="size-4"></i>
                     Imprimir
                 </x-button>
             </x-slot>
@@ -37,23 +36,23 @@
     </div>
 
     @if($invoice->isCancelled())
-        <div class="mx-auto mb-6 flex max-w-4xl items-center gap-3 rounded-2xl border-2 border-red-300 bg-red-50 px-6 py-4 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
-            <i data-lucide="ban" class="h-6 w-6 shrink-0"></i>
+        <div class="mx-auto mb-6 flex max-w-4xl items-start gap-3 rounded-lg border px-4 py-3 text-sm {{ \App\Support\Tone::alert('danger') }}">
+            <i data-lucide="ban" class="mt-0.5 size-4 shrink-0"></i>
             <div>
-                <p class="text-lg font-black uppercase tracking-wide">Factura anulada</p>
-                <p class="text-sm font-medium">
-                    El {{ $invoice->cancelled_at->format('d/m/Y H:i') }}{{ $invoice->cancelledBy ? ' por ' . $invoice->cancelledBy->name : '' }}. No tiene validez como comprobante.
+                <p class="font-semibold">Factura anulada</p>
+                <p class="mt-0.5">
+                    El {{ $invoice->cancelled_at->format('d/m/Y h:i a') }}{{ $invoice->cancelledBy ? ' por ' . $invoice->cancelledBy->name : '' }}. No tiene validez como comprobante.
                 </p>
             </div>
         </div>
     @endif
 
-    <div class="invoice-sheet mx-auto max-w-4xl rounded-2xl border border-slate-200 bg-white p-8 shadow-sm md:p-12 dark:border-gray-800 dark:bg-gray-900">
-        {{-- Encabezado --}}
-        <div class="flex flex-col gap-6 border-b border-slate-200 pb-8 md:flex-row md:items-start md:justify-between dark:border-gray-800">
+    {{-- Hoja imprimible: `invoice-sheet` la pasa a negro sobre blanco al imprimir (ver app-layout). --}}
+    <article class="invoice-sheet mx-auto max-w-4xl rounded-lg border border-border bg-card p-6 shadow-xs md:p-10">
+        <header class="flex flex-col gap-6 border-b border-border pb-6 md:flex-row md:items-start md:justify-between">
             <div>
-                <h2 class="text-2xl font-black text-slate-900 dark:text-white">{{ $settings['workshop_name'] ?? config('app.name') }}</h2>
-                <div class="mt-2 space-y-0.5 text-sm text-slate-500 dark:text-gray-400">
+                <h2 class="text-xl font-semibold">{{ $settings['workshop_name'] ?? config('app.name') }}</h2>
+                <div class="mt-2 space-y-0.5 text-sm text-muted-foreground">
                     @if(!empty($settings['workshop_nit']))
                         <p>NIT {{ $settings['workshop_nit'] }}</p>
                     @endif
@@ -69,58 +68,58 @@
                 </div>
             </div>
             <div class="md:text-right">
-                <p class="text-xs font-black uppercase tracking-widest text-slate-400">Factura de servicio</p>
-                <p class="mt-1 font-mono text-2xl font-black text-slate-900 dark:text-white">{{ $invoice->invoice_number }}</p>
-                <p class="mt-2 text-sm text-slate-500">Fecha: <span class="font-bold text-slate-700 dark:text-gray-300">{{ $invoice->invoice_date->format('d/m/Y') }}</span></p>
-                <p class="text-sm text-slate-500">Orden: <span class="font-bold text-slate-700 dark:text-gray-300">#{{ str_pad($order->id, 4, '0', STR_PAD_LEFT) }}</span></p>
+                <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Factura de servicio</p>
+                <p class="mt-1 font-mono text-xl font-semibold">{{ $invoice->invoice_number }}</p>
+                <dl class="mt-2 space-y-0.5 text-sm">
+                    <div><dt class="inline text-muted-foreground">Fecha:</dt> <dd class="inline tabular-nums">{{ $invoice->invoice_date->format('d/m/Y') }}</dd></div>
+                    <div><dt class="inline text-muted-foreground">Orden:</dt> <dd class="inline font-mono">{{ $orderNumber }}</dd></div>
+                </dl>
             </div>
-        </div>
+        </header>
 
-        {{-- Cliente y vehículo --}}
-        <div class="grid grid-cols-1 gap-6 border-b border-slate-200 py-8 md:grid-cols-2 dark:border-gray-800">
+        <section class="grid grid-cols-1 gap-6 border-b border-border py-6 md:grid-cols-2">
             <div>
-                <p class="text-xs font-black uppercase tracking-widest text-slate-400">Cliente</p>
-                <p class="mt-1 text-lg font-bold text-slate-900 dark:text-white">{{ $order->customer_name }}</p>
-                <p class="text-sm text-slate-500">{{ $order->customer_phone ?: 'Sin teléfono' }}</p>
+                <p class="text-xs font-medium text-muted-foreground">Cliente</p>
+                <p class="mt-1 font-medium">{{ $order->customer_name }}</p>
+                <p class="text-sm tabular-nums text-muted-foreground">{{ $order->customer_phone ?: 'Sin teléfono' }}</p>
             </div>
             <div>
-                <p class="text-xs font-black uppercase tracking-widest text-slate-400">Vehículo</p>
-                <p class="mt-1 text-lg font-bold text-slate-900 dark:text-white">{{ $order->vehicle_info }}</p>
-                <p class="text-sm text-slate-500">{{ \Illuminate\Support\Str::limit($order->service_description, 140) }}</p>
+                <p class="text-xs font-medium text-muted-foreground">Vehículo</p>
+                <p class="mt-1 font-medium">{{ $order->vehicle_info }}</p>
+                <p class="text-sm text-muted-foreground">{{ \Illuminate\Support\Str::limit($order->service_description, 140) }}</p>
             </div>
-        </div>
+        </section>
 
-        {{-- Detalle --}}
-        <div class="overflow-x-auto py-8">
+        <div class="overflow-x-auto py-6">
             <table class="min-w-full text-sm">
                 <thead>
-                    <tr class="border-b border-slate-200 text-left text-[10px] font-black uppercase tracking-widest text-slate-400 dark:border-gray-800">
+                    <tr class="border-b border-border text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
                         <th class="pb-3 pr-4">Concepto</th>
                         <th class="px-4 pb-3 text-right">Cant.</th>
                         <th class="px-4 pb-3 text-right">Valor unit.</th>
                         <th class="pb-3 pl-4 text-right">Total</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100 dark:divide-gray-800">
+                <tbody class="divide-y divide-border">
                     @foreach($jobs as $job)
                         <tr>
                             <td class="py-3 pr-4">
-                                <p class="font-bold text-slate-900 dark:text-white">{{ $job->jobType?->name ?? 'Servicio' }}</p>
-                                <p class="text-xs text-slate-500">{{ $job->description }} · Mecánico: {{ $job->mechanic?->name ?? 'Sin asignar' }}</p>
+                                <p class="font-medium">{{ $job->jobType?->name ?? 'Servicio' }}</p>
+                                <p class="text-xs text-muted-foreground">{{ $job->description }} · Mecánico: {{ $job->mechanic?->name ?? 'Sin asignar' }}</p>
                             </td>
-                            <td class="px-4 py-3 text-right text-slate-600 dark:text-gray-400">1</td>
-                            <td class="px-4 py-3 text-right text-slate-600 dark:text-gray-400">{{ $money($job->total_amount) }}</td>
-                            <td class="py-3 pl-4 text-right font-bold text-slate-900 dark:text-white">{{ $money($job->total_amount) }}</td>
+                            <td class="px-4 py-3 text-right tabular-nums">1</td>
+                            <td class="px-4 py-3 text-right tabular-nums">{{ money($job->total_amount) }}</td>
+                            <td class="py-3 pl-4 text-right font-medium tabular-nums">{{ money($job->total_amount) }}</td>
                         </tr>
                         @foreach($job->jobProducts as $part)
                             <tr>
                                 <td class="py-3 pl-4 pr-4">
-                                    <p class="text-slate-700 dark:text-gray-300">{{ $part->product?->name ?? 'Producto eliminado' }}</p>
-                                    <p class="text-xs text-slate-400">Repuesto</p>
+                                    <p>{{ $part->product?->name ?? 'Producto eliminado' }}</p>
+                                    <p class="text-xs text-muted-foreground">Repuesto</p>
                                 </td>
-                                <td class="px-4 py-3 text-right text-slate-600 dark:text-gray-400">{{ $part->quantity }}</td>
-                                <td class="px-4 py-3 text-right text-slate-600 dark:text-gray-400">{{ $money($part->unit_price) }}</td>
-                                <td class="py-3 pl-4 text-right font-bold text-slate-900 dark:text-white">{{ $money($part->total_price) }}</td>
+                                <td class="px-4 py-3 text-right tabular-nums">{{ $part->quantity }}</td>
+                                <td class="px-4 py-3 text-right tabular-nums">{{ money($part->unit_price) }}</td>
+                                <td class="py-3 pl-4 text-right font-medium tabular-nums">{{ money($part->total_price) }}</td>
                             </tr>
                         @endforeach
                     @endforeach
@@ -128,28 +127,28 @@
             </table>
         </div>
 
-        {{-- Totales --}}
-        <div class="flex justify-end border-t border-slate-200 pt-6 dark:border-gray-800">
+        <div class="flex justify-end border-t border-border pt-6">
             <dl class="w-full max-w-xs space-y-2 text-sm">
                 <div class="flex justify-between">
-                    <dt class="text-slate-500">Mano de obra</dt>
-                    <dd class="font-bold text-slate-900 dark:text-white">{{ $money($laborTotal) }}</dd>
+                    <dt class="text-muted-foreground">Mano de obra</dt>
+                    <dd class="tabular-nums">{{ money($laborTotal) }}</dd>
                 </div>
                 <div class="flex justify-between">
-                    <dt class="text-slate-500">Repuestos</dt>
-                    <dd class="font-bold text-slate-900 dark:text-white">{{ $money($partsTotal) }}</dd>
+                    <dt class="text-muted-foreground">Repuestos</dt>
+                    <dd class="tabular-nums">{{ money($partsTotal) }}</dd>
                 </div>
-                <div class="flex items-center justify-between border-t border-slate-200 pt-3 dark:border-gray-800">
-                    <dt class="text-base font-black text-slate-900 dark:text-white">Total</dt>
-                    <dd class="text-2xl font-black text-slate-900 dark:text-white">{{ $money($invoice->amount) }}</dd>
+                <div class="flex items-baseline justify-between border-t border-border pt-3">
+                    <dt class="font-medium">Total</dt>
+                    <dd @class(['text-2xl font-semibold tabular-nums', 'line-through' => $invoice->isCancelled()])>{{ money($invoice->amount) }}</dd>
                 </div>
             </dl>
         </div>
 
         @if(!empty($settings['footer_text_invoice']))
-            <p class="mt-10 border-t border-dashed border-slate-200 pt-6 text-center text-xs text-slate-500 dark:border-gray-800">
+            <p class="mt-8 border-t border-dashed border-border pt-6 text-center text-xs text-muted-foreground">
                 {{ $settings['footer_text_invoice'] }}
             </p>
         @endif
-    </div>
+    </article>
+</div>
 </x-app-layout>

@@ -1,59 +1,59 @@
 <x-app-layout>
-    <x-page-header title="Facturación" subtitle="Facturas generadas desde las órdenes de servicio de esta sucursal." />
+<div class="ds">
+    <x-page-header title="Facturas" subtitle="Se generan desde el detalle de una orden con todos sus trabajos completados" />
 
-    <x-card class="overflow-hidden p-0">
-        <x-table :headers="['NÚMERO', 'FECHA', 'ORDEN / CLIENTE', 'MONTO', 'ESTADO', 'ACCIONES']">
-            @forelse($invoices as $invoice)
-                <tr>
-                    <td class="px-6 py-4 font-mono text-sm font-bold text-slate-900 dark:text-white">
-                        {{ $invoice->invoice_number }}
-                    </td>
-                    <td class="px-6 py-4 text-sm text-slate-600 dark:text-gray-400">
-                        {{ $invoice->invoice_date->format('d/m/Y') }}
-                    </td>
-                    <td class="px-6 py-4">
-                        <div class="text-sm font-bold text-slate-900 dark:text-white">Orden #{{ str_pad($invoice->service_order_id, 4, '0', STR_PAD_LEFT) }}</div>
-                        <div class="text-xs text-slate-500">{{ $invoice->serviceOrder?->customer_name }} · {{ $invoice->serviceOrder?->vehicle_info }}</div>
-                    </td>
-                    <td class="px-6 py-4 text-sm font-black {{ $invoice->isCancelled() ? 'text-slate-400 line-through' : 'text-slate-900 dark:text-white' }}">
-                        ${{ number_format($invoice->amount, 0, ',', '.') }}
-                    </td>
-                    <td class="px-6 py-4">
-                        @if($invoice->isCancelled())
-                            <x-badge variant="error" title="Anulada el {{ $invoice->cancelled_at->format('d/m/Y H:i') }}{{ $invoice->cancelledBy ? ' por ' . $invoice->cancelledBy->name : '' }}">Anulada</x-badge>
-                        @else
-                            <x-badge variant="success">Vigente</x-badge>
-                        @endif
-                    </td>
-                    <td class="px-6 py-4 text-right text-sm font-medium">
-                        <div class="flex justify-end gap-2">
-                            <a href="{{ route('invoices.show', $invoice) }}" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-blue-600 transition-colors" title="Ver factura">
-                                <i data-lucide="eye" class="h-4 w-4"></i>
-                            </a>
-                            @if(!$invoice->isCancelled() && auth()->user()->can('admin'))
-                                <form action="{{ route('invoices.cancel', $invoice) }}" method="POST" class="inline"
-                                    onsubmit="return confirm('¿Anular la factura {{ $invoice->invoice_number }}? Quedará registrada como anulada y la orden podrá facturarse de nuevo.')">
+    <x-card flush>
+        @if($invoices->isNotEmpty())
+            <x-table :headers="['Factura', 'Fecha', 'Orden y cliente', 'Estado', ['label' => 'Total', 'align' => 'right'], ['label' => '', 'align' => 'right']]">
+                @foreach($invoices as $invoice)
+                    <tr class="transition-colors hover:bg-muted/50">
+                        <td class="whitespace-nowrap px-4 py-3">
+                            <a href="{{ route('invoices.show', $invoice) }}" class="font-mono font-medium text-primary hover:underline">{{ $invoice->invoice_number }}</a>
+                        </td>
+                        <td class="whitespace-nowrap px-4 py-3 tabular-nums text-muted-foreground">{{ $invoice->invoice_date->format('d/m/Y') }}</td>
+                        <td class="px-4 py-3">
+                            <p>
+                                <a href="{{ route('service-orders.show', $invoice->service_order_id) }}" class="font-mono hover:underline">#{{ str_pad($invoice->service_order_id, 4, '0', STR_PAD_LEFT) }}</a>
+                                · {{ $invoice->serviceOrder?->customer_name }}
+                            </p>
+                            <p class="mt-0.5 text-xs text-muted-foreground">{{ $invoice->serviceOrder?->vehicle_info }}</p>
+                        </td>
+                        <td class="px-4 py-3">
+                            <x-status-badge :tone="$invoice->statusTone()"
+                                            :title="$invoice->isCancelled() ? 'Anulada el ' . $invoice->cancelled_at->format('d/m/Y h:i a') . ($invoice->cancelledBy ? ' por ' . $invoice->cancelledBy->name : '') : null">
+                                {{ $invoice->statusLabel() }}
+                            </x-status-badge>
+                        </td>
+                        <td @class(['whitespace-nowrap px-4 py-3 text-right font-medium tabular-nums', 'text-muted-foreground line-through' => $invoice->isCancelled()])>
+                            {{ money($invoice->amount) }}
+                        </td>
+                        <td class="whitespace-nowrap px-4 py-2 text-right">
+                            @if(! $invoice->isCancelled() && auth()->user()->can('admin'))
+                                <form action="{{ route('invoices.cancel', $invoice) }}" method="POST"
+                                      data-confirm="¿Anular la factura {{ $invoice->invoice_number }}?"
+                                      data-confirm-description="Queda registrada como anulada y la orden se puede facturar de nuevo con el siguiente número."
+                                      data-confirm-label="Anular factura"
+                                      data-confirm-destructive>
                                     @csrf
-                                    <button type="submit" class="rounded-lg p-2 text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer" title="Anular factura">
-                                        <i data-lucide="ban" class="h-4 w-4"></i>
-                                    </button>
+                                    <x-button type="submit" variant="ghost" size="icon" class="hover:!text-destructive-text" title="Anular factura">
+                                        <i data-lucide="ban" class="size-4"></i>
+                                        <span class="sr-only">Anular la factura {{ $invoice->invoice_number }}</span>
+                                    </x-button>
                                 </form>
                             @endif
-                        </div>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="6" class="px-6 py-12 text-center text-slate-500">
-                        No hay facturas registradas. Se generan desde el detalle de una orden con todos sus trabajos completados.
-                    </td>
-                </tr>
-            @endforelse
-        </x-table>
-        @if($invoices->hasPages())
-            <div class="px-6 py-4 border-t border-slate-200 dark:border-gray-800">
-                {{ $invoices->links() }}
+                        </td>
+                    </tr>
+                @endforeach
+            </x-table>
+        @else
+            <div class="p-5">
+                <x-empty-state icon="file-text">Aún no hay facturas. Se generan desde el detalle de una orden con todos sus trabajos completados.</x-empty-state>
             </div>
         @endif
+
+        @if($invoices->hasPages())
+            <x-slot name="footer">{{ $invoices->links() }}</x-slot>
+        @endif
     </x-card>
+</div>
 </x-app-layout>

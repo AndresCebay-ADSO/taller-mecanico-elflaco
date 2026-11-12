@@ -35,6 +35,17 @@ class Invoice extends Model
         return $this->cancelled_at !== null;
     }
 
+    public function statusLabel(): string
+    {
+        return $this->isCancelled() ? 'Anulada' : 'Vigente';
+    }
+
+    /** Tono de la píldora de estado (DESIGN.md §3). */
+    public function statusTone(): string
+    {
+        return $this->isCancelled() ? 'danger' : 'success';
+    }
+
     /**
      * Facturas vigentes (no anuladas).
      */
