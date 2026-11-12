@@ -1,109 +1,59 @@
 <x-app-layout>
-    <x-page-header title="Nuevo Producto" subtitle="Agrega un nuevo artículo al inventario.">
-        <x-slot name="actions">
-            <x-button variant="outline" onclick="window.location.href='{{ route('products.index') }}'">
-                Cancelar
-            </x-button>
-        </x-slot>
-    </x-page-header>
+<div class="ds mx-auto max-w-3xl">
+    <x-page-header title="Nuevo producto" subtitle="Agrega un artículo al inventario"
+                   :back="route('products.index')" back-label="Inventario" />
 
-    <div class="max-w-4xl">
-        <x-card>
-            <form action="{{ route('products.store') }}" method="POST" class="space-y-6" 
-                x-data="{ 
-                    stock: '{{ old('stock') }}', 
-                    purchasePrice: '{{ old('purchase_price') }}',
-                    salePrice: '{{ old('sale_price') }}',
-                    selectedSuppliers: [],
-                    allSuppliers: [
-                        @foreach($suppliers as $supplier)
-                            { id: '{{ $supplier->id }}', name: '{{ $supplier->name }}' },
-                        @endforeach
-                    ],
-                    get filteredSuppliers() {
-                        return this.allSuppliers.filter(s => this.selectedSuppliers.includes(s.id));
-                    }
-                }"
-                x-init="
-                    @if(old('supplier_ids'))
-                        selectedSuppliers = @json(old('supplier_ids'));
-                    @endif
-                ">
-                @csrf
-                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <x-input label="Nombre del Producto" name="name" required placeholder="Ej. Filtro de Aceite" value="{{ old('name') }}" maxlength="255" />
-                    
-                    <div>
-                        <label for="category" class="block text-sm font-semibold text-slate-700 space-y-1.5">Categoría <span class="text-red-500">*</span></label>
-                        <select id="category" name="category" required class="mt-1.5 block w-full rounded-xl border border-slate-300 px-4 py-2.5 text-slate-900 shadow-sm transition-all duration-200 focus:border-blue-500 focus:ring-blue-500 sm:text-sm cursor-pointer">
-                            <option value="">Selecciona una categoría</option>
-                            <option value="Repuestos" {{ old('category') == 'Repuestos' ? 'selected' : '' }}>Repuestos</option>
-                            <option value="Aceites" {{ old('category') == 'Aceites' ? 'selected' : '' }}>Aceites</option>
-                            <option value="Accesorios" {{ old('category') == 'Accesorios' ? 'selected' : '' }}>Accesorios</option>
-                            <option value="Otros" {{ old('category') == 'Otros' ? 'selected' : '' }}>Otros</option>
-                        </select>
-                    </div>
+    <form action="{{ route('products.store') }}" method="POST" class="space-y-6"
+          x-data="{
+              stock: @js((string) old('stock', '')),
+              selectedSuppliers: @js(array_map('strval', old('supplier_ids', []))),
+              allSuppliers: @js($suppliers->map(fn ($s) => ['id' => (string) $s->id, 'name' => $s->name])->values()),
+              get filteredSuppliers() { return this.allSuppliers.filter(s => this.selectedSuppliers.includes(s.id)); },
+          }">
+        @csrf
 
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">
-                            Proveedores <span class="text-red-500">*</span>
-                        </label>
-                        <div class="grid grid-cols-2 md:grid-cols-3 gap-2 rounded-xl border border-slate-200 p-4 bg-slate-50 max-h-48 overflow-y-auto">
-                            @foreach($suppliers as $supplier)
-                                <label class="flex items-center gap-2 cursor-pointer rounded-lg px-3 py-2 hover:bg-white hover:shadow-sm transition-all text-sm text-slate-700">
-                                    <input type="checkbox"
-                                        name="supplier_ids[]"
-                                        value="{{ $supplier->id }}"
-                                        x-model="selectedSuppliers"
-                                        class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
-                                    <span>{{ $supplier->name }}</span>
-                                </label>
-                            @endforeach
-                        </div>
-                        @error('supplier_ids')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <x-input label="Código UPC / Barcode" name="upc" placeholder="Ej. 1234567890" value="{{ old('upc') }}" maxlength="50" />
-                    
-                    <div>
-                        <x-input label="Precio de Compra" name="purchase_price" type="number" step="0.01" required placeholder="0.00" x-model="purchasePrice" />
-                        <p class="text-xs text-slate-500 mt-1 font-medium" x-show="purchasePrice" x-cloak>
-                            $ <span x-text="Number(purchasePrice).toLocaleString('es-CO')"></span>
-                        </p>
-                    </div>
-                    <div>
-                        <x-input label="Precio de Venta" name="sale_price" type="number" step="0.01" required placeholder="0.00" x-model="salePrice" />
-                        <p class="text-xs text-slate-500 mt-1 font-medium" x-show="salePrice" x-cloak>
-                            $ <span x-text="Number(salePrice).toLocaleString('es-CO')"></span>
-                        </p>
-                    </div>
-                    
-                    <x-input label="Stock Inicial" name="stock" type="number" required placeholder="0" x-model="stock" />
-                    
-                    <div x-show="stock > 0" x-transition class="animate-in fade-in slide-in-from-top-2 duration-300">
-                        <label for="initial_supplier_id" class="block text-sm font-semibold text-slate-700 space-y-1.5">Proveedor del stock inicial <span class="text-red-500">*</span></label>
-                        <select id="initial_supplier_id" name="initial_supplier_id" :required="stock > 0" class="mt-1.5 block w-full rounded-xl border border-blue-200 bg-blue-50/30 px-4 py-2.5 text-slate-900 shadow-sm transition-all duration-200 focus:border-blue-500 focus:ring-blue-500 sm:text-sm cursor-pointer">
-                            <option value="">Selecciona quién provee el stock inicial</option>
-                            <template x-for="supplier in filteredSuppliers" :key="supplier.id">
-                                <option :value="supplier.id" x-text="supplier.name" :selected="supplier.id == '{{ old('initial_supplier_id') }}'"></option>
-                            </template>
-                        </select>
-                        @error('initial_supplier_id')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <x-input label="Stock Mínimo (Alerta)" name="min_stock" type="number" required placeholder="5" value="{{ old('min_stock') }}" />
-                </div>
-
-                <div class="flex justify-end pt-4 border-t border-slate-100">
-                    <x-button variant="primary" type="submit" class="w-full md:w-auto">
-                        Guardar Producto
-                    </x-button>
-                </div>
-            </form>
+        <x-card title="Producto">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <x-input label="Nombre" name="name" required placeholder="Ej.: Filtro de aceite Pulsar 180" maxlength="255" />
+                <x-select label="Categoría" name="category" required>
+                    <option value="">Selecciona una categoría</option>
+                    @foreach(['Repuestos', 'Aceites', 'Accesorios', 'Otros'] as $category)
+                        <option value="{{ $category }}" @selected(old('category') === $category)>{{ $category }}</option>
+                    @endforeach
+                </x-select>
+                <x-input label="Código / UPC" name="upc" placeholder="Opcional" maxlength="50" />
+            </div>
         </x-card>
-    </div>
+
+        <x-card title="Proveedores" description="Quiénes venden este producto. Se puede marcar más de uno.">
+            @include('products.partials.supplier-checkboxes', ['selected' => old('supplier_ids', []), 'model' => true])
+        </x-card>
+
+        <x-card title="Precios y stock">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <x-input label="Precio de compra" name="purchase_price" is-money required placeholder="0" />
+                <x-input label="Precio de venta" name="sale_price" is-money required placeholder="0" />
+                <x-input label="Stock inicial" name="stock" inputmode="numeric" pattern="[0-9]*" required placeholder="0" x-model="stock"
+                         help="Unidades que hay hoy. Crea el primer lote con el precio de compra." />
+                <x-input label="Stock mínimo" name="min_stock" inputmode="numeric" pattern="[0-9]*" required placeholder="5"
+                         help="Al llegar aquí, el producto aparece en «Stock bajo»." />
+
+                <div x-show="Number(stock) > 0" x-cloak class="md:col-span-2">
+                    <x-select label="Proveedor del stock inicial" name="initial_supplier_id" x-bind:required="Number(stock) > 0"
+                              help="Solo aparecen los proveedores marcados arriba.">
+                        <option value="">Selecciona un proveedor</option>
+                        <template x-for="supplier in filteredSuppliers" :key="supplier.id">
+                            <option :value="supplier.id" x-text="supplier.name" :selected="supplier.id === @js((string) old('initial_supplier_id'))"></option>
+                        </template>
+                    </x-select>
+                </div>
+            </div>
+        </x-card>
+
+        <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
+            <x-button variant="secondary" href="{{ route('products.index') }}">Cancelar</x-button>
+            <x-button type="submit">Guardar producto</x-button>
+        </div>
+    </form>
+</div>
 </x-app-layout>

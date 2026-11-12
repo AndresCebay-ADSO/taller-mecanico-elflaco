@@ -1,52 +1,40 @@
 <x-app-layout>
-    <x-page-header title="Ajuste de Inventario" subtitle="Corrección manual de stock por daño, pérdida o inventario físico.">
-        <x-slot name="actions">
-            <x-button variant="outline" onclick="window.location.href='{{ route('inventory.index') }}'">
-                Cancelar
-            </x-button>
-        </x-slot>
-    </x-page-header>
+<div class="ds mx-auto max-w-2xl">
+    <x-page-header title="Ajuste de inventario" subtitle="Corrige el stock por daño, pérdida o conteo físico"
+                   :back="route('inventory.index')" back-label="Trazabilidad" />
 
-    <div class="max-w-xl">
+    <form action="{{ route('inventory.store-adjustment') }}" method="POST" class="space-y-6"
+          data-confirm="¿Aplicar el ajuste de inventario?"
+          data-confirm-description="El stock cambia de inmediato y queda registrado en la trazabilidad."
+          data-confirm-label="Aplicar ajuste">
+        @csrf
+
         <x-card>
-            <form action="{{ route('inventory.store-adjustment') }}" method="POST" class="space-y-6">
-                @csrf
-                <div class="space-y-6">
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Producto</label>
-                        <select name="product_id" required class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm cursor-pointer">
-                            @foreach($products as $product)
-                            <option value="{{ $product->id }}">{{ $product->name }} (Stock actual: {{ $product->stock }})</option>
-                            @endforeach
-                        </select>
-                    </div>
+            <div class="space-y-4">
+                <x-select label="Producto" name="product_id" required>
+                    @foreach($products as $product)
+                        <option value="{{ $product->id }}" @selected(old('product_id') == $product->id)>{{ $product->name }} · Stock actual {{ $product->stock }}</option>
+                    @endforeach
+                </x-select>
 
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Cantidad (Positivo para sumar, Negativo para restar)</label>
-                        <x-input name="quantity" type="number" required placeholder="Ej. -2" />
-                        <p class="mt-1 text-[10px] text-slate-400 font-medium">Usa números negativos para registrar pérdidas o salidas manuales.</p>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Razón del Ajuste</label>
-                        <select name="reason" required class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm cursor-pointer">
-                            <option value="adjustment">Inventario Físico / Ajuste General</option>
-                            <option value="damage">Producto Dañado</option>
-                            <option value="loss">Pérdida / Robo</option>
-                        </select>
-                    </div>
-
-                    <div class="md:col-span-2">
-                        <x-input label="Notas adicionales / Explicación" name="notes" placeholder="Explica el motivo del ajuste..." />
-                    </div>
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <x-input label="Cantidad" name="quantity" inputmode="numeric" pattern="-?[0-9]+" required placeholder="Ej.: -2"
+                             help="Positiva suma unidades; negativa las resta." />
+                    <x-select label="Motivo" name="reason" required>
+                        @foreach(['adjustment' => 'Conteo físico / ajuste general', 'damage' => 'Producto dañado', 'loss' => 'Pérdida o robo'] as $value => $label)
+                            <option value="{{ $value }}" @selected(old('reason') === $value)>{{ $label }}</option>
+                        @endforeach
+                    </x-select>
                 </div>
 
-                <div class="flex justify-end pt-4 border-t border-slate-100">
-                    <x-button variant="primary" type="submit" class="w-full md:w-auto">
-                        Aplicar Ajuste
-                    </x-button>
-                </div>
-            </form>
+                <x-textarea label="Explicación" name="notes" rows="3" placeholder="Qué pasó y quién lo revisó" />
+            </div>
         </x-card>
-    </div>
+
+        <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
+            <x-button variant="secondary" href="{{ route('inventory.index') }}">Cancelar</x-button>
+            <x-button type="submit">Aplicar ajuste</x-button>
+        </div>
+    </form>
+</div>
 </x-app-layout>
