@@ -26,6 +26,21 @@ final class Tone
         };
     }
 
+    /**
+     * Icono de cada tono: segunda señal además del color (rojo, verde y ámbar se confunden con
+     * daltonismo). Misma familia (círculo) con símbolo distinto. Neutral no lleva icono.
+     */
+    public static function icon(string $tone): ?string
+    {
+        return match ($tone) {
+            self::SUCCESS => 'circle-check',
+            self::WARNING => 'circle-alert',
+            self::INFO => 'circle-dot',
+            self::DANGER => 'circle-x',
+            default => null,
+        };
+    }
+
     /** Caja de aviso: tinte suave, borde del tono y texto del tono. */
     public static function alert(string $tone): string
     {

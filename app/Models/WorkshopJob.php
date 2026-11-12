@@ -116,8 +116,9 @@ class WorkshopJob extends Model
         return match ($this->status) {
             self::STATUS_PENDING => 'warning',
             self::STATUS_IN_PROGRESS => 'info',
-            self::STATUS_COMPLETED => 'success',
-            self::STATUS_CANCELLED => 'danger',
+            // Terminado o cancelado: no pide acción, no lleva color (DESIGN.md §3).
+            self::STATUS_COMPLETED => 'neutral',
+            self::STATUS_CANCELLED => 'neutral',
             default => 'neutral',
         };
     }

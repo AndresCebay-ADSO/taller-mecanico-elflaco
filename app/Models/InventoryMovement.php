@@ -53,13 +53,18 @@ class InventoryMovement extends Model
         return self::TYPE_LABELS[$this->movement_type] ?? (string) $this->movement_type;
     }
 
-    /** Dirección (DESIGN.md §3): entrada success, salida warning, transferencia info. */
+    /**
+     * Tono del movimiento (DESIGN.md §3). Ventas y usos en orden son la rutina (más del 80 % de los
+     * movimientos): van sin color y su dirección la dicen la flecha y el signo. Color solo para lo que
+     * conviene notar: compras (entra mercancía), ajustes manuales (revisar) y transferencias.
+     */
     public function directionTone(): string
     {
-        return match (true) {
-            str_starts_with((string) $this->movement_type, 'transfer') => 'info',
-            $this->quantity > 0 => 'success',
-            default => 'warning',
+        return match ($this->movement_type) {
+            'purchase' => 'success',
+            'adjustment' => 'warning',
+            'transfer_in', 'transfer_out' => 'info',
+            default => 'neutral',
         };
     }
 

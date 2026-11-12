@@ -41,7 +41,7 @@ class Product extends Model
             $this->trashed() => 'neutral',
             $this->stock <= 0 => 'danger',
             $this->isLowStock() => 'warning',
-            default => 'success',
+            default => 'neutral',
         };
     }
 

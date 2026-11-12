@@ -29,10 +29,7 @@
                             <p class="mt-0.5 text-xs text-muted-foreground">{{ $mov->product?->category ?? '—' }}</p>
                         </td>
                         <td class="px-4 py-3">
-                            <x-status-badge :tone="$mov->directionTone()">
-                                <i data-lucide="{{ $mov->directionIcon() }}" class="size-3"></i>
-                                {{ $mov->typeLabel() }}
-                            </x-status-badge>
+                            <x-status-badge :tone="$mov->directionTone()" :icon="$mov->directionIcon()">{{ $mov->typeLabel() }}</x-status-badge>
                         </td>
                         <td class="whitespace-nowrap px-4 py-3 text-right font-medium tabular-nums {{ \App\Support\Tone::text($mov->directionTone()) }}">{{ $mov->signedQuantity() }}</td>
                         <td class="whitespace-nowrap px-4 py-3 text-right tabular-nums text-muted-foreground">{{ money($mov->unit_price) }}</td>

@@ -50,9 +50,9 @@ Valores (escala gris y azul que el taller ya tenía):
 | `ring` | `#465fff` | `#7592ff` |
 | `destructive` / `-foreground` | `#d92d20` / `#ffffff` | `#d92d20` / `#ffffff` |
 | `success` / `success-text` | `#12b76a` / `#067647` | `#12b76a` / `#32d583` |
-| `warning` / `warning-text` | `#f79009` / `#b54708` | `#f79009` / `#fdb022` |
+| `warning` / `warning-text` | `#f79009` / `#8a5a00` | `#f79009` / `#fdb022` |
 | `info` / `info-text` | `#0ba5ec` / `#026aa2` | `#0ba5ec` / `#36bffa` |
-| `destructive-text` | `#b42318` | `#f97066` |
+| `destructive-text` | `#be123c` | `#f97066` |
 | `sidebar` / `-foreground` / `-active` | `#0c111d` / `#98a2b3` / `#ffffff` | igual |
 
 - Contraste verificado (WCAG ≥ 4,5:1) en ambos temas: texto sobre `background`, `card` y `muted`; cada `-text` sobre el
@@ -64,27 +64,35 @@ Valores (escala gris y azul que el taller ya tenía):
 
 ## 3. Estados (tonos)
 
-Cinco tonos, ninguno más (sin morado, sin teal, sin `primary`):
+Cinco tonos, ninguno más (sin morado, sin teal, sin `primary`).
 
-| Tono | Clases | Significa |
-| :-- | :-- | :-- |
-| `neutral` | `bg-muted text-muted-foreground` | inactivo, borrador, tipos y categorías, método de pago |
-| `info` | `bg-info/15 text-info-text` | en progreso, en tránsito, transferencia |
-| `warning` | `bg-warning/15 text-warning-text` | pendiente, stock bajo, salida de inventario |
-| `success` | `bg-success/15 text-success-text` | completada, entregada, vigente, activo, entrada de inventario |
-| `danger` | `bg-destructive/15 text-destructive-text` | cancelada, anulada, sin stock |
+**Regla de oro: el estado normal o terminado no lleva color.** El color se reserva para lo que pide acción o es
+excepcional. Si todo tiene color, el ojo aprende a ignorarlo: en los datos de demo, el 83 % de los movimientos son
+ventas y usos en orden, y el 90 % de las órdenes están completadas; pintarlos convertía las tablas en un muro
+amarillo o verde.
 
-Una sola forma de píldora: `rounded-full px-2 py-0.5 text-xs font-medium` + el tono.
+| Tono | Icono | Clases | Significa |
+| :-- | :-- | :-- | :-- |
+| `neutral` | — | `bg-muted text-muted-foreground` | lo normal o terminado: completada, vigente, cancelada, rutina, método de pago, inactivo |
+| `info` | `circle-dot` | `bg-info/15 text-info-text` | en curso: en progreso, en tránsito, transferencia |
+| `warning` | `circle-alert` | `bg-warning/15 text-warning-text` | pide acción: pendiente, stock bajo, ajuste manual |
+| `success` | `circle-check` | `bg-success/15 text-success-text` | algo bueno que conviene notar: entra mercancía, activo |
+| `danger` | `circle-x` | `bg-destructive/15 text-destructive-text` | dinero revertido o problema: anulada, agotado |
+
+- **Nunca solo color.** Rojo, verde y ámbar se confunden con daltonismo (verificado: ningún ajuste de color los
+  separa del todo). Cada píldora lleva su texto **y** el icono del tono (`App\Support\Tone::icon()`); un movimiento
+  usa su flecha en vez del icono (`<x-status-badge :icon="…">`).
+- Una sola forma de píldora: `rounded-full px-2 py-0.5 text-xs font-medium` + el tono.
 
 | Qué | Valor → tono |
 | :-- | :-- |
-| Orden de servicio, trabajo | pending warning · in_progress info · completed success · cancelled danger |
-| Transferencia | pending warning · in_transit info · completed success · cancelled danger |
-| Venta | completada success · anulada danger |
-| Factura | vigente success · anulada danger |
-| Producto, mecánico, proveedor, usuario | activo success · inactivo neutral |
-| Stock | normal (sin píldora) · bajo warning · agotado danger |
-| Movimiento de inventario | entrada success · salida warning · transferencia info · ajuste neutral |
+| Orden de servicio, trabajo | pending warning · in_progress info · completed neutral · cancelled neutral |
+| Transferencia | pending warning · in_transit info · completed neutral · cancelled neutral |
+| Venta | completada neutral · anulada danger |
+| Factura | vigente neutral · anulada danger |
+| Producto, mecánico, proveedor, usuario | activo success · inactivo neutral (listas cortas: el verde ayuda a ver los inactivos) |
+| Stock | normal neutral (en listados, sin píldora) · bajo warning · agotado danger |
+| Movimiento de inventario | compra success · ajuste warning · transferencia info · venta, uso en orden y anulación neutral (flecha y signo dicen la dirección) |
 | Método de pago (Efectivo, Nequi…) | siempre neutral |
 
 - **Una sola fuente de verdad, en PHP.** Cada modelo con estado expone `statusLabel()` y `statusTone()` (`ServiceOrder`,

@@ -63,7 +63,8 @@ class Sale extends Model
     /** Tono de la píldora de estado (DESIGN.md §3). */
     public function statusTone(): string
     {
-        return $this->isCancelled() ? 'danger' : 'success';
+        // Lo normal (completada) va sin color; solo la anulada resalta.
+        return $this->isCancelled() ? 'danger' : 'neutral';
     }
 
     /** Número visible de la venta: #S0042. */
