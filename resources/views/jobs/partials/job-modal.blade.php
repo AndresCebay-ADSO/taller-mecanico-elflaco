@@ -147,7 +147,7 @@
                                            :class="p.quantity > stockOf(p) && '!border-destructive'"
                                            class="h-8 w-14 rounded-md border border-input bg-card px-2 text-center text-sm tabular-nums text-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30">
                                     <div class="min-w-0">
-                                        <p class="truncate text-sm" x-text="p.name"></p>
+                                        <p class="truncate text-sm" x-text="p.name" :title="p.name"></p>
                                         <p class="text-xs"
                                            :class="p.quantity > stockOf(p) ? 'text-destructive-text' : 'text-muted-foreground'"
                                            x-text="p.quantity > stockOf(p) ? `Solo hay ${stockOf(p)} en stock` : `Stock: ${stockOf(p)}`"></p>

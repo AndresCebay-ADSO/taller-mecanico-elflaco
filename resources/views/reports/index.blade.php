@@ -104,7 +104,7 @@
                     @foreach($report['mechanics'] as $mech)
                         <li>
                             <div class="mb-1.5 flex items-baseline justify-between gap-3 text-sm">
-                                <span class="truncate">
+                                <span class="truncate" title="{{ $mech['name'] }}">
                                     {{ $mech['name'] }}
                                     @unless($mech['is_active'])<span class="text-xs text-muted-foreground">(inactivo)</span>@endunless
                                 </span>
@@ -131,7 +131,7 @@
                     @foreach($report['top_products'] as $product)
                         <li>
                             <div class="mb-1.5 flex items-baseline justify-between gap-3 text-sm">
-                                <span class="truncate">{{ $product['name'] }}</span>
+                                <span class="truncate" title="{{ $product['name'] }}">{{ $product['name'] }}</span>
                                 <span class="shrink-0 font-medium tabular-nums">{{ $product['quantity'] }} und.</span>
                             </div>
                             <div class="h-1.5 w-full overflow-hidden rounded-full bg-muted">

@@ -16,7 +16,7 @@
                            @if($model ?? false) x-model="selectedSuppliers" @endif
                            @checked(in_array((string) $supplier->id, $selected, true))
                            class="size-4 cursor-pointer rounded border-input text-primary focus:ring-2 focus:ring-ring/30">
-                    <span class="truncate">{{ $supplier->name }}</span>
+                    <span class="truncate" title="{{ $supplier->name }}">{{ $supplier->name }}</span>
                 </label>
             @endforeach
         </div>

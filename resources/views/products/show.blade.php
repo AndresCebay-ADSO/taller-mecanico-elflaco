@@ -38,7 +38,7 @@
                     </div>
                     <div>
                         <dt class="text-xs font-medium text-muted-foreground">Código / UPC</dt>
-                        <dd class="mt-0.5 font-mono">{{ $product->upc ?: '—' }}</dd>
+                        <dd class="mt-0.5 break-all font-mono">{{ $product->upc ?: '—' }}</dd>
                     </div>
                     <div>
                         <dt class="text-xs font-medium text-muted-foreground">Costo de referencia</dt>
@@ -52,14 +52,14 @@
             </x-card>
         </div>
 
-        <x-card title="Proveedores" flush>
+        <x-card title="Proveedores" flush class="self-start">
             @php $lastSupplier = $product->lastSupplier(); @endphp
             @if($product->suppliers->isNotEmpty())
                 <ul class="divide-y divide-border">
                     @foreach($product->suppliers as $supplier)
                         <li class="flex items-center justify-between gap-3 px-5 py-3">
                             <div class="min-w-0">
-                                <p class="truncate text-sm font-medium">{{ $supplier->name }}</p>
+                                <p class="truncate text-sm font-medium" title="{{ $supplier->name }}">{{ $supplier->name }}</p>
                                 @if($lastSupplier && $lastSupplier->id === $supplier->id)
                                     <p class="text-xs text-muted-foreground">Última compra</p>
                                 @endif

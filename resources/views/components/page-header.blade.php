@@ -10,7 +10,8 @@
 ])
 
 <div class="ds mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-    <div class="min-w-0">
+    {{-- El título cede ancho; las acciones nunca se aplastan (min-w-0 + shrink-0). --}}
+    <div class="min-w-0 md:flex-1">
         @if($back)
             <a href="{{ $back }}" class="mb-2 inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground">
                 <i data-lucide="chevron-left" class="size-4"></i>
@@ -29,7 +30,7 @@
     </div>
 
     @isset($actions)
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2 md:shrink-0 md:flex-nowrap">
             {{ $actions }}
         </div>
     @endisset

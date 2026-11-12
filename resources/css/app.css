@@ -125,6 +125,8 @@
     body {
         background-color: var(--background);
         color: var(--foreground);
+        /* Una palabra larguísima (un código, una referencia pegada) se corta antes que salirse de su caja. */
+        overflow-wrap: break-word;
     }
 
     /* Los iconos ocupan su lugar antes de que Lucide los dibuje: el texto no salta al cargar. */

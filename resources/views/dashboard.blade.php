@@ -65,8 +65,8 @@
                         <li>
                             <a href="{{ route('sales.show', $sale) }}" class="flex items-center justify-between gap-4 px-5 py-3 transition-colors hover:bg-muted/50">
                                 <div class="min-w-0">
-                                    <p class="truncate text-sm font-medium">{{ $sale->customer_name ?: 'Venta mostrador' }}</p>
-                                    <p class="mt-0.5 truncate text-xs text-muted-foreground">{{ $productsSummary }} · {{ $sale->created_at->format('h:i a') }}</p>
+                                    <p class="truncate text-sm font-medium" title="{{ $sale->customer_name ?: 'Venta mostrador' }}">{{ $sale->customer_name ?: 'Venta mostrador' }}</p>
+                                    <p class="mt-0.5 truncate text-xs text-muted-foreground" title="{{ $productsSummary }}">{{ $productsSummary }} · {{ $sale->created_at->format('h:i a') }}</p>
                                 </div>
                                 <div class="flex shrink-0 items-center gap-3">
                                     <x-status-badge>{{ $sale->payment_method }}</x-status-badge>
@@ -99,7 +99,7 @@
                         @endphp
                         <li>
                             <div class="mb-1.5 flex items-baseline justify-between gap-3">
-                                <a href="{{ route('products.show', $product) }}" class="truncate text-sm font-medium hover:underline">{{ $product->name }}</a>
+                                <a href="{{ route('products.show', $product) }}" title="{{ $product->name }}" class="truncate text-sm font-medium hover:underline">{{ $product->name }}</a>
                                 <span class="shrink-0 text-xs tabular-nums {{ \App\Support\Tone::text($critical ? 'danger' : 'warning') }}">
                                     {{ $product->stock }} / {{ $product->min_stock }} mín.
                                 </span>
