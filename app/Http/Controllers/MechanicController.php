@@ -67,7 +67,7 @@ class MechanicController extends Controller
 
         Mechanic::create($validated);
 
-        return redirect()->route('mechanics.index')->with('success', 'Mecanico registrado exitosamente.');
+        return redirect()->route('mechanics.index')->with('success', 'Mecánico registrado exitosamente.');
     }
 
     public function edit(Mechanic $mechanic)
@@ -91,7 +91,7 @@ class MechanicController extends Controller
 
         $mechanic->update($validated);
 
-        return redirect()->route('mechanics.index')->with('success', 'Informacion del mecanico actualizada.');
+        return redirect()->route('mechanics.index')->with('success', 'Información del mecánico actualizada.');
     }
 
     public function destroy(Mechanic $mechanic)
@@ -102,11 +102,11 @@ class MechanicController extends Controller
             $mechanic->update(['is_active' => false]);
 
             return redirect()->route('mechanics.index')
-                ->with('info', 'El mecanico tiene historial asociado y fue desactivado.');
+                ->with('info', 'El mecánico tiene historial asociado y fue desactivado.');
         }
 
         $mechanic->delete();
 
-        return redirect()->route('mechanics.index')->with('success', 'Mecanico eliminado exitosamente.');
+        return redirect()->route('mechanics.index')->with('success', 'Mecánico eliminado exitosamente.');
     }
 }

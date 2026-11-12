@@ -26,7 +26,7 @@ class InvoiceService
             }
 
             if (!in_array($order->status, [ServiceOrder::STATUS_IN_PROGRESS, ServiceOrder::STATUS_COMPLETED], true)) {
-                throw new BusinessRuleException('Solo se pueden facturar ordenes en progreso o completadas.', 'invoice');
+                throw new BusinessRuleException('Solo se pueden facturar órdenes en progreso o completadas.', 'invoice');
             }
 
             $jobs = $order->workshopJobs()

@@ -39,7 +39,7 @@ class BatchController extends Controller
                     $diff = (int) $validated['quantity'] - (int) $lockedBatch->quantity;
 
                     if ($product->stock + $diff < 0) {
-                        throw new BusinessRuleException('La correccion dejaria el stock del producto en negativo.', 'quantity');
+                        throw new BusinessRuleException('La corrección dejaría el stock del producto en negativo.', 'quantity');
                     }
 
                     if ($diff !== 0) {

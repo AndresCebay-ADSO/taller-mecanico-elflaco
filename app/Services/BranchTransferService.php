@@ -30,7 +30,7 @@ class BranchTransferService
                 ->firstOrFail();
 
             if ($lockedTransfer->status !== BranchTransfer::STATUS_IN_TRANSIT) {
-                throw new BusinessRuleException('La transferencia ya fue procesada o no esta en transito.', 'status');
+                throw new BusinessRuleException('La transferencia ya fue procesada o no está en tránsito.', 'status');
             }
 
             $sourceProduct = Product::where('id', $lockedTransfer->product_id)
