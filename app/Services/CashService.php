@@ -12,6 +12,7 @@ use App\Models\Sale;
 use App\Models\WorkshopJob;
 use App\Support\PaymentMethod;
 use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -173,16 +174,76 @@ class CashService
     /** Compra de repuestos pagada con plata del día (se llama desde Inventario → Registrar compra). */
     public function recordPurchase(int $branchId, Batch $batch, string $paymentMethod, ?int $userId): CashMovement
     {
-        $batch->loadMissing(['product', 'supplier']);
-        $concept = $batch->product->name . ' × ' . $batch->quantity . ($batch->supplier ? ' (' . $batch->supplier->name . ')' : '');
-
         return $this->addMovement($branchId, CarbonImmutable::today(), [
             'type' => CashMovement::PURCHASE,
-            'concept' => $concept,
+            'concept' => $this->purchaseConcept($batch),
             'amount' => (float) $batch->cost_price * $batch->quantity,
             'payment_method' => $paymentMethod,
             'batch_id' => $batch->id,
         ], $userId);
+    }
+
+    /**
+     * Al corregir un lote (costo, cantidad o proveedor), la salida de caja de esa compra se ajusta.
+     * Si el valor cambia y la caja de ese día ya se cerró, no se corrige: primero hay que reabrirla.
+     *
+     * @throws BusinessRuleException
+     */
+    public function syncPurchase(Batch $batch): void
+    {
+        DB::transaction(function () use ($batch) {
+            $movement = CashMovement::where('batch_id', $batch->id)
+                ->where('type', CashMovement::PURCHASE)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$movement) {
+                return;
+            }
+
+            $batch->unsetRelation('supplier')->loadMissing(['product', 'supplier']);
+            $amount = (float) $batch->cost_price * $batch->quantity;
+            $day = CashDay::whereKey($movement->cash_day_id)->lockForUpdate()->firstOrFail();
+
+            if (abs($amount - (float) $movement->amount) >= 0.005 && $day->isClosed()) {
+                throw new BusinessRuleException(
+                    'Esta compra se pagó con la caja del ' . $day->date->format('d/m/Y') . ', que ya está cerrada. Reábrela para corregir el costo o la cantidad.',
+                    'cost_price'
+                );
+            }
+
+            $movement->update(['amount' => $amount, 'concept' => $this->purchaseConcept($batch)]);
+        });
+    }
+
+    /**
+     * Aviso para cuando una venta o comprobante en efectivo cambia la caja de un día ya cerrado.
+     * `$label`: «La venta», «El comprobante FAC-000012»… Devuelve null si no hace falta avisar.
+     */
+    public function closedDayNotice(int $branchId, CarbonInterface $date, ?string $paymentMethod, string $label, bool $cancelled): ?string
+    {
+        if ($paymentMethod !== PaymentMethod::CASH) {
+            return null;
+        }
+
+        $day = $this->find($branchId, CarbonImmutable::parse($date)->startOfDay());
+        if (!$day?->isClosed()) {
+            return null;
+        }
+
+        if ($cancelled && !$day->date->isToday()) {
+            return $label . ' era del ' . $day->date->format('d/m/Y') . ' y esa caja ya se cerró. '
+                . 'Si hoy le devolviste la plata al cliente, regístralo en Caja como un gasto para que la caja de hoy cuadre.';
+        }
+
+        return 'La caja de hoy ya estaba cerrada y esto cambia el efectivo que debe haber. Hay que reabrir la caja y cerrarla de nuevo.';
+    }
+
+    private function purchaseConcept(Batch $batch): string
+    {
+        $batch->loadMissing(['product', 'supplier']);
+
+        return $batch->product->name . ' × ' . $batch->quantity . ($batch->supplier ? ' (' . $batch->supplier->name . ')' : '');
     }
 
     public function deleteMovement(CashMovement $movement): void

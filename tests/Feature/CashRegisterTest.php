@@ -216,4 +216,71 @@ describe('caja diaria', function () {
         $purchase('Efectivo')->assertSessionHas('error');
         expect(Batch::count())->toBe($batches)->and(CashMovement::count())->toBe(1);
     });
+
+    it('keeps the cash outflow in step when a purchase batch paid from the drawer is corrected', function () {
+        [$admin, $branch] = branchUser(admin: true);
+        $product = stockedProduct($branch, 1);
+        $supplier = Supplier::create(['name' => 'Repuestos del Huila', 'phone' => '3001112233', 'active' => true]);
+        $product->suppliers()->attach($supplier);
+        $session = cashSession($branch);
+
+        $this->actingAs($admin)->withSession($session)->post(route('inventory.store-purchase'), [
+            'product_id' => $product->id, 'supplier_id' => $supplier->id, 'quantity' => 3, 'unit_price' => 15000, 'cash_payment' => 'Efectivo',
+        ]);
+        $movement = CashMovement::sole();
+        $batch = Batch::findOrFail($movement->batch_id);
+        $correct = fn (array $data) => $this->actingAs($admin)->withSession($session)->patch(route('batches.update', $batch), $data + [
+            'supplier_id' => $supplier->id, 'sale_price' => 25000, 'notes' => 'Se digitó mal la factura del proveedor',
+        ]);
+
+        $correct(['cost_price' => 12000, 'quantity' => 4])->assertSessionHas('success');
+        expect((float) $movement->fresh()->amount)->toBe(48000.0)
+            ->and($movement->fresh()->concept)->toContain('× 4');
+
+        // Con la caja de ese día cerrada no se cambia el valor: hay que reabrirla.
+        app(CashService::class)->close($branch->id, CarbonImmutable::today(), 0, 0, null, $admin->id);
+        $correct(['cost_price' => 10000])->assertSessionHas('error');
+        expect((float) $batch->fresh()->cost_price)->toBe(12000.0)
+            ->and((float) $movement->fresh()->amount)->toBe(48000.0);
+
+        // Corregir solo el precio de venta no toca la caja: se permite.
+        $correct(['cost_price' => 12000])->assertSessionHas('success');
+    });
+
+    it('warns when a cash sale or receipt changes a day whose cash is already closed', function () {
+        [$admin, $branch] = branchUser(admin: true);
+        $product = stockedProduct($branch, 10, cost: 10000, price: 20000);
+        $session = cashSession($branch);
+        $sell = fn (string $method) => $this->actingAs($admin)->withSession($session)
+            ->post(route('sales.store'), ['payment_method' => $method, 'products' => [['id' => $product->id, 'quantity' => 1]]]);
+
+        // Caja abierta: sin aviso.
+        $sell('Efectivo')->assertSessionMissing('warning');
+
+        app(CashService::class)->close($branch->id, CarbonImmutable::today(), 20000, 0, null, $admin->id);
+
+        $sell('Nequi')->assertSessionMissing('warning');
+        $sell('Efectivo')->assertSessionHas('warning', fn ($text) => str_contains($text, 'reabrir la caja'));
+
+        $order = cashOrder($branch, 30000);
+        $this->actingAs($admin)->withSession($session)
+            ->post(route('invoices.generate', $order), ['payment_method' => 'Efectivo'])
+            ->assertSessionHas('warning');
+    });
+
+    it('reminds to record the refund when cancelling a cash sale from an earlier closed day', function () {
+        [$admin, $branch] = branchUser(admin: true);
+        $product = stockedProduct($branch, 10, cost: 10000, price: 20000);
+        $session = cashSession($branch);
+
+        $this->travelTo(now()->subDays(2));
+        $sale = app(SaleService::class)->create($branch->id, $admin->id, null, 'Efectivo', [['id' => $product->id, 'quantity' => 1]])['sale'];
+        app(CashService::class)->close($branch->id, CarbonImmutable::today(), 20000, 0, null, $admin->id);
+        $this->travelBack();
+
+        $this->actingAs($admin)->withSession($session)
+            ->post(route('sales.cancel', $sale))
+            ->assertSessionHas('success')
+            ->assertSessionHas('warning', fn ($text) => str_contains($text, "La venta #{$sale->id} era del") && str_contains($text, 'como un gasto'));
+    });
 });

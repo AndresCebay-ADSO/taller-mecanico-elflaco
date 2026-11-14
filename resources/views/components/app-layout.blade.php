@@ -75,6 +75,10 @@
                         <x-alert type="info" :message="session('info')" />
                     @endif
 
+                    @if(session('warning'))
+                        <x-alert type="warning" :message="session('warning')" />
+                    @endif
+
                     @if(session('error'))
                         <x-alert type="error" :message="session('error')" />
                     @endif
