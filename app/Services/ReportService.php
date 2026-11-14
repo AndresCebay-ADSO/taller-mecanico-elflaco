@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Batch;
 use App\Models\InventoryMovement;
+use App\Models\Invoice;
 use App\Models\JobProduct;
 use App\Models\Mechanic;
 use App\Models\Product;
@@ -11,6 +12,7 @@ use App\Models\Sale;
 use App\Models\SaleProduct;
 use App\Models\ServiceOrder;
 use App\Models\WorkshopJob;
+use App\Support\PaymentMethod;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -77,13 +79,43 @@ class ReportService
             'mechanics' => $mechanics,
             'daily' => $this->dailyIncome($branchId, $from, $to, $orders),
             'top_products' => $this->topProducts($saleIds, $jobs->pluck('id')),
-            'payment_methods' => (clone $sales)
-                ->select('payment_method', DB::raw('SUM(total_amount) as total'), DB::raw('COUNT(*) as sales'))
-                ->groupBy('payment_method')
-                ->orderByDesc('total')
-                ->get(),
+            'payment_methods' => $this->paymentMethods($branchId, $from, $to),
             'inventory' => $this->inventory($branchId),
         ];
+    }
+
+    /**
+     * Lo cobrado por método de pago: ventas de mostrador no anuladas (fecha de venta)
+     * + comprobantes de servicio vigentes (fecha del comprobante).
+     *
+     * @return Collection<int, object{payment_method: string, total: float, sales: int, invoices: int}>
+     */
+    public function paymentMethods(?int $branchId, CarbonImmutable $from, CarbonImmutable $to): Collection
+    {
+        $sales = $this->salesQuery($branchId, $from->startOfDay(), $to->endOfDay())
+            ->select('payment_method', DB::raw('SUM(total_amount) as total'), DB::raw('COUNT(*) as items'))
+            ->groupBy('payment_method')
+            ->get();
+
+        $invoices = Invoice::active()
+            ->whereHas('serviceOrder', fn ($query) => $query->forBranch($branchId))
+            ->whereDate('invoice_date', '>=', $from->toDateString())
+            ->whereDate('invoice_date', '<=', $to->toDateString())
+            ->select('payment_method', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as items'))
+            ->groupBy('payment_method')
+            ->get();
+
+        $methods = [];
+        foreach (['sales' => $sales, 'invoices' => $invoices] as $kind => $rows) {
+            foreach ($rows as $row) {
+                $label = PaymentMethod::label($row->payment_method);
+                $methods[$label] ??= (object) ['payment_method' => $label, 'total' => 0.0, 'sales' => 0, 'invoices' => 0];
+                $methods[$label]->total += (float) $row->total;
+                $methods[$label]->{$kind} += (int) $row->items;
+            }
+        }
+
+        return collect(array_values($methods))->sortByDesc('total')->values();
     }
 
     private function salesQuery(?int $branchId, CarbonImmutable $from, CarbonImmutable $to)

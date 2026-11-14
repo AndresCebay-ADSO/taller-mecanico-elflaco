@@ -203,7 +203,7 @@ describe('ventas y facturacion', function () {
 
         $this->from(route('service-orders.show', $order))
             ->actingAs($employee)->withSession($session)
-            ->post(route('invoices.generate', $order))
+            ->post(route('invoices.generate', $order), ['payment_method' => 'Efectivo'])
             ->assertRedirect(route('service-orders.show', $order))
             ->assertSessionHas('error', 'Completa todos los trabajos antes de generar la factura.');
 
@@ -211,7 +211,7 @@ describe('ventas y facturacion', function () {
         $this->actingAs($employee)->withSession($session)->post(route('jobs.complete', $job));
 
         $this->actingAs($employee)->withSession($session)
-            ->post(route('invoices.generate', $order))
+            ->post(route('invoices.generate', $order), ['payment_method' => 'Efectivo'])
             ->assertRedirect();
 
         $invoice = Invoice::firstOrFail();

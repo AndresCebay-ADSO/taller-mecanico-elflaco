@@ -75,7 +75,7 @@ it('does not generate a second invoice for the same service order', function () 
 
     $this->actingAs($user)
         ->withSession(['current_branch_id' => $branch->id])
-        ->post(route('invoices.generate', $serviceOrder))
+        ->post(route('invoices.generate', $serviceOrder), ['payment_method' => 'Efectivo'])
         ->assertRedirect();
 
     expect(Invoice::count())->toBe(1)
@@ -85,7 +85,7 @@ it('does not generate a second invoice for the same service order', function () 
     $this->from(route('service-orders.show', $serviceOrder))
         ->actingAs($user)
         ->withSession(['current_branch_id' => $branch->id])
-        ->post(route('invoices.generate', $serviceOrder))
+        ->post(route('invoices.generate', $serviceOrder), ['payment_method' => 'Efectivo'])
         ->assertRedirect(route('service-orders.show', $serviceOrder))
         ->assertSessionHas('error', 'Esta orden ya tiene una factura vinculada.');
 

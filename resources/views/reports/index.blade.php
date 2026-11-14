@@ -4,7 +4,7 @@
     $maxDaily = max(1, (float) $daily->max('total'));
     $maxEarnings = max(1, (float) $report['mechanics']->max('earnings'));
     $maxProductQty = max(1, (int) $report['top_products']->max('quantity'));
-    $salesTotal = max(1, (float) $report['income']['sales']);
+    $collectedTotal = max(1, (float) $report['payment_methods']->sum('total'));
 @endphp
 
 <x-app-layout>
@@ -146,15 +146,20 @@
             @endif
         </x-card>
 
-        {{-- Ventas de mostrador por método de pago --}}
-        <x-card title="Ventas por método de pago" flush>
+        {{-- Lo cobrado (mostrador + comprobantes de servicio) por método de pago --}}
+        <x-card title="Cobros por método de pago" description="Ventas de mostrador y comprobantes de servicio" flush>
             @if($report['payment_methods']->isNotEmpty())
                 <ul class="divide-y divide-border">
                     @foreach($report['payment_methods'] as $method)
                         <li class="flex items-center justify-between gap-3 px-5 py-3">
                             <div>
                                 <p class="text-sm">{{ $method->payment_method }}</p>
-                                <p class="text-xs text-muted-foreground">{{ $method->sales }} {{ $method->sales == 1 ? 'venta' : 'ventas' }} · {{ round($method->total / $salesTotal * 100) }} %</p>
+                                <p class="text-xs text-muted-foreground">
+                                    {{ collect([
+                                        $method->sales ? $method->sales . ($method->sales == 1 ? ' venta' : ' ventas') : null,
+                                        $method->invoices ? $method->invoices . ($method->invoices == 1 ? ' servicio' : ' servicios') : null,
+                                    ])->filter()->join(' · ') }} · {{ round($method->total / $collectedTotal * 100) }} %
+                                </p>
                             </div>
                             <span class="text-sm font-medium tabular-nums">{{ money($method->total) }}</span>
                         </li>
@@ -162,7 +167,7 @@
                 </ul>
             @else
                 <div class="p-5">
-                    <x-empty-state icon="wallet">Sin ventas de mostrador en {{ $monthLabel }}.</x-empty-state>
+                    <x-empty-state icon="wallet">Sin cobros en {{ $monthLabel }}.</x-empty-state>
                 </div>
             @endif
         </x-card>

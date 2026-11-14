@@ -8,7 +8,10 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\ServiceOrder;
 use App\Models\WorkshopJob;
+use App\Services\ReportService;
+use App\Support\BackupStatus;
 use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Closure;
 
 class DashboardController extends Controller
@@ -67,12 +70,7 @@ class DashboardController extends Controller
         $lowStockProducts = Product::forBranch($branchId)->whereRaw('stock <= min_stock')->get();
         $lowStockCount = $lowStockProducts->count();
 
-        $todayByMethod = Sale::forBranch($branchId)
-            ->where('status', '!=', 'anulada')
-            ->whereDate('sale_date', $todayStart)
-            ->selectRaw('payment_method, sum(total_amount) as total')
-            ->groupBy('payment_method')
-            ->get();
+        $todayByMethod = app(ReportService::class)->paymentMethods($branchId, CarbonImmutable::today(), CarbonImmutable::today());
 
         $mechanics = Mechanic::forBranch($branchId)
             ->where('is_active', true)
@@ -93,7 +91,7 @@ class DashboardController extends Controller
             ->get();
 
         // Solo el administrador puede hacer algo con un respaldo atrasado.
-        $backupStatus = auth()->user()?->is_admin ? \App\Support\BackupStatus::fromConfig() : null;
+        $backupStatus = auth()->user()?->is_admin ? BackupStatus::fromConfig() : null;
 
         return view('dashboard', compact(
             'backupStatus',

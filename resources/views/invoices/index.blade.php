@@ -4,13 +4,16 @@
 
     <x-card flush>
         @if($invoices->isNotEmpty())
-            <x-table :headers="['Factura', 'Fecha', 'Orden y cliente', 'Estado', ['label' => 'Total', 'align' => 'right'], ['label' => '', 'align' => 'right']]">
+            <x-table :headers="['Factura', 'Fecha y pago', 'Orden y cliente', 'Estado', ['label' => 'Total', 'align' => 'right'], ['label' => '', 'align' => 'right']]">
                 @foreach($invoices as $invoice)
                     <tr class="transition-colors hover:bg-muted/50">
                         <td class="whitespace-nowrap px-4 py-3">
                             <a href="{{ route('invoices.show', $invoice) }}" class="font-mono font-medium text-primary hover:underline">{{ $invoice->invoice_number }}</a>
                         </td>
-                        <td class="whitespace-nowrap px-4 py-3 tabular-nums text-muted-foreground">{{ $invoice->invoice_date->format('d/m/Y') }}</td>
+                        <td class="whitespace-nowrap px-4 py-3 text-muted-foreground">
+                            <p class="tabular-nums">{{ $invoice->invoice_date->format('d/m/Y') }}</p>
+                            <p class="mt-0.5 text-xs">{{ $invoice->paymentMethodLabel() }}</p>
+                        </td>
                         <td class="px-4 py-3">
                             <p>
                                 <a href="{{ route('service-orders.show', $invoice->service_order_id) }}" class="font-mono hover:underline">#{{ str_pad($invoice->service_order_id, 4, '0', STR_PAD_LEFT) }}</a>

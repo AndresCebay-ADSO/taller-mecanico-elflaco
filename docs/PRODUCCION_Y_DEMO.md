@@ -117,14 +117,14 @@ Genera 60 días de operación de un taller de motos con dos sedes: catálogo de 
 
 ## 5. Preguntas para obtener feedback del cliente
 
-1. **IVA**: ¿los precios incluyen IVA? ¿La factura debe discriminar el 19 %? (Hoy el porcentaje se configura pero no se aplica.)
+1. **IVA**: ¿los precios incluyen IVA? ¿La factura debe discriminar el 19 %? (Hoy el porcentaje se configura pero no se aplica.) *Decidido 2026-11-14: se deja así por ahora.*
 2. **Factura electrónica DIAN**: ¿están obligados? El sistema emite comprobantes internos; la factura electrónica requiere integrarse con un proveedor tecnológico autorizado.
 3. **Permisos**: ¿qué debe poder hacer un cajero y qué solo el dueño? (Ver tabla de la sección 1.)
 4. **Órdenes canceladas**: hoy los repuestos vuelven al inventario y no se permite cancelar si ya hay trabajos completados. ¿Es así como trabajan o esos repuestos se cobran?
 5. **Reportes**: ¿la cajera debe ver ganancias y comisiones, o solo el dueño?
-6. **Pagos de órdenes**: ¿necesitan registrar método de pago, abonos o saldo pendiente en las facturas de taller?
+6. **Pagos de órdenes**: ¿necesitan registrar método de pago, abonos o saldo pendiente en las facturas de taller? *Hecho 2026-11-14: el comprobante de servicio pide el método de pago (mismas opciones que la venta) y el dashboard y los reportes suman ambos. Abonos y saldo: no por ahora.*
 7. **Cierre de caja** diario por cajero y por método de pago: ¿lo necesitan?
 8. **Comisiones**: ¿son correctos los porcentajes y montos fijos por tipo de trabajo?
 9. **Clientes y motos**: ¿quieren historial por placa o por cliente?
-10. **Impresión**: ¿impresora de tickets (80 mm) o carta?
+10. **Impresión**: ¿impresora de tickets (80 mm) o carta? *Hoy no tienen impresora: se imprime en carta o se guarda en PDF. El formato térmico se hace cuando la compren (depende del ancho, 58 u 80 mm).*
 11. **Sedes**: ¿cuántas sedes reales hay y quién autoriza las transferencias?

@@ -20,7 +20,7 @@
                          help="Si se deja vacío, queda como «Venta mostrador»." />
 
                 <x-select label="Método de pago" name="payment_method" required>
-                    @foreach(['Efectivo', 'Nequi', 'Daviplata', 'Transferencia', 'Tarjeta', 'Otro'] as $method)
+                    @foreach(\App\Support\PaymentMethod::ALL as $method)
                         <option value="{{ $method }}" @selected(old('payment_method', 'Efectivo') === $method)>{{ $method }}</option>
                     @endforeach
                 </x-select>

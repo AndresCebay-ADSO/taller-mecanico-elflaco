@@ -7,14 +7,13 @@ use App\Exceptions\InsufficientStockException;
 use App\Models\Sale;
 use App\Services\InventoryService;
 use App\Services\SaleService;
+use App\Support\PaymentMethod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class SaleController extends Controller
 {
-    private const PAYMENT_METHODS = 'Efectivo,Nequi,Daviplata,Transferencia,Tarjeta,Otro';
-
     /**
      * Display a listing of the resource.
      */
@@ -23,7 +22,7 @@ class SaleController extends Controller
         $branchId = $this->currentBranchId();
         $request->validate([
             'search' => 'nullable|string|max:255',
-            'payment_method' => 'nullable|string|in:' . self::PAYMENT_METHODS,
+            'payment_method' => 'nullable|string|' . PaymentMethod::rule(),
             'status' => 'nullable|string|in:completada,anulada',
             'date_start' => 'nullable|date',
             'date_end' => 'nullable|date|after_or_equal:date_start',
@@ -111,7 +110,7 @@ class SaleController extends Controller
 
         $validated = $request->validate([
             'customer_name'       => 'nullable|string|max:255',
-            'payment_method'      => 'required|string|in:' . self::PAYMENT_METHODS,
+            'payment_method'      => 'required|string|' . PaymentMethod::rule(),
             'products'            => 'required|array|min:1',
             'products.*.id'       => [
                 'required',

@@ -42,7 +42,7 @@
         </x-select>
         <x-select label="Método de pago" name="payment_method">
             <option value="">Todos</option>
-            @foreach(['Efectivo', 'Nequi', 'Daviplata', 'Transferencia', 'Tarjeta', 'Otro'] as $method)
+            @foreach(\App\Support\PaymentMethod::ALL as $method)
                 <option value="{{ $method }}" @selected(request('payment_method') === $method)>{{ $method }}</option>
             @endforeach
         </x-select>

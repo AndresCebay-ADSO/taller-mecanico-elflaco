@@ -148,8 +148,13 @@
                             Ver factura <span class="font-mono">{{ $invoice->invoice_number }}</span>
                         </x-button>
                     @elseif($canInvoice)
-                        <form action="{{ route('invoices.generate', $serviceOrder) }}" method="POST">
+                        <form action="{{ route('invoices.generate', $serviceOrder) }}" method="POST" class="space-y-3">
                             @csrf
+                            <x-select label="¿Cómo pagó?" name="payment_method" required>
+                                @foreach(\App\Support\PaymentMethod::ALL as $method)
+                                    <option value="{{ $method }}" @selected(old('payment_method', \App\Support\PaymentMethod::CASH) === $method)>{{ $method }}</option>
+                                @endforeach
+                            </x-select>
                             <x-button type="submit" class="w-full">Generar factura</x-button>
                         </form>
                     @elseif($billableJobs->isNotEmpty() && $serviceOrder->canReceiveJobs())

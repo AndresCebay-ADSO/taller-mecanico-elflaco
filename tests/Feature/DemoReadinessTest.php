@@ -124,7 +124,7 @@ describe('reportes', function () {
 
         app(SaleService::class)->create($branch->id, $admin->id, null, 'Nequi', [['id' => $product->id, 'quantity' => 2]]);
         [$order] = completedJobOrder($branch, $product, quantity: 1, labor: 50000);
-        app(InvoiceService::class)->generateFor($order);
+        app(InvoiceService::class)->generateFor($order, 'Nequi');
 
         // Otra sucursal no debe sumar.
         [, $otherBranch] = branchUser();
@@ -140,7 +140,7 @@ describe('reportes', function () {
             ->and($report['commissions'])->toBe(30000.0)
             ->and($report['orders'])->toBe(['received' => 1, 'delivered' => 1])
             ->and($report['top_products']->first())->toMatchArray(['quantity' => 3, 'revenue' => 60000.0])
-            ->and($report['payment_methods']->first()->payment_method)->toBe('Nequi')
+            ->and((array) $report['payment_methods']->sole())->toBe(['payment_method' => 'Nequi', 'total' => 110000.0, 'sales' => 1, 'invoices' => 1])
             ->and($report['inventory']['cost_value'])->toBe(70000.0)
             ->and($report['daily']->sum('total'))->toBe(110000.0);
 
@@ -184,7 +184,7 @@ describe('facturas y órdenes', function () {
             ->assertSessionHas('error');
 
         $this->actingAs($admin)->withSession($session)
-            ->post(route('invoices.generate', $order))
+            ->post(route('invoices.generate', $order), ['payment_method' => 'Efectivo'])
             ->assertRedirect();
 
         expect(Invoice::count())->toBe(2)

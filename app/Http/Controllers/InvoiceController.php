@@ -7,6 +7,8 @@ use App\Models\Invoice;
 use App\Models\ServiceOrder;
 use App\Models\Setting;
 use App\Services\InvoiceService;
+use App\Support\PaymentMethod;
+use Illuminate\Http\Request;
 
 class InvoiceController extends Controller
 {
@@ -51,12 +53,20 @@ class InvoiceController extends Controller
     /**
      * Generate an invoice from a Service Order.
      */
-    public function generateFromServiceOrder(ServiceOrder $serviceOrder, InvoiceService $invoiceService)
+    public function generateFromServiceOrder(Request $request, ServiceOrder $serviceOrder, InvoiceService $invoiceService)
     {
         $this->ensureCurrentBranch($serviceOrder->branch_id);
 
+        $validated = $request->validate(
+            ['payment_method' => 'required|string|' . PaymentMethod::rule()],
+            [
+                'payment_method.required' => 'Elige cómo pagó el cliente.',
+                'payment_method.in' => 'Elige un método de pago de la lista.',
+            ],
+        );
+
         try {
-            $invoice = $invoiceService->generateFor($serviceOrder);
+            $invoice = $invoiceService->generateFor($serviceOrder, $validated['payment_method']);
         } catch (BusinessRuleException $exception) {
             return back()->with('error', $exception->getMessage());
         }

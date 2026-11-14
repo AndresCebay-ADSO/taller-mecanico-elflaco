@@ -26,6 +26,9 @@
         <x-document.meta label="Fecha">{{ $invoice->invoice_date->format('d/m/Y') }}</x-document.meta>
         <x-document.meta label="Hora">{{ $invoice->created_at->format('h:i a') }}</x-document.meta>
         <x-document.meta label="Orden" class="font-mono">#{{ str_pad($order->id, 4, '0', STR_PAD_LEFT) }}</x-document.meta>
+        @if($invoice->payment_method)
+            <x-document.meta label="Pago">{{ $invoice->payment_method }}</x-document.meta>
+        @endif
         @if($order->branch)
             <x-document.meta label="Sede">{{ $order->branch->name }}</x-document.meta>
         @endif

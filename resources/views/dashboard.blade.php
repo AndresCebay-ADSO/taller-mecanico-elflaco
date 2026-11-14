@@ -144,19 +144,19 @@
             @endif
         </x-card>
 
-        {{-- Ventas por método de pago --}}
-        <x-card title="Ventas de hoy por método">
+        {{-- Lo cobrado hoy (mostrador + servicios) por método de pago --}}
+        <x-card title="Cobrado hoy por método" description="Ventas de mostrador y comprobantes de servicio">
             @if($todayByMethod->isNotEmpty())
                 <dl class="space-y-3">
                     @foreach($todayByMethod as $method)
                         <div class="flex items-center justify-between gap-3 text-sm">
-                            <dt class="text-muted-foreground">{{ ucfirst($method->payment_method) }}</dt>
+                            <dt class="text-muted-foreground">{{ $method->payment_method }}</dt>
                             <dd class="font-medium tabular-nums">{{ money($method->total) }}</dd>
                         </div>
                     @endforeach
                 </dl>
             @else
-                <x-empty-state>No hay ventas registradas hoy.</x-empty-state>
+                <x-empty-state>Hoy no se ha cobrado nada.</x-empty-state>
             @endif
         </x-card>
     </div>

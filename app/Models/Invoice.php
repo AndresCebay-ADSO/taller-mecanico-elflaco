@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PaymentMethod;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +13,7 @@ class Invoice extends Model
         'invoice_number',
         'service_order_id',
         'amount',
+        'payment_method',
         'invoice_date',
     ];
 
@@ -28,6 +30,11 @@ class Invoice extends Model
     public function cancelledBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'cancelled_by');
+    }
+
+    public function paymentMethodLabel(): string
+    {
+        return PaymentMethod::label($this->payment_method);
     }
 
     public function isCancelled(): bool

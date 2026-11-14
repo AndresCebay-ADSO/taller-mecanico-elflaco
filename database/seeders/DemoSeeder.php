@@ -531,7 +531,7 @@ class DemoSeeder extends Seeder
         }
 
         try {
-            $this->invoices->generateFor($order);
+            $this->invoices->generateFor($order, (string) $this->weightedPick(self::PAYMENT_METHODS));
             $this->stats['invoices']++;
         } catch (BusinessRuleException) {
         }

@@ -6,6 +6,7 @@ use App\Exceptions\BusinessRuleException;
 use App\Models\Invoice;
 use App\Models\ServiceOrder;
 use App\Models\WorkshopJob;
+use App\Support\PaymentMethod;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -13,12 +14,17 @@ class InvoiceService
 {
     /**
      * Genera la factura consolidada de una orden (mano de obra + repuestos) y la marca como completada.
+     * `$paymentMethod`: cómo pagó el cliente (PaymentMethod::ALL).
      *
      * @throws BusinessRuleException
      */
-    public function generateFor(ServiceOrder $serviceOrder): Invoice
+    public function generateFor(ServiceOrder $serviceOrder, string $paymentMethod = PaymentMethod::CASH): Invoice
     {
-        return DB::transaction(function () use ($serviceOrder) {
+        if (!in_array($paymentMethod, PaymentMethod::ALL, true)) {
+            throw new BusinessRuleException('Elige un método de pago válido.', 'payment_method');
+        }
+
+        return DB::transaction(function () use ($serviceOrder, $paymentMethod) {
             $order = ServiceOrder::whereKey($serviceOrder->id)->lockForUpdate()->firstOrFail();
 
             if ($order->activeInvoice()->exists()) {
@@ -48,6 +54,7 @@ class InvoiceService
                 'invoice_number' => 'TMP-' . Str::uuid(),
                 'service_order_id' => $order->id,
                 'amount' => $amount,
+                'payment_method' => $paymentMethod,
                 'invoice_date' => now(),
             ]);
 

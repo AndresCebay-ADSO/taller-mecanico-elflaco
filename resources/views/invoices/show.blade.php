@@ -73,6 +73,7 @@
                 <dl class="mt-2 space-y-0.5 text-sm">
                     <div><dt class="inline text-muted-foreground">Fecha:</dt> <dd class="inline tabular-nums">{{ $invoice->invoice_date->format('d/m/Y') }}</dd></div>
                     <div><dt class="inline text-muted-foreground">Orden:</dt> <dd class="inline font-mono">{{ $orderNumber }}</dd></div>
+                    <div><dt class="inline text-muted-foreground">Pago:</dt> <dd class="inline">{{ $invoice->paymentMethodLabel() }}</dd></div>
                 </dl>
             </div>
         </header>
