@@ -1,7 +1,7 @@
 {{--
     Tabla de detalle del documento: Descripción · Cantidad · Unidad · Precio · Importe.
     La descripción va primero (es lo que se lee); las cifras, a la derecha y alineadas.
-    Filas: <x-document.line> (y <x-document.group> para agrupar las líneas de un trabajo).
+    Filas: <x-document.line> (y <x-document.job-lines> para agrupar las líneas de un trabajo).
 --}}
 <table {{ $attributes->merge(['class' => 'w-full text-sm']) }}>
     <thead>
