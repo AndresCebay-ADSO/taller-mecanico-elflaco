@@ -1,4 +1,9 @@
-@import 'tailwindcss';
+/*
+ * Fuentes de clases explícitas (source(none) apaga la detección automática): el CSS depende solo
+ * del código, no de lo que haya en storage/ (vistas compiladas, páginas de error de las pruebas).
+ * app/ va porque App\Support\Tone y los modelos devuelven clases de tono.
+ */
+@import 'tailwindcss' source(none);
 
 /* Fuente incluida en la app (funciona sin internet). Ver DESIGN.md §4. */
 @import '@fontsource/instrument-sans/latin-400.css';
@@ -6,9 +11,9 @@
 @import '@fontsource/instrument-sans/latin-600.css';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
+@source '../views';
+@source '../js';
+@source '../../app';
 
 /* Enable class-based dark mode for Tailwind 4 */
 @variant dark (&:where(.dark, .dark *));
