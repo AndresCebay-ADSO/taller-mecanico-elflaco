@@ -80,7 +80,7 @@
                         </div>
                         <div>
                             <label for="job-phone" class="{{ $labelClass }}">Teléfono</label>
-                            <input id="job-phone" type="tel" name="customer_phone" value="{{ old('customer_phone') }}" maxlength="20" placeholder="3001234567" class="{{ $inputClass }}">
+                            <input id="job-phone" type="tel" inputmode="numeric" name="customer_phone" value="{{ old('customer_phone') }}" maxlength="10" placeholder="3001234567" class="{{ $inputClass }}">
                         </div>
                     </div>
                     <div>
