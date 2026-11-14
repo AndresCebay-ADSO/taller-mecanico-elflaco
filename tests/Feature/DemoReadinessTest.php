@@ -138,7 +138,7 @@ describe('reportes', function () {
             // Taller 40% de 50.000 + margen (40.000 - 20.000) + (20.000 - 10.000)
             ->and($report['profit']['total'])->toBe(50000.0)
             ->and($report['commissions'])->toBe(30000.0)
-            ->and($report['orders'])->toBe(['received' => 1, 'delivered' => 1])
+            ->and($report['orders'])->toBe(['received' => 1, 'invoiced' => 1])
             ->and($report['top_products']->first())->toMatchArray(['quantity' => 3, 'revenue' => 60000.0])
             ->and((array) $report['payment_methods']->sole())->toBe(['payment_method' => 'Nequi', 'total' => 110000.0, 'sales' => 1, 'invoices' => 1])
             ->and($report['inventory']['cost_value'])->toBe(70000.0)
@@ -149,6 +149,36 @@ describe('reportes', function () {
             ->assertOk()
             ->assertSee('$110.000')
             ->assertDontSee('$0.00');
+    });
+
+    it('counts service income from active invoices, so it always matches what was collected', function () {
+        [$admin, $branch] = branchUser(admin: true);
+        $product = stockedProduct($branch, 10, cost: 10000, price: 20000);
+
+        [$invoiced] = completedJobOrder($branch, $product, quantity: 1, labor: 50000);
+        app(InvoiceService::class)->generateFor($invoiced, 'Efectivo');
+
+        // Factura anulada y no vuelta a generar: ya no es ingreso.
+        [$cancelled] = completedJobOrder($branch, $product, quantity: 1, labor: 30000);
+        app(InvoiceService::class)->cancel(app(InvoiceService::class)->generateFor($cancelled), $admin->id);
+
+        // Orden vieja marcada completada sin factura: no se cobró, no suma.
+        [$withoutInvoice] = completedJobOrder($branch, $product, quantity: 1, labor: 40000);
+        $withoutInvoice->update(['status' => 'completed', 'completed_at' => now()]);
+
+        $report = app(ReportService::class)->summary($branch->id, CarbonImmutable::now()->startOfMonth(), CarbonImmutable::now()->endOfMonth());
+
+        expect($report['income'])->toBe(['total' => 70000.0, 'sales' => 0.0, 'orders' => 70000.0])
+            ->and($report['income']['total'])->toBe($report['payment_methods']->sum('total'))
+            ->and($report['orders']['invoiced'])->toBe(1)
+            ->and($report['daily']->sum('total'))->toBe(70000.0)
+            ->and(app(ReportService::class)->income($branch->id, CarbonImmutable::today(), CarbonImmutable::today()))->toBe(70000.0);
+
+        $this->actingAs($admin)->withSession(['current_branch_id' => $branch->id])
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertViewHas('todayEarnings', 70000.0)
+            ->assertViewHas('monthEarnings', 70000.0);
     });
 
     it('ignores cancelled sales in the report', function () {

@@ -52,6 +52,11 @@ Estado: **pendiente de revisar** salvo que diga otra cosa.
     caja cuentan las ventas y los **comprobantes generados** ese día. Difieren cuando una orden se entrega un día y
     se cobra otro, cuando se completa sin comprobante (ver 12) o cuando el comprobante se anula y no se vuelve a
     generar (la orden sigue sumando como ingreso). ¿Está bien así, o «Ingresos» debería contar comprobantes?
+    **Decidido (2026-11-14): contar facturas.** «Ingresos» (dashboard y reportes) suma las ventas y las **facturas
+    vigentes por su fecha**, igual que «Cobrado» y la caja. Una factura anulada deja de sumar; las órdenes viejas
+    completadas sin factura no suman hasta que se les genere. La ganancia se calcula sobre los trabajos de esas
+    facturas. Las comisiones siguen por trabajo completado, porque es lo que se le debe al mecánico (igual que en
+    la caja). En Reportes, «Órdenes entregadas» pasó a «Órdenes facturadas».
 14. **Los empleados ven Reportes completos:** utilidad, comisiones de cada mecánico y valor del inventario al costo.
     Igual que el punto 7: hoy da igual, importa si algún día hay empleados con usuario.
 

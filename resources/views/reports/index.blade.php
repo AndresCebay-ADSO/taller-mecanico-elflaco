@@ -30,7 +30,7 @@
         $kpis = [
             ['label' => 'Ingresos del mes', 'value' => money($report['income']['total']), 'hint' => 'Órdenes ' . money($report['income']['orders']) . ' · Ventas ' . money($report['income']['sales'])],
             ['label' => 'Ganancia estimada', 'value' => money($report['profit']['total']), 'hint' => 'Mano de obra del taller ' . money($report['profit']['labor']) . ' · Margen de repuestos ' . money($report['profit']['parts_margin'])],
-            ['label' => 'Órdenes entregadas', 'value' => $report['orders']['delivered'], 'hint' => $report['orders']['received'] . ' recibidas · ' . $report['sales_count'] . ' ventas de mostrador'],
+            ['label' => 'Órdenes facturadas', 'value' => $report['orders']['invoiced'], 'hint' => $report['orders']['received'] . ' recibidas · ' . $report['sales_count'] . ' ventas de mostrador'],
             ['label' => 'Comisiones de mecánicos', 'value' => money($report['commissions']), 'hint' => 'Por trabajos completados en el mes'],
         ];
     @endphp

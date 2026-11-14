@@ -30,7 +30,7 @@
     <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         @php
             $kpis = [
-                ['label' => 'Ingresos de hoy', 'value' => money($todayEarnings), 'hint' => 'Ventas + órdenes entregadas hoy', 'icon' => 'wallet'],
+                ['label' => 'Ingresos de hoy', 'value' => money($todayEarnings), 'hint' => 'Ventas + órdenes facturadas hoy', 'icon' => 'wallet'],
                 ['label' => 'Ingresos del mes', 'value' => money($monthEarnings), 'hint' => ucfirst(now()->translatedFormat('F Y')), 'icon' => 'trending-up', 'link' => route('reports')],
                 ['label' => 'Órdenes activas', 'value' => $activeOrders, 'hint' => $pendingOrders . ' pendientes de entrega', 'icon' => 'clipboard-list', 'link' => route('service-orders.index')],
                 ['label' => 'Productos', 'value' => $totalProducts, 'hint' => $lowStockCount . ' con stock bajo', 'icon' => 'package', 'link' => route('products.index')],
