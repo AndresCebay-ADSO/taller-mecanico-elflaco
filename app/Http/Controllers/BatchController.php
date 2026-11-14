@@ -19,6 +19,9 @@ class BatchController extends Controller
     {
         $this->ensureCurrentBranch(Product::withTrashed()->find($batch->product_id)?->branch_id);
 
+        // Solo se corrigen lotes de compra: los de ajustes, devoluciones o transferencias salen de otros registros.
+        abort_unless(InventoryMovement::where('batch_id', $batch->id)->where('movement_type', 'purchase')->exists(), 404);
+
         $validated = $request->validate([
             'supplier_id' => 'required|exists:suppliers,id',
             'cost_price'  => 'required|numeric|min:0|max:99999999',

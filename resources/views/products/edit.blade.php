@@ -30,7 +30,8 @@
         <x-card title="Precios y stock">
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <x-input label="Precio de compra" name="purchase_price" is-money required :value="(int) $product->purchase_price" />
-                <x-input label="Precio de venta" name="sale_price" is-money required :value="(int) $product->sale_price" />
+                <x-input label="Precio de venta" name="sale_price" is-money required :value="(int) $product->sale_price"
+                         help="Si lo cambias, las unidades que ya hay en inventario se venden al precio nuevo." />
                 <div class="ds space-y-1.5">
                     <label for="current-stock" class="block text-sm font-medium">Stock actual</label>
                     <input id="current-stock" type="text" value="{{ $product->stock }}" readonly
