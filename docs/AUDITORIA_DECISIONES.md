@@ -42,6 +42,8 @@ Estado: **pendiente de revisar** salvo que diga otra cosa.
     comprobante, la orden debería volver a «En progreso»?
 12. **Una orden se puede marcar «Completada» sin generar el comprobante.** Entonces ese cobro no aparece en la caja
     ni en «Cobrado hoy por método». ¿Obligar a que completar la orden sea generando el comprobante?
+    **Decidido (2026-11-14): sí.** «Completada» ya no aparece en Editar; la orden se completa solo con «Generar
+    factura». Las órdenes que ya estaban completadas sin factura siguen mostrando el botón para generarla.
 
 ## Reportes y documentos (módulo 7)
 
