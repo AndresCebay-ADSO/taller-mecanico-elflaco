@@ -80,6 +80,14 @@ class CheckEnvironment extends Command
 
         $this->add(config('app.timezone') === 'America/Bogota' ? 'OK' : 'ERROR', 'Zona horaria', config('app.timezone') . (config('app.timezone') === 'America/Bogota' ? '' : ' (debe ser America/Bogota: las ventas de la noche quedan con fecha del día siguiente)'));
 
+        // Pasos de la guía que se hacen a mano y se olvidan fácil (§3 y §8).
+        if ($production && config('auth.admin.password')) {
+            $this->add('AVISO', 'ADMIN_PASSWORD', 'Sigue en el .env: borrar la línea y ejecutar php artisan config:cache (solo sirve para crear el primer usuario)');
+        }
+        if ($production && config('database.connections.' . config('database.default') . '.username') === 'root') {
+            $this->add('AVISO', 'Usuario de la base', 'La app entra como root: crear el usuario «taller» con permisos solo sobre su base (guía §3)');
+        }
+
         $cached = app()->configurationIsCached();
         $this->add('OK', 'Configuración en caché', $cached ? 'Sí: tras editar .env ejecutar php artisan config:cache' : 'No');
     }

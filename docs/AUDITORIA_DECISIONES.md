@@ -53,9 +53,18 @@ Estado: **pendiente de revisar** salvo que diga otra cosa.
 14. **Los empleados ven Reportes completos:** utilidad, comisiones de cada mecánico y valor del inventario al costo.
     Igual que el punto 7: hoy da igual, importa si algún día hay empleados con usuario.
 
+## Respaldos y servidor (módulo 8)
+
+15. **Los respaldos van a Google Drive sin cifrar.** El .zip trae toda la base: clientes, teléfonos, ventas y las
+    contraseñas de los usuarios (estas sí cifradas). Quien entre a esa cuenta de Google puede leerlo. Lo mínimo es
+    activar la verificación en dos pasos en esa cuenta. ¿Cifrar además el .zip con una clave (por ejemplo con 7-Zip),
+    sabiendo que si se pierde esa clave el respaldo no sirve?
+
 ## Conocido, sin corregir (impacto bajo)
 
 - **Reimprimir un comprobante anulado puede mostrar líneas que no suman su total.** El comprobante guarda el total,
   pero las líneas se leen de la orden en el momento de imprimir. Si después de anularlo se borra un trabajo de la
   orden, la reimpresión del anulado muestra las líneas nuevas con el total viejo. Los comprobantes vigentes no se
   afectan: con comprobante activo no se pueden borrar trabajos.
+- **Restaurar no pone la app en mantenimiento.** Si alguien registra algo mientras `restaurar.bat` carga la base, ese
+  registro se pierde. Con un solo usuario no pasa: se restaura con el sistema sin uso.
