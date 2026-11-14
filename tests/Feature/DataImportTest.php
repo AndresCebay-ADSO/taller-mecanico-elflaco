@@ -9,6 +9,7 @@ use App\Models\Supplier;
 use App\Services\DataImport\ImportSchema;
 use App\Services\DataImport\WorkbookImporter;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use OpenSpout\Common\Entity\Row;
 use OpenSpout\Reader\XLSX\Reader;
 use OpenSpout\Writer\XLSX\Writer;
@@ -190,4 +191,63 @@ describe('importación desde Excel', function () {
             expect($headers[$sheet] ?? null)->toBe(array_values($columns), "La hoja «{$sheet}» de la plantilla no coincide con ImportSchema");
         }
     });
+});
+
+it('reports out-of-range numbers in the workbook as row errors instead of failing', function () {
+    [, $branch] = branchUser();
+    $path = importWorkbook([
+        'Proveedores' => [['Lubricantes', '3101234567', '', '']],
+        'Productos' => [
+            ['Aceite', 'Aceites', '', 'Lubricantes', 30000, '999999999999999', 2, 0], // fila 2: precio fuera de rango
+            ['Filtro', 'Filtros', '', 'Lubricantes', 9000, 17000, 5000000, 0],        // fila 3: stock absurdo
+        ],
+        'Tipos de trabajo' => [
+            ['Lavado', 'Lavado general', 'Monto fijo', '', '999999999999', 1000, 'No', 'No'], // fila 2
+        ],
+    ]);
+
+    $report = app(WorkbookImporter::class)->import($path, $branch->id);
+    $where = collect($report->errors)->map(fn ($e) => "{$e['sheet']}:{$e['row']}")->all();
+
+    expect($where)->toContain('Productos:2', 'Productos:3', 'Tipos de trabajo:2')
+        ->and(Supplier::count())->toBe(0)
+        ->and(Product::count())->toBe(0);
+});
+
+it('rejects out-of-range prices and stock when creating a product or a job type', function () {
+    [$admin, $branch] = branchUser(admin: true);
+    $supplier = Supplier::create(['name' => 'Proveedor', 'phone' => '3001112233', 'active' => true]);
+    $session = ['current_branch_id' => $branch->id];
+
+    $this->actingAs($admin)->withSession($session)->post(route('products.store'), [
+        'name' => 'Llanta', 'category' => 'Llantas', 'supplier_ids' => [$supplier->id],
+        'sale_price' => '999999999999999', 'stock' => 5000000, 'min_stock' => 0,
+        'purchase_price' => 1000, 'initial_supplier_id' => $supplier->id,
+    ])->assertSessionHasErrors(['sale_price', 'stock']);
+
+    $this->actingAs($admin)->withSession($session)->post(route('job-types.store'), [
+        'name' => 'Lavado', 'description' => 'Lavado', 'calculation_type' => 'fixed',
+        'fixed_mechanic_amount' => '999999999999', 'fixed_workshop_amount' => 1000, 'is_active' => 1,
+    ])->assertSessionHasErrors('fixed_mechanic_amount');
+});
+
+it('clears import files that were reviewed but never confirmed', function () {
+    [$admin, $branch] = branchUser(admin: true);
+    Storage::fake('local');
+    Storage::disk('local')->put('imports/viejo.xlsx', 'x');
+    touch(Storage::disk('local')->path('imports/viejo.xlsx'), now()->subDays(2)->getTimestamp());
+    Storage::disk('local')->put('imports/reciente.xlsx', 'x');
+
+    $this->actingAs($admin)->withSession(['current_branch_id' => $branch->id])->get(route('imports.index'))->assertOk();
+
+    expect(Storage::disk('local')->exists('imports/viejo.xlsx'))->toBeFalse()
+        ->and(Storage::disk('local')->exists('imports/reciente.xlsx'))->toBeTrue();
+});
+
+it('stops reading a workbook with an absurd number of rows', function () {
+    [, $branch] = branchUser();
+    $rows = array_fill(0, 5001, ['Juan Pérez', '3101234567', '15/01/2024', '']);
+
+    expect(fn () => app(WorkbookImporter::class)->analyze(importWorkbook(['Mecánicos' => $rows]), $branch->id))
+        ->toThrow(RuntimeException::class, 'más de 5.000 filas');
 });

@@ -147,7 +147,7 @@ class ProductController extends Controller
             'supplier_ids.*' => 'exists:suppliers,id',
             'purchase_price' => 'required|numeric|min:0|max:99999999',
             'sale_price' => 'required|numeric|min:0|max:99999999',
-            'min_stock' => 'required|integer|min:0',
+            'min_stock' => 'required|integer|min:0|max:100000',
             'upc' => 'nullable|string|max:50',
         ]);
 

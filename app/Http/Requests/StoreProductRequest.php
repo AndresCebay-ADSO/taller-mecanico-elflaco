@@ -25,12 +25,12 @@ class StoreProductRequest extends FormRequest
             'supplier_ids' => 'required|array|min:1',
             'supplier_ids.*' => 'exists:suppliers,id,active,1',
             'upc' => 'nullable|string|max:50',
-            'sale_price' => 'required|numeric|min:0',
-            'stock' => 'required|integer|min:0',
-            'min_stock' => 'required|integer|min:0',
+            'sale_price' => 'required|numeric|min:0|max:99999999',
+            'stock' => 'required|integer|min:0|max:100000',
+            'min_stock' => 'required|integer|min:0|max:100000',
             
             // Conditional validations
-            'purchase_price' => ($this->stock > 0) ? 'required|numeric|min:0' : 'nullable|numeric|min:0',
+            'purchase_price' => ($this->stock > 0) ? 'required|numeric|min:0|max:99999999' : 'nullable|numeric|min:0|max:99999999',
             'initial_supplier_id' => ($this->stock > 0) ? [
                 'required',
                 'exists:suppliers,id',

@@ -24,6 +24,9 @@ use Throwable;
  */
 class WorkbookImporter
 {
+    /** Filas con datos por hoja: la carga inicial de un taller pequeño no llega ni cerca. */
+    private const MAX_ROWS = 5000;
+
     public function __construct(private readonly InventoryService $inventory)
     {
     }
@@ -142,6 +145,12 @@ class WorkbookImporter
                 // La plantilla trae 500 filas con formato: solo cuentan las que tienen algo escrito.
                 if (collect($data)->filter(fn ($v) => $v !== null && $v !== '')->isNotEmpty()) {
                     $sheets[$sheetName][] = ['row' => $rowNumber, 'data' => $data];
+
+                    // Un archivo pequeño puede traer cientos de miles de filas comprimidas: se corta antes de agotar la memoria.
+                    if (count($sheets[$sheetName]) > self::MAX_ROWS) {
+                        $reader->close();
+                        throw new RuntimeException("La hoja «{$sheetName}» tiene más de " . number_format(self::MAX_ROWS, 0, ',', '.') . ' filas. Divide la carga en varios archivos.');
+                    }
                 }
             }
         }
@@ -234,10 +243,10 @@ class WorkbookImporter
                 'category' => 'required|string|max:255',
                 'upc' => 'nullable|string|max:50',
                 'supplier' => 'required|string',
-                'cost' => 'required|numeric|min:0',
-                'price' => 'required|numeric|min:0',
-                'stock' => 'required|integer|min:0',
-                'min_stock' => 'required|integer|min:0',
+                'cost' => 'required|numeric|min:0|max:99999999',
+                'price' => 'required|numeric|min:0|max:99999999',
+                'stock' => 'required|integer|min:0|max:100000',
+                'min_stock' => 'required|integer|min:0|max:100000',
             ], $report)) {
                 continue;
             }
@@ -329,8 +338,8 @@ class WorkbookImporter
                 'description' => 'required|string|max:255',
                 'calculation_type' => 'required|in:percentage,fixed',
                 'mechanic_percentage' => 'nullable|required_if:calculation_type,percentage|numeric|min:0|max:100',
-                'fixed_mechanic_amount' => 'nullable|required_if:calculation_type,fixed|numeric|min:0',
-                'fixed_workshop_amount' => 'nullable|required_if:calculation_type,fixed|numeric|min:0',
+                'fixed_mechanic_amount' => 'nullable|required_if:calculation_type,fixed|numeric|min:0|max:99999999',
+                'fixed_workshop_amount' => 'nullable|required_if:calculation_type,fixed|numeric|min:0|max:99999999',
                 'allow_products' => 'required|boolean',
                 'allow_custom_labor' => 'required|boolean',
             ], $report, ['calculation_type' => 'Cálculo', 'mechanic_percentage' => '% mecánico', 'fixed_mechanic_amount' => 'Monto mecánico', 'fixed_workshop_amount' => 'Monto taller', 'allow_products' => '¿Usa repuestos?', 'allow_custom_labor' => '¿Mano de obra variable?'])) {

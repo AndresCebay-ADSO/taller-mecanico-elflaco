@@ -20,6 +20,8 @@ class DataImportController extends Controller
 
     public function index()
     {
+        $this->forgetAbandonedFiles();
+
         return view('imports.index', ['branch' => Branch::find($this->requireCurrentBranchId())]);
     }
 
@@ -83,6 +85,19 @@ class DataImportController extends Controller
         }
 
         return redirect()->route('imports.index');
+    }
+
+    /** Archivos que se revisaron pero nunca se confirmaron ni descartaron (se cerró la pestaña). */
+    private function forgetAbandonedFiles(): void
+    {
+        $disk = Storage::disk('local');
+        $limit = now()->subDay()->getTimestamp();
+
+        foreach ($disk->files(self::DIR) as $file) {
+            if ($disk->lastModified($file) < $limit) {
+                $disk->delete($file);
+            }
+        }
     }
 
     private function path(string $token): string
