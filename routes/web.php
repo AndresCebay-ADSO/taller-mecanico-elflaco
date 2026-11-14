@@ -28,7 +28,8 @@ Route::get('/', function () {
 });
 
 // ─── Rutas protegidas por autenticación ───────────────────────────────────────
-Route::middleware('auth')->group(function () {
+// auth.session: si a un usuario le cambian la contraseña, sus otras sesiones abiertas se cierran.
+Route::middleware(['auth', 'auth.session'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/reports', [ReportController::class, 'index'])->name('reports');

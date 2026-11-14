@@ -30,3 +30,16 @@ it('passes when the database has an administrator and an active branch', functio
         }
     }
 });
+
+it('warns in production about the install steps that are done by hand', function () {
+    app()->detectEnvironment(fn () => 'production');
+    config([
+        'app.debug' => false,
+        'auth.admin.password' => 'la-del-primer-ingreso',
+        'database.connections.' . config('database.default') . '.username' => 'root',
+    ]);
+
+    $this->artisan('taller:verificar')
+        ->expectsOutputToContain('ADMIN_PASSWORD')
+        ->expectsOutputToContain('Usuario de la base');
+});

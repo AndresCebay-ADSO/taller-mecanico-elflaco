@@ -6,6 +6,7 @@ use App\Exceptions\BusinessRuleException;
 use App\Models\Invoice;
 use App\Models\ServiceOrder;
 use App\Models\Setting;
+use App\Services\CashService;
 use App\Services\InvoiceService;
 use App\Support\PaymentMethod;
 use Illuminate\Http\Request;
@@ -53,7 +54,7 @@ class InvoiceController extends Controller
     /**
      * Generate an invoice from a Service Order.
      */
-    public function generateFromServiceOrder(Request $request, ServiceOrder $serviceOrder, InvoiceService $invoiceService)
+    public function generateFromServiceOrder(Request $request, ServiceOrder $serviceOrder, InvoiceService $invoiceService, CashService $cashService)
     {
         $this->ensureCurrentBranch($serviceOrder->branch_id);
 
@@ -71,13 +72,15 @@ class InvoiceController extends Controller
             return back()->with('error', $exception->getMessage());
         }
 
-        return redirect()->route('invoices.show', $invoice)->with('success', 'Factura consolidada generada con éxito.');
+        return redirect()->route('invoices.show', $invoice)
+            ->with('success', 'Factura consolidada generada con éxito.')
+            ->with('warning', $cashService->closedDayNotice($serviceOrder->branch_id, $invoice->invoice_date, $invoice->payment_method, 'El comprobante', false));
     }
 
     /**
      * Anula la factura sin borrarla (solo administradores).
      */
-    public function cancel(Invoice $invoice, InvoiceService $invoiceService)
+    public function cancel(Invoice $invoice, InvoiceService $invoiceService, CashService $cashService)
     {
         $this->ensureCurrentBranch($invoice->serviceOrder?->branch_id);
 
@@ -86,6 +89,7 @@ class InvoiceController extends Controller
         }
 
         return redirect()->route('invoices.show', $invoice)
-            ->with('success', "Factura {$invoice->invoice_number} anulada. La orden puede facturarse de nuevo.");
+            ->with('success', "Factura {$invoice->invoice_number} anulada. La orden puede facturarse de nuevo.")
+            ->with('warning', $cashService->closedDayNotice($invoice->serviceOrder->branch_id, $invoice->invoice_date, $invoice->payment_method, "El comprobante {$invoice->invoice_number}", true));
     }
 }

@@ -47,6 +47,10 @@ class BranchController extends Controller
 
     public function destroy(Branch $branch)
     {
+        if ($this->isLastActive($branch)) {
+            return $this->lastActiveError();
+        }
+
         $branch->update(['is_active' => false]);
 
         return redirect()->route('branches.index')->with('success', 'Sucursal desactivada exitosamente.');
@@ -54,9 +58,25 @@ class BranchController extends Controller
 
     public function toggleActive(Branch $branch)
     {
+        if ($branch->is_active && $this->isLastActive($branch)) {
+            return $this->lastActiveError();
+        }
+
         $branch->update(['is_active' => !$branch->is_active]);
 
         return redirect()->route('branches.index')->with('success', 'Estado de sucursal actualizado.');
+    }
+
+    /** Sin ninguna sucursal activa nadie puede registrar órdenes, ventas ni caja. */
+    private function isLastActive(Branch $branch): bool
+    {
+        return !Branch::active()->whereKeyNot($branch->id)->exists();
+    }
+
+    private function lastActiveError()
+    {
+        return redirect()->route('branches.index')
+            ->with('error', 'Debe quedar al menos una sucursal activa para poder trabajar.');
     }
 
     public function switch(Request $request, BranchService $branchService)

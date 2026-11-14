@@ -22,8 +22,9 @@ class SettingSeeder extends Seeder
             'footer_text_invoice' => 'Gracias por confiar en MotoTaller El Flaco.',
         ];
 
+        // Solo los que faltan: volver a correr el seeder no debe borrar la configuración real del taller.
         foreach ($settings as $key => $value) {
-            \App\Models\Setting::updateOrCreate(['key' => $key], ['value' => $value]);
+            \App\Models\Setting::firstOrCreate(['key' => $key], ['value' => $value]);
         }
     }
 }

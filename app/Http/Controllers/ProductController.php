@@ -147,15 +147,24 @@ class ProductController extends Controller
             'supplier_ids.*' => 'exists:suppliers,id',
             'purchase_price' => 'required|numeric|min:0|max:99999999',
             'sale_price' => 'required|numeric|min:0|max:99999999',
-            'min_stock' => 'required|integer|min:0',
+            'min_stock' => 'required|integer|min:0|max:100000',
             'upc' => 'nullable|string|max:50',
         ]);
 
         $supplierIds = $validated['supplier_ids'];
         unset($validated['supplier_ids']);
+        $priceChanged = (float) $validated['sale_price'] !== (float) $product->sale_price;
 
-        $product->update($validated);
-        $product->suppliers()->sync($supplierIds);
+        DB::transaction(function () use ($product, $validated, $supplierIds, $priceChanged) {
+            $product->update($validated);
+            $product->suppliers()->sync($supplierIds);
+
+            // En la venta se cobra el precio de cada lote: si cambia el precio del producto,
+            // las unidades que quedan en inventario pasan a venderse al precio nuevo.
+            if ($priceChanged) {
+                $product->batches()->withStock()->update(['sale_price' => $validated['sale_price']]);
+            }
+        });
 
         return redirect()->route('products.index')->with('success', 'Producto actualizado exitosamente.');
     }
@@ -172,6 +181,12 @@ class ProductController extends Controller
                    || $product->saleProducts()->exists()
                    || $product->jobProducts()->exists()
                    || $product->batches()->exists();
+
+        // Desactivarlo escondería esas unidades de ventas, trabajos y del valor del inventario.
+        if ($product->stock > 0) {
+            return redirect()->route('products.index')->with('error',
+                "«{$product->name}» todavía tiene {$product->stock} unidades. Sácalas con un ajuste de inventario antes de desactivarlo.");
+        }
 
         if ($hasHistory) {
             $product->delete(); // soft delete

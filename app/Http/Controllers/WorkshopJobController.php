@@ -47,7 +47,8 @@ class WorkshopJobController extends Controller
         $validated = $request->validate($this->jobRules($branchId) + [
             'vehicle_info' => 'required|string|max:255',
             'customer_name' => 'required|string|max:255',
-            'customer_phone' => 'nullable|string|max:20',
+            // Igual que en la orden: si no, la orden creada aquí no se puede editar después.
+            'customer_phone' => 'nullable|digits:10',
         ]);
 
         try {

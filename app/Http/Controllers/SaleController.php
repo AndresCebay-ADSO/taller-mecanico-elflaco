@@ -6,6 +6,7 @@ use App\Exceptions\BusinessRuleException;
 use App\Exceptions\InsufficientStockException;
 use App\Models\Sale;
 use App\Services\InventoryService;
+use App\Services\CashService;
 use App\Services\SaleService;
 use App\Support\PaymentMethod;
 use Illuminate\Http\Request;
@@ -104,7 +105,7 @@ class SaleController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request, SaleService $saleService)
+    public function store(Request $request, SaleService $saleService, CashService $cashService)
     {
         $branchId = $this->requireCurrentBranchId();
 
@@ -144,7 +145,9 @@ class SaleController extends Controller
             session()->flash('show_low_stock_toast', true);
         }
 
-        return redirect()->route('sales.index')->with('success', 'Venta registrada y stock descontado.');
+        return redirect()->route('sales.index')
+            ->with('success', 'Venta registrada y stock descontado.')
+            ->with('warning', $cashService->closedDayNotice($branchId, $result['sale']->sale_date, $result['sale']->payment_method, 'La venta', false));
     }
 
     /**
@@ -164,7 +167,7 @@ class SaleController extends Controller
     /**
      * Cancel the specified sale and return its stock to the original batches.
      */
-    public function cancel(Sale $sale, SaleService $saleService)
+    public function cancel(Sale $sale, SaleService $saleService, CashService $cashService)
     {
         $this->ensureCurrentBranch($sale->branch_id);
 
@@ -172,6 +175,8 @@ class SaleController extends Controller
             return back()->with('error', 'Esta venta ya ha sido anulada.');
         }
 
-        return redirect()->route('sales.index')->with('success', 'Venta anulada y stock devuelto.');
+        return redirect()->route('sales.index')
+            ->with('success', 'Venta anulada y stock devuelto.')
+            ->with('warning', $cashService->closedDayNotice($sale->branch_id, $sale->sale_date, $sale->payment_method, "La venta #{$sale->id}", true));
     }
 }

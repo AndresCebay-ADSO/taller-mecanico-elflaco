@@ -6,6 +6,7 @@ use App\Exceptions\BusinessRuleException;
 use App\Models\Batch;
 use App\Models\InventoryMovement;
 use App\Models\Product;
+use App\Services\CashService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -14,9 +15,12 @@ class BatchController extends Controller
     /**
      * Corrige proveedor, precios y (si el lote no se ha usado) la cantidad de un lote de compra.
      */
-    public function update(Request $request, Batch $batch)
+    public function update(Request $request, Batch $batch, CashService $cashService)
     {
         $this->ensureCurrentBranch(Product::withTrashed()->find($batch->product_id)?->branch_id);
+
+        // Solo se corrigen lotes de compra: los de ajustes, devoluciones o transferencias salen de otros registros.
+        abort_unless(InventoryMovement::where('batch_id', $batch->id)->where('movement_type', 'purchase')->exists(), 404);
 
         $validated = $request->validate([
             'supplier_id' => 'required|exists:suppliers,id',
@@ -27,7 +31,7 @@ class BatchController extends Controller
         ]);
 
         try {
-            DB::transaction(function () use ($validated, $batch) {
+            DB::transaction(function () use ($validated, $batch, $cashService) {
                 $lockedBatch = Batch::whereKey($batch->id)->lockForUpdate()->firstOrFail();
                 $product = Product::withTrashed()->whereKey($lockedBatch->product_id)->lockForUpdate()->firstOrFail();
 
@@ -69,6 +73,9 @@ class BatchController extends Controller
 
                     $movement->save();
                 }
+
+                // Si la compra se pagó con la caja, la salida de caja queda con el valor corregido.
+                $cashService->syncPurchase($lockedBatch);
             });
         } catch (BusinessRuleException $exception) {
             return redirect()->route('inventory.index')->with('error', $exception->getMessage());
