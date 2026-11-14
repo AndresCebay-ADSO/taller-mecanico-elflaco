@@ -3,6 +3,7 @@
 use App\Http\Controllers\BatchController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\BranchTransferController;
+use App\Http\Controllers\CashController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\InvoiceController;
@@ -63,6 +64,15 @@ Route::middleware('auth')->group(function () {
     Route::resource('invoices', InvoiceController::class)->only(['index', 'show']);
     Route::post('invoices/generate/{serviceOrder}', [InvoiceController::class, 'generateFromServiceOrder'])->name('invoices.generate');
 
+    // Caja diaria: base, gastos y pagos, cierre e historial.
+    Route::prefix('cash')->name('cash.')->group(function () {
+        Route::get('/', [CashController::class, 'index'])->name('index');
+        Route::get('/history', [CashController::class, 'history'])->name('history');
+        Route::put('/opening', [CashController::class, 'updateOpening'])->name('opening');
+        Route::post('/movements', [CashController::class, 'storeMovement'])->name('movements.store');
+        Route::post('/close', [CashController::class, 'close'])->name('close');
+    });
+
     // Documentos imprimibles (página aparte, tamaño carta) y logo del taller.
     Route::get('invoices/{invoice}/print', [DocumentController::class, 'invoice'])->name('documents.invoice');
     Route::get('sales/{sale}/print', [DocumentController::class, 'sale'])->name('documents.sale');
@@ -90,6 +100,10 @@ Route::middleware('auth')->group(function () {
 
         Route::post('sales/{sale}/cancel', [SaleController::class, 'cancel'])->name('sales.cancel');
         Route::post('invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('invoices.cancel');
+
+        // Caja: borrar un movimiento o reabrir un día cerrado cambia cifras ya revisadas.
+        Route::delete('cash/movements/{movement}', [CashController::class, 'destroyMovement'])->name('cash.movements.destroy');
+        Route::post('cash/{cashDay}/reopen', [CashController::class, 'reopen'])->name('cash.reopen');
 
         // Usuarios
         Route::resource('users', UserController::class)->except(['show', 'destroy']);

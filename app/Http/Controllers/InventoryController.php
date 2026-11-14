@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\BusinessRuleException;
 use App\Exceptions\InsufficientStockException;
 use App\Models\InventoryMovement;
 use App\Models\Product;
 use App\Models\Supplier;
+use App\Services\CashService;
 use App\Services\InventoryService;
+use App\Support\PaymentMethod;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use RuntimeException;
 
@@ -69,7 +73,7 @@ class InventoryController extends Controller
         return view('inventory.purchase', compact('products', 'suppliers'));
     }
 
-    public function storePurchase(Request $request, InventoryService $inventoryService)
+    public function storePurchase(Request $request, InventoryService $inventoryService, CashService $cashService)
     {
         $branchId = $this->requireCurrentBranchId();
 
@@ -93,22 +97,38 @@ class InventoryController extends Controller
             'sale_price' => 'nullable|numeric|min:0|max:99999999',
             'reference' => 'nullable|string|max:255',
             'notes' => 'nullable|string|max:1000',
+            'cash_payment' => 'required|in:none,' . implode(',', PaymentMethod::ALL),
+        ], [
+            'cash_payment.required' => 'Indica si la compra se pagó con la plata de la caja.',
         ]);
 
         $product = Product::forBranch($branchId)->findOrFail($validated['product_id']);
 
-        $inventoryService->registerPurchaseBatch([
-            'product_id' => $product->id,
-            'supplier_id' => $validated['supplier_id'],
-            'quantity' => $validated['quantity'],
-            'cost_price' => $validated['unit_price'],
-            'sale_price' => $validated['sale_price'] ?? $product->sale_price,
-            'reference' => $validated['reference'] ?? null,
-            'notes' => $validated['notes'] ?? null,
-            'purchased_at' => now(),
-        ]);
+        // La compra y su salida de caja van juntas: si la caja de hoy ya está cerrada, no se registra ninguna.
+        try {
+            DB::transaction(function () use ($inventoryService, $cashService, $validated, $product, $branchId) {
+                $batch = $inventoryService->registerPurchaseBatch([
+                    'product_id' => $product->id,
+                    'supplier_id' => $validated['supplier_id'],
+                    'quantity' => $validated['quantity'],
+                    'cost_price' => $validated['unit_price'],
+                    'sale_price' => $validated['sale_price'] ?? $product->sale_price,
+                    'reference' => $validated['reference'] ?? null,
+                    'notes' => $validated['notes'] ?? null,
+                    'purchased_at' => now(),
+                ]);
 
-        return redirect()->route('inventory.index')->with('success', 'Compra registrada y stock actualizado.');
+                if ($validated['cash_payment'] !== 'none' && (float) $batch->cost_price * $batch->quantity > 0) {
+                    $cashService->recordPurchase($branchId, $batch, $validated['cash_payment'], auth()->id());
+                }
+            });
+        } catch (BusinessRuleException $exception) {
+            return back()->withInput()->with('error', $exception->getMessage() . ' Reábrela o registra la compra como pagada con otra plata.');
+        }
+
+        return redirect()->route('inventory.index')->with('success', $validated['cash_payment'] === 'none'
+            ? 'Compra registrada y stock actualizado.'
+            : 'Compra registrada, stock actualizado y descontada de la caja de hoy.');
     }
 
     public function createAdjustment()

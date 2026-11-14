@@ -123,7 +123,7 @@ Genera 60 días de operación de un taller de motos con dos sedes: catálogo de 
 4. **Órdenes canceladas**: hoy los repuestos vuelven al inventario y no se permite cancelar si ya hay trabajos completados. ¿Es así como trabajan o esos repuestos se cobran?
 5. **Reportes**: ¿la cajera debe ver ganancias y comisiones, o solo el dueño?
 6. **Pagos de órdenes**: ¿necesitan registrar método de pago, abonos o saldo pendiente en las facturas de taller? *Hecho 2026-11-14: el comprobante de servicio pide el método de pago (mismas opciones que la venta) y el dashboard y los reportes suman ambos. Abonos y saldo: no por ahora.*
-7. **Cierre de caja** diario por cajero y por método de pago: ¿lo necesitan?
+7. **Cierre de caja** diario por cajero y por método de pago: ¿lo necesitan? *Hecho 2026-11-14 (menú Caja): base, gastos, pagos a mecánicos, compras pagadas desde la caja, retiros, cierre con efectivo contado e historial. Por sucursal y día, no por cajero.*
 8. **Comisiones**: ¿son correctos los porcentajes y montos fijos por tipo de trabajo?
 9. **Clientes y motos**: ¿quieren historial por placa o por cliente?
 10. **Impresión**: ¿impresora de tickets (80 mm) o carta? *Hoy no tienen impresora: se imprime en carta o se guarda en PDF. El formato térmico se hace cuando la compren (depende del ancho, 58 u 80 mm).*

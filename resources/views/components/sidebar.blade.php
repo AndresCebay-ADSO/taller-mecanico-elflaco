@@ -70,6 +70,10 @@
             Facturas
         </x-sidebar-link>
 
+        <x-sidebar-link href="{{ route('cash.index') }}" icon="wallet" :active="request()->routeIs('cash*')">
+            Caja
+        </x-sidebar-link>
+
         <x-sidebar-link href="{{ route('products.index') }}" icon="package" :active="request()->routeIs('products*')">
             Inventario
         </x-sidebar-link>

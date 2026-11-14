@@ -55,6 +55,19 @@
             </div>
         </x-card>
 
+        <x-card title="Pago">
+            <div class="max-w-md">
+                <x-select label="¿Se pagó con la plata de la caja de hoy?" name="cash_payment" required
+                          help="Si se pagó desde la caja, queda como salida en la caja de hoy. Si es a crédito o con otra plata, no.">
+                    <option value="">Elige…</option>
+                    <option value="none" @selected(old('cash_payment') === 'none')>No: a crédito o con otra plata</option>
+                    @foreach(\App\Support\PaymentMethod::ALL as $method)
+                        <option value="{{ $method }}" @selected(old('cash_payment') === $method)>Sí, en {{ mb_strtolower($method) }}</option>
+                    @endforeach
+                </x-select>
+            </div>
+        </x-card>
+
         <x-card title="Soporte">
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <x-input label="Referencia" name="reference" placeholder="Ej.: factura del proveedor FAC-123" maxlength="255" />
