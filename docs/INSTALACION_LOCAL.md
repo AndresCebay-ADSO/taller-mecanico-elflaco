@@ -257,6 +257,7 @@ Si `git pull` se queja de cambios locales, **no** forzar: revisar con `git statu
 - [ ] `php artisan taller:verificar` sin errores.
 - [ ] Reiniciar el portátil: Apache y MySQL arrancan solos; el acceso directo abre el login.
 - [ ] Entrar con el administrador y **cambiar la contraseña** desde *Perfil* junto con el cliente.
+- [ ] Borrar la línea `ADMIN_PASSWORD` del `.env` y correr `php artisan config:cache`: ya no se usa y deja una contraseña escrita en el disco.
 - [ ] Registrar una venta de prueba, una orden con un trabajo y su factura; imprimir la factura. Luego anularlas.
 - [ ] `respaldo.bat` a mano: «Listo» y el `.zip` en Google Drive. Tarea programada instalada.
 - [ ] Restauración probada con `restaurar.bat` sobre una base de práctica.
@@ -278,6 +279,7 @@ Si `git pull` se queja de cambios locales, **no** forzar: revisar con `git statu
 | Ventas de la noche con fecha de mañana | Zona horaria distinta de `America/Bogota` | `APP_TIMEZONE=America/Bogota`. Los datos creados antes del 2026-09 están en UTC. |
 | Un cálculo da distinto en MySQL que en las pruebas | MySQL devuelve `SUM()` como texto (`'2'`); SQLite como número | Nunca comparar sumas con `===`; convertir con `(int)` / `(float)`. |
 | Error 500 sin detalle | `APP_DEBUG=false` (correcto en el cliente) | Ver `storage\logs\laravel-AAAA-MM-DD.log`. |
+| Olvidó la contraseña | El sistema no envía correos | `php artisan taller:restablecer-clave correo@del-usuario` muestra una temporal; que la cambie en *Perfil*. Volver a correr `db:seed` **no** la cambia. |
 | «Permission denied» en `storage` | Carpeta copiada desde otro usuario | Dar permiso de escritura en `storage\` y `bootstrap\cache\`. |
 | Apache no arranca | Puerto 80 ocupado (IIS, Skype, «Servicio de publicación World Wide Web») | Detener ese servicio o cambiar `Listen 80` en `httpd.conf`. |
 | MySQL no arranca | Puerto 3306 ocupado por otro MySQL instalado | Detener el otro servicio o cambiar el puerto (y `DB_PORT`). |

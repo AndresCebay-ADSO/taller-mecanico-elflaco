@@ -11,10 +11,20 @@ class AdminSeeder extends Seeder
 {
     /**
      * Crea el usuario administrador inicial del sistema.
+     *
+     * Si ya existe no lo toca: volver a correr los seeders no debe cambiarle la contraseña a nadie.
+     * Para una contraseña olvidada está `php artisan taller:restablecer-clave`.
      */
     public function run(): void
     {
         $email = config('auth.admin.email', 'admin@tallerflacos.com');
+
+        if (User::where('email', $email)->exists()) {
+            $this->command?->info("El administrador {$email} ya existe: no se cambió.");
+
+            return;
+        }
+
         $password = config('auth.admin.password');
         $generatedPassword = false;
 
@@ -23,14 +33,12 @@ class AdminSeeder extends Seeder
             $generatedPassword = true;
         }
 
-        User::updateOrCreate(
-            ['email' => $email],
-            [
-                'name' => config('auth.admin.name', 'Administrador'),
-                'password' => Hash::make($password),
-                'is_admin' => true,
-            ]
-        );
+        $user = User::create([
+            'name' => config('auth.admin.name', 'Administrador'),
+            'email' => $email,
+            'password' => Hash::make($password),
+        ]);
+        $user->forceFill(['is_admin' => true, 'is_active' => true])->save();
 
         $message = "Usuario admin listo: {$email}";
 
