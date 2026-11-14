@@ -2,10 +2,9 @@
 
 use App\Models\Product;
 use App\Models\Supplier;
-use App\Models\User;
 
 it('does not allow direct stock changes from the product edit endpoint', function () {
-    $user = User::factory()->create();
+    [$user, $branch] = branchUser();
 
     $supplier = Supplier::create([
         'name' => 'Proveedor Central',
@@ -22,11 +21,13 @@ it('does not allow direct stock changes from the product edit endpoint', functio
         'sale_price' => 160,
         'stock' => 8,
         'min_stock' => 2,
+        'branch_id' => $branch->id,
     ]);
 
     $product->suppliers()->sync([$supplier->id]);
 
     $this->actingAs($user)
+        ->withSession(['current_branch_id' => $branch->id])
         ->put(route('products.update', $product), [
             'name' => 'Kit arrastre premium',
             'category' => 'Repuestos',

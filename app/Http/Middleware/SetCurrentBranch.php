@@ -2,31 +2,44 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\Branch;
 use App\Services\BranchService;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 class SetCurrentBranch
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (!auth()->check()) {
+        $user = $request->user();
+
+        if (!$user) {
             return $next($request);
         }
 
-        $branchService = app(BranchService::class);
+        // Un usuario desactivado pierde la sesion en su siguiente peticion.
+        if ($user->is_active === false) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
 
-        if (!$branchService->getCurrentBranch()) {
-            $availableBranches = $branchService->getAvailableBranches();
-
-            if ($availableBranches->isNotEmpty()) {
-                $branchService->setCurrentBranch($availableBranches->first()->id);
-            }
+            return redirect()->route('login')->withErrors([
+                'email' => 'Tu usuario esta desactivado. Contacta al administrador.',
+            ]);
         }
 
-        view()->share('currentBranch', $branchService->getCurrentBranch());
+        $branchService = app(BranchService::class);
+        $availableBranches = $branchService->getAvailableBranches();
+
+        if (!$branchService->getCurrentBranch() && $availableBranches->isNotEmpty()) {
+            $branchService->setCurrentBranch($availableBranches->first()->id);
+        }
+
+        view()->share([
+            'currentBranch' => $branchService->getCurrentBranch(),
+            'availableBranches' => $availableBranches,
+        ]);
 
         return $next($request);
     }

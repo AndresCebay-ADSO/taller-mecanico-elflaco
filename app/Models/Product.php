@@ -20,6 +20,31 @@ class Product extends Model
         'upc',
     ];
 
+    public function isLowStock(): bool
+    {
+        return $this->stock <= $this->min_stock;
+    }
+
+    /** Estado del stock: «Agotado», «Stock bajo» o «Normal» (DESIGN.md §3). */
+    public function stockLabel(): string
+    {
+        return match (true) {
+            $this->stock <= 0 => 'Agotado',
+            $this->isLowStock() => 'Stock bajo',
+            default => 'Normal',
+        };
+    }
+
+    public function stockTone(): string
+    {
+        return match (true) {
+            $this->trashed() => 'neutral',
+            $this->stock <= 0 => 'danger',
+            $this->isLowStock() => 'warning',
+            default => 'neutral',
+        };
+    }
+
     /**
      * Get the last supplier from the most recent batch.
      */
@@ -88,11 +113,6 @@ class Product extends Model
         return $this->hasMany(InventoryMovement::class);
     }
 
-    public function productPurchases()
-    {
-        return $this->hasMany(ProductPurchase::class);
-    }
-
     public function batches()
     {
         return $this->hasMany(Batch::class);
@@ -108,6 +128,8 @@ class Product extends Model
         if ($branchId) {
             return $query->where('branch_id', $branchId);
         }
-        return $query;
+        
+        // Block leaking if branch is not explicitly passed or set
+        return $query->whereRaw('1 = 0');
     }
 }

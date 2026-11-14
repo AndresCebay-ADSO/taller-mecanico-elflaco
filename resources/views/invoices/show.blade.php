@@ -1,69 +1,122 @@
+@php
+    $order = $invoice->serviceOrder;
+    $jobs = $order->workshopJobs->where('status', '!=', 'cancelled');
+    $laborTotal = $jobs->sum('total_amount');
+    $partsTotal = $jobs->sum(fn ($job) => $job->jobProducts->sum('total_price'));
+    $orderNumber = '#' . str_pad($order->id, 4, '0', STR_PAD_LEFT);
+@endphp
+
 <x-app-layout>
-    <x-page-header title="Detalle de Factura {{ $invoice->invoice_number }}" subtitle="Información técnica y financiera de la factura.">
-        <x-slot name="actions">
-            <x-button variant="outline" onclick="window.location.href='{{ route('invoices.index') }}'">
-                <i data-lucide="arrow-left" class="mr-2 h-4 w-4"></i>
-                Volver
-            </x-button>
-            <x-button variant="primary">
-                <i data-lucide="download" class="mr-2 h-4 w-4"></i>
-                Descargar PDF
-            </x-button>
-        </x-slot>
-    </x-page-header>
-
-    <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        <div class="lg:col-span-2">
-            <x-card>
-                <div class="flex justify-between items-start mb-8">
-                    <div>
-                        <h2 class="text-3xl font-bold text-slate-900 leading-none">FACTURA</h2>
-                        <p class="text-slate-500 mt-2 font-mono">{{ $invoice->invoice_number }}</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Fecha de Emisión</p>
-                        <p class="text-lg font-bold text-slate-900">{{ \Carbon\Carbon::parse($invoice->invoice_date)->format('d/m/Y') }}</p>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-8 mb-8 pt-8 border-t border-slate-100">
-                    <div>
-                        <p class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Asociado a Orden</p>
-                        <p class="text-slate-900 font-bold text-lg">Orden #{{ str_pad($invoice->service_order_id, 4, '0', STR_PAD_LEFT) }}</p>
-                        <a href="{{ route('service-orders.show', $invoice->service_order_id) }}" class="text-blue-600 text-sm hover:underline">Ver detalles de la orden</a>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Estado</p>
-                        <x-badge variant="blue" class="text-sm px-4 py-1">EMITIDA</x-badge>
-                    </div>
-                </div>
-
-                <div class="mt-12 pt-8 border-t border-slate-100">
-                    <div class="flex justify-between items-center bg-slate-50 p-6 rounded-2xl">
-                        <span class="text-xl font-bold text-slate-700">TOTAL A PAGAR</span>
-                        <span class="text-3xl font-black text-slate-900">${{ number_format($invoice->amount, 2) }}</span>
-                    </div>
-                </div>
-            </x-card>
-        </div>
-
-        <div class="space-y-6">
-            <x-card>
-                <x-slot name="header">
-                    <h3 class="font-bold text-slate-900">Historial de Pagos</h3>
-                </x-slot>
-                <div class="space-y-4">
-                    <div class="flex items-center gap-3">
-                        <div class="h-8 w-8 rounded-full bg-emerald-50 flex items-center justify-center">
-                            <i data-lucide="check" class="h-4 w-4 text-emerald-600"></i>
-                        </div>
-                        <div>
-                            <p class="text-sm font-bold text-slate-900">Pago registrado</p>
-                            <p class="text-xs text-slate-500">{{ \Carbon\Carbon::parse($invoice->invoice_date)->format('d/m/Y') }}</p>
-                        </div>
-                    </div>
-                </div>
-            </x-card>
-        </div>
+<div class="ds">
+    <div class="no-print">
+        <x-page-header :title="'Factura ' . $invoice->invoice_number"
+                       :subtitle="'Orden ' . $orderNumber . ' · ' . $order->customer_name"
+                       :back="route('invoices.index')" back-label="Facturas">
+            <x-slot name="badge">
+                <x-status-badge :tone="$invoice->statusTone()">{{ $invoice->statusLabel() }}</x-status-badge>
+            </x-slot>
+            <x-slot name="actions">
+                <x-button variant="secondary" href="{{ route('service-orders.show', $order) }}">Ver orden</x-button>
+                @if(! $invoice->isCancelled() && auth()->user()->can('admin'))
+                    <form action="{{ route('invoices.cancel', $invoice) }}" method="POST"
+                          data-confirm="¿Anular la factura {{ $invoice->invoice_number }}?"
+                          data-confirm-description="Queda registrada como anulada y la orden se puede facturar de nuevo con el siguiente número."
+                          data-confirm-label="Anular factura"
+                          data-confirm-destructive>
+                        @csrf
+                        <x-button type="submit" variant="secondary" class="!text-destructive-text">Anular</x-button>
+                    </form>
+                @endif
+                <x-button href="{{ route('documents.invoice', ['invoice' => $invoice, 'auto' => 1]) }}" target="_blank">
+                    <i data-lucide="printer" class="size-4"></i>
+                    Imprimir
+                </x-button>
+            </x-slot>
+        </x-page-header>
     </div>
+
+    @if($invoice->isCancelled())
+        <div class="mx-auto mb-6 flex max-w-4xl items-start gap-3 rounded-lg border px-4 py-3 text-sm {{ \App\Support\Tone::alert('danger') }}">
+            <i data-lucide="ban" class="mt-0.5 size-4 shrink-0"></i>
+            <div>
+                <p class="font-semibold">Factura anulada</p>
+                <p class="mt-0.5">
+                    El {{ $invoice->cancelled_at->format('d/m/Y h:i a') }}{{ $invoice->cancelledBy ? ' por ' . $invoice->cancelledBy->name : '' }}. No tiene validez como comprobante.
+                </p>
+            </div>
+        </div>
+    @endif
+
+    {{-- Vista en pantalla. Lo impreso sale de documents/invoice (botón «Imprimir»). --}}
+    <article class="mx-auto max-w-4xl rounded-lg border border-border bg-card p-6 shadow-xs md:p-10">
+        <header class="flex flex-col gap-6 border-b border-border pb-6 md:flex-row md:items-start md:justify-between">
+            <div>
+                <h2 class="text-xl font-semibold">{{ $settings['workshop_name'] ?? config('app.name') }}</h2>
+                <div class="mt-2 space-y-0.5 text-sm text-muted-foreground">
+                    @if(!empty($settings['workshop_nit']))
+                        <p>NIT {{ $settings['workshop_nit'] }}</p>
+                    @endif
+                    @if($order->branch)
+                        <p>{{ $order->branch->name }}{{ $order->branch->address ? ' · ' . $order->branch->address : '' }}</p>
+                    @endif
+                    @if(!empty($settings['workshop_phone']))
+                        <p>Tel. {{ $settings['workshop_phone'] }}</p>
+                    @endif
+                    @if(!empty($settings['workshop_email']))
+                        <p>{{ $settings['workshop_email'] }}</p>
+                    @endif
+                </div>
+            </div>
+            <div class="md:text-right">
+                <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">Factura de servicio</p>
+                <p class="mt-1 font-mono text-xl font-semibold">{{ $invoice->invoice_number }}</p>
+                <dl class="mt-2 space-y-0.5 text-sm">
+                    <div><dt class="inline text-muted-foreground">Fecha:</dt> <dd class="inline tabular-nums">{{ $invoice->invoice_date->format('d/m/Y') }}</dd></div>
+                    <div><dt class="inline text-muted-foreground">Orden:</dt> <dd class="inline font-mono">{{ $orderNumber }}</dd></div>
+                    <div><dt class="inline text-muted-foreground">Pago:</dt> <dd class="inline">{{ $invoice->paymentMethodLabel() }}</dd></div>
+                </dl>
+            </div>
+        </header>
+
+        <section class="grid grid-cols-1 gap-6 border-b border-border py-6 md:grid-cols-2">
+            <div>
+                <p class="text-xs font-medium text-muted-foreground">Cliente</p>
+                <p class="mt-1 font-medium">{{ $order->customer_name }}</p>
+                <p class="text-sm tabular-nums text-muted-foreground">{{ $order->customer_phone ?: 'Sin teléfono' }}</p>
+            </div>
+            <div>
+                <p class="text-xs font-medium text-muted-foreground">Vehículo</p>
+                <p class="mt-1 font-medium">{{ $order->vehicle_info }}</p>
+                <p class="text-sm text-muted-foreground">{{ \Illuminate\Support\Str::limit($order->service_description, 140) }}</p>
+            </div>
+        </section>
+
+        <div class="overflow-x-auto py-6">
+            <x-document.job-lines :jobs="$jobs" />
+        </div>
+
+        <div class="flex justify-end border-t border-border pt-6">
+            <dl class="w-full max-w-xs space-y-2 text-sm">
+                <div class="flex justify-between">
+                    <dt class="text-muted-foreground">Mano de obra</dt>
+                    <dd class="tabular-nums">{{ money($laborTotal) }}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-muted-foreground">Repuestos</dt>
+                    <dd class="tabular-nums">{{ money($partsTotal) }}</dd>
+                </div>
+                <div class="flex items-baseline justify-between border-t border-border pt-3">
+                    <dt class="font-medium">Total</dt>
+                    <dd @class(['text-2xl font-semibold tabular-nums', 'line-through' => $invoice->isCancelled()])>{{ money($invoice->amount) }}</dd>
+                </div>
+            </dl>
+        </div>
+
+        @if(!empty($settings['footer_text_invoice']))
+            <p class="mt-8 border-t border-dashed border-border pt-6 text-center text-xs text-muted-foreground">
+                {{ $settings['footer_text_invoice'] }}
+            </p>
+        @endif
+    </article>
+</div>
 </x-app-layout>

@@ -41,11 +41,35 @@ class Sale extends Model
         if ($branchId) {
             return $query->where('branch_id', $branchId);
         }
-        return $query;
+        
+        return $query->whereRaw('1 = 0');
     }
 
     public function getTotalItemsAttribute()
     {
         return $this->saleProducts->sum('quantity');
+    }
+
+    public function isCancelled(): bool
+    {
+        return $this->status === 'anulada';
+    }
+
+    public function statusLabel(): string
+    {
+        return $this->isCancelled() ? 'Anulada' : 'Completada';
+    }
+
+    /** Tono de la píldora de estado (DESIGN.md §3). */
+    public function statusTone(): string
+    {
+        // Lo normal (completada) va sin color; solo la anulada resalta.
+        return $this->isCancelled() ? 'danger' : 'neutral';
+    }
+
+    /** Número visible de la venta: #S0042. */
+    public function displayNumber(): string
+    {
+        return '#S' . str_pad((string) $this->id, 4, '0', STR_PAD_LEFT);
     }
 }

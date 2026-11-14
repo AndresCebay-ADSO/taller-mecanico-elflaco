@@ -2,30 +2,34 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\BusinessRuleException;
+use App\Exceptions\InsufficientStockException;
+use App\Models\Sale;
+use App\Services\InventoryService;
+use App\Services\SaleService;
+use App\Support\PaymentMethod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Models\Product;
-use App\Models\Sale;
-use App\Services\BranchService;
+use Illuminate\Validation\Rule;
 
 class SaleController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request, BranchService $branchService)
+    public function index(Request $request)
     {
-        $branchId = $branchService->getCurrentBranch()?->id;
+        $branchId = $this->currentBranchId();
         $request->validate([
             'search' => 'nullable|string|max:255',
-            'payment_method' => 'nullable|string|in:Efectivo,Nequi,Daviplata,Transferencia,Tarjeta,Otro',
+            'payment_method' => 'nullable|string|' . PaymentMethod::rule(),
             'status' => 'nullable|string|in:completada,anulada',
             'date_start' => 'nullable|date',
             'date_end' => 'nullable|date|after_or_equal:date_start',
         ]);
 
-        $query = Sale::with(['saleProducts' => function($query) {
-            $query->with(['product' => function($q) {
+        $query = Sale::with(['saleProducts' => function ($query) {
+            $query->with(['product' => function ($q) {
                 $q->withTrashed();
             }]);
         }, 'user'])->forBranch($branchId);
@@ -90,24 +94,30 @@ class SaleController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create(BranchService $branchService)
+    public function create(InventoryService $inventoryService)
     {
-        $branchId = $branchService->getCurrentBranch()?->id;
-        $products = Product::forBranch($branchId)->where('stock', '>', 0)->get();
+        $products = $inventoryService->sellableProducts($this->currentBranchId());
+
         return view('sales.create', compact('products'));
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request, BranchService $branchService)
+    public function store(Request $request, SaleService $saleService)
     {
+        $branchId = $this->requireCurrentBranchId();
+
         $validated = $request->validate([
             'customer_name'       => 'nullable|string|max:255',
-            'payment_method'      => 'required|string|in:Efectivo,Nequi,Daviplata,Transferencia,Tarjeta,Otro',
+            'payment_method'      => 'required|string|' . PaymentMethod::rule(),
             'products'            => 'required|array|min:1',
-            'products.*.id'       => 'required|distinct|exists:products,id',
-            'products.*.quantity' => 'required|integer|min:1',
+            'products.*.id'       => [
+                'required',
+                'distinct',
+                Rule::exists('products', 'id')->where('branch_id', $branchId)->whereNull('deleted_at'),
+            ],
+            'products.*.quantity' => 'required|integer|min:1|max:100000',
         ], [
             'products.required'            => 'Debes agregar al menos un producto.',
             'products.*.id.required'       => 'Selecciona un producto en cada fila.',
@@ -119,98 +129,18 @@ class SaleController extends Controller
         ]);
 
         try {
-
-            $hasLowStock = false;
-
-            DB::transaction(function () use ($validated, &$hasLowStock, $branchService) {
-
-                $productData = [];
-
-                foreach ($validated['products'] as $index => $item) {
-
-                    $id  = $item['id'];
-                    $qty = $item['quantity'];
-
-                    if (!isset($productData[$id])) {
-                        $productData[$id] = [
-                            'quantity' => 0,
-                            'index' => $index
-                        ];
-                    }
-
-                    $productData[$id]['quantity'] += $qty;
-                }
-
-                $sale = Sale::create([
-                    'customer_name'  => $validated['customer_name'] ?? 'Venta Mostrador',
-                    'total_amount'   => 0,
-                    'branch_id'      => $branchService->getCurrentBranch()?->id,
-                    'sale_date'      => now(),
-                    'payment_method' => $validated['payment_method'],
-                    'user_id'        => auth()->id(),
-                    'status'         => 'completada',
-                ]);
-
-                $totalSaleAmount = 0;
-
-                foreach ($productData as $productId => $data) {
-
-                    $quantity = $data['quantity'];
-                    $index    = $data['index'];
-
-                    $product = Product::where('id', $productId)
-                        ->where('branch_id', $branchService->getCurrentBranch()?->id)
-                        ->lockForUpdate()
-                        ->firstOrFail();
-
-                    if ($product->stock < $quantity) {
-
-                        throw new \Illuminate\Validation\ValidationException(
-                            validator([], []),
-                            back()->withErrors([
-                                "products.$index.quantity" =>
-                                "Stock insuficiente para {$product->name}. Disponible: {$product->stock} unidades."
-                            ])->withInput()
-                        );
-
-                    }
-
-                    // Descontar stock FIFO — retorna un tramo por cada lote consumido (Opción A)
-                    $inventoryService = app(\App\Services\InventoryService::class);
-                    $tramos = $inventoryService->deductStock($product->id, $quantity, "Venta #{$sale->id}");
-
-                    // Crear una línea en la venta por cada tramo (lote) consumido
-                    foreach ($tramos as $tramo) {
-                        $tramoTotal       = $tramo['unit_price'] * $tramo['quantity'];
-                        $totalSaleAmount += $tramoTotal;
-
-                        $sale->saleProducts()->create([
-                            'product_id'  => $product->id,
-                            'quantity'    => $tramo['quantity'],
-                            'unit_price'  => $tramo['unit_price'],
-                            'total_price' => $tramoTotal,
-                        ]);
-                    }
-
-                    $product->refresh();
-                    if ($product->stock <= $product->min_stock) {
-                        $hasLowStock = true;
-                    }
-                }
-
-                $sale->update([
-                    'total_amount' => $totalSaleAmount
-                ]);
-
-            });
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
-
-            return $e->getResponse();
-
+            $result = $saleService->create(
+                $branchId,
+                auth()->id(),
+                $validated['customer_name'] ?? null,
+                $validated['payment_method'],
+                $validated['products']
+            );
+        } catch (InsufficientStockException|BusinessRuleException $exception) {
+            return back()->withErrors(['products' => $exception->getMessage()])->withInput();
         }
 
-        if ($hasLowStock) {
+        if ($result['low_stock']) {
             session()->flash('show_low_stock_toast', true);
         }
 
@@ -222,7 +152,9 @@ class SaleController extends Controller
      */
     public function show(Sale $sale)
     {
-        $sale->load(['saleProducts.product' => function($q) {
+        $this->ensureCurrentBranch($sale->branch_id);
+
+        $sale->load(['saleProducts.product' => function ($q) {
             $q->withTrashed();
         }]);
 
@@ -230,65 +162,15 @@ class SaleController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Cancel the specified sale and return its stock to the original batches.
      */
-    public function edit(Sale $sale)
+    public function cancel(Sale $sale, SaleService $saleService)
     {
-        return view('sales.edit', compact('sale'));
-    }
+        $this->ensureCurrentBranch($sale->branch_id);
 
-    /**
-     * Update the specified resource in storage.
-     * Fix A03: Blocked direct total_amount edits to preserve financial traceability.
-     */
-    public function update(Request $request, Sale $sale)
-    {
-        if ($sale->status === 'anulada') {
-            return back()->with('error', 'No se puede editar una venta anulada.');
-        }
-
-        abort(403, 'Las ventas completadas no pueden editarse directamente. Use Anular para corregir errores.');
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     * Deshabilitado para preservar trazabilidad de stock
-     */
-    public function destroy(Sale $sale)
-    {
-        abort(403, 'Las ventas no pueden eliminarse directamente. Use Anular para revertir el stock.');
-    }
-
-    /**
-     * Cancel the specified resource.
-     */
-    public function cancel(Sale $sale)
-    {
-        if ($sale->status === 'anulada') {
+        if (!$saleService->cancel($sale)) {
             return back()->with('error', 'Esta venta ya ha sido anulada.');
         }
-
-        DB::transaction(function () use ($sale) {
-
-            $sale->update([
-                'status' => 'anulada'
-            ]);
-
-            // ANTES:
-            /*
-            foreach ($sale->saleProducts as $item) {
-                $item->product->reverseStock(
-                    $item->quantity,
-                    "Anulación Venta #{$sale->id}"
-                );
-            }
-            */
-
-            // DESPUÉS:
-            $inventoryService = app(\App\Services\InventoryService::class);
-            $inventoryService->reverseStockFromSale($sale->id);
-
-        });
 
         return redirect()->route('sales.index')->with('success', 'Venta anulada y stock devuelto.');
     }

@@ -1,84 +1,51 @@
 <x-app-layout>
-    <x-page-header title="Editar Producto" subtitle="Modifica la informacion de {{ $product->name }}.">
-        <x-slot name="actions">
-            <x-button variant="outline" onclick="window.location.href='{{ route('products.index') }}'">
-                Cancelar
-            </x-button>
-        </x-slot>
-    </x-page-header>
+<div class="ds mx-auto max-w-3xl">
+    <x-page-header :title="'Editar ' . $product->name"
+                   :back="route('products.show', $product)" :back-label="$product->name" />
 
-    <div class="max-w-4xl">
-        <x-card>
-            <form action="{{ route('products.update', $product) }}" method="POST" class="space-y-6"
-                x-data="{
-                    purchasePrice: '{{ old('purchase_price', (int) $product->purchase_price) }}',
-                    salePrice: '{{ old('sale_price', (int) $product->sale_price) }}'
-                }">
-                @csrf
-                @method('PUT')
-                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <x-input label="Nombre del Producto" name="name" required :value="$product->name" maxlength="255" />
+    <form action="{{ route('products.update', $product) }}" method="POST" class="space-y-6">
+        @csrf
+        @method('PUT')
 
-                    <div>
-                        <label for="category" class="block text-sm font-semibold text-slate-700 space-y-1.5">Categoria <span class="text-red-500">*</span></label>
-                        <select id="category" name="category" required class="mt-1.5 block w-full rounded-xl border border-slate-300 px-4 py-2.5 text-slate-900 shadow-sm transition-all duration-200 focus:border-blue-500 focus:ring-blue-500 sm:text-sm cursor-pointer">
-                            <option value="Repuestos" {{ $product->category == 'Repuestos' ? 'selected' : '' }}>Repuestos</option>
-                            <option value="Aceites" {{ $product->category == 'Aceites' ? 'selected' : '' }}>Aceites</option>
-                            <option value="Accesorios" {{ $product->category == 'Accesorios' ? 'selected' : '' }}>Accesorios</option>
-                            <option value="Otros" {{ $product->category == 'Otros' ? 'selected' : '' }}>Otros</option>
-                        </select>
-                    </div>
-
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">
-                            Proveedores <span class="text-red-500">*</span>
-                        </label>
-                        <div class="grid grid-cols-2 md:grid-cols-3 gap-2 rounded-xl border border-slate-200 p-4 bg-slate-50 max-h-48 overflow-y-auto">
-                            @foreach($suppliers as $supplier)
-                                <label class="flex items-center gap-2 cursor-pointer rounded-lg px-3 py-2 hover:bg-white hover:shadow-sm transition-all text-sm text-slate-700 {{ in_array($supplier->id, $selectedSupplierIds) ? 'bg-white shadow-sm ring-1 ring-blue-200' : '' }}">
-                                    <input type="checkbox"
-                                        name="supplier_ids[]"
-                                        value="{{ $supplier->id }}"
-                                        {{ in_array($supplier->id, $selectedSupplierIds) ? 'checked' : '' }}
-                                        class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
-                                    <span>{{ $supplier->name }}</span>
-                                </label>
-                            @endforeach
-                        </div>
-                        @error('supplier_ids')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <x-input label="Codigo UPC / Barcode" name="upc" :value="$product->upc" maxlength="50" />
-
-                    <div>
-                        <x-input label="Precio de Compra" name="purchase_price" type="number" step="0.01" required x-model="purchasePrice" />
-                        <p class="text-xs text-slate-500 mt-1 font-medium" x-show="purchasePrice" x-cloak>
-                            $ <span x-text="Number(purchasePrice).toLocaleString('es-CO')"></span>
-                        </p>
-                    </div>
-                    <div>
-                        <x-input label="Precio de Venta" name="sale_price" type="number" step="0.01" required x-model="salePrice" />
-                        <p class="text-xs text-slate-500 mt-1 font-medium" x-show="salePrice" x-cloak>
-                            $ <span x-text="Number(salePrice).toLocaleString('es-CO')"></span>
-                        </p>
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <label class="block text-sm font-semibold text-slate-700">Stock actual</label>
-                        <input type="text" value="{{ $product->stock }}" readonly class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-500 shadow-sm">
-                        <p class="text-xs text-slate-500">El stock se modifica solo desde compras, ventas y ajustes de inventario.</p>
-                    </div>
-                    <x-input label="Stock Minimo (Alerta)" name="min_stock" type="number" required :value="$product->min_stock" />
+        <x-card title="Producto">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <x-input label="Nombre" name="name" required :value="$product->name" maxlength="255" />
+                <div>
+                    <x-input label="Categoría" name="category" required maxlength="255" list="category-options" autocomplete="off"
+                             :value="$product->category" placeholder="Ej.: Filtros" help="Escribe una nueva o elige una de las que ya usas." />
+                    <datalist id="category-options">
+                        @foreach($categories as $category)
+                            <option value="{{ $category }}"></option>
+                        @endforeach
+                    </datalist>
                 </div>
-
-                <div class="flex justify-end pt-4 border-t border-slate-100">
-                    <x-button variant="primary" type="submit" class="w-full md:w-auto">
-                        Actualizar Producto
-                    </x-button>
-                </div>
-            </form>
+                <x-input label="Código / UPC" name="upc" :value="$product->upc" maxlength="50" placeholder="Opcional" />
+            </div>
         </x-card>
-    </div>
+
+        <x-card title="Proveedores">
+            @include('products.partials.supplier-checkboxes', ['selected' => old('supplier_ids', $selectedSupplierIds)])
+        </x-card>
+
+        <x-card title="Precios y stock">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <x-input label="Precio de compra" name="purchase_price" is-money required :value="(int) $product->purchase_price" />
+                <x-input label="Precio de venta" name="sale_price" is-money required :value="(int) $product->sale_price" />
+                <div class="ds space-y-1.5">
+                    <label for="current-stock" class="block text-sm font-medium">Stock actual</label>
+                    <input id="current-stock" type="text" value="{{ $product->stock }}" readonly
+                           class="block h-10 w-full cursor-not-allowed rounded-md border border-border bg-muted px-3 text-sm tabular-nums text-muted-foreground">
+                    <p class="text-xs text-muted-foreground">Cambia solo con compras, ventas y ajustes de inventario.</p>
+                </div>
+                <x-input label="Stock mínimo" name="min_stock" inputmode="numeric" pattern="[0-9]*" required :value="$product->min_stock"
+                         help="Al llegar aquí, el producto aparece en «Stock bajo»." />
+            </div>
+        </x-card>
+
+        <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
+            <x-button variant="secondary" href="{{ route('products.show', $product) }}">Cancelar</x-button>
+            <x-button type="submit">Guardar cambios</x-button>
+        </div>
+    </form>
+</div>
 </x-app-layout>

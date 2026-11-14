@@ -1,131 +1,117 @@
 <x-app-layout>
-    <x-page-header title="Inventario" subtitle="Gestión de productos y stock">
+<div class="ds">
+    <x-page-header title="Inventario" subtitle="Productos, precios y stock de la sucursal">
         <x-slot name="actions">
-            <x-button variant="primary" onclick="window.location.href='{{ route('products.create') }}'">
-                <i data-lucide="plus" class="mr-2 h-4 w-4"></i>
-                Nuevo Producto
-            </x-button>
+            <x-button variant="secondary" href="{{ route('inventory.purchase') }}">Registrar compra</x-button>
+            <x-button href="{{ route('products.create') }}">Nuevo producto</x-button>
         </x-slot>
     </x-page-header>
 
-    {{-- Flash messages --}}
-    @if(session('info'))
-        <div class="mb-4 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700/40 px-5 py-4 text-sm font-medium text-amber-800 dark:text-amber-300">
-            <i data-lucide="info" class="h-4 w-4 mt-0.5 shrink-0"></i>
-            {{ session('info') }}
-        </div>
-    @endif
-
-    <x-search-filter action="{{ route('products.index') }}" searchPlaceholder="Producto, categoría, UPC o proveedor...">
-        <div>
-            <label for="category" class="block text-xs font-bold text-slate-400 dark:text-gray-500 uppercase mb-2 ml-1">Categoría</label>
-            <select name="category" id="category" class="w-full rounded-2xl border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-950/50 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 dark:text-gray-300 transition-all">
-                <option value="">Todas las categorías</option>
-                @foreach($categories as $category)
-                    <option value="{{ $category }}" {{ request('category') == $category ? 'selected' : '' }}>
-                        {{ $category }}
-                    </option>
-                @endforeach
-            </select>
-        </div>
-        <div class="flex items-center pt-6">
-            <label for="low_stock" class="flex items-center gap-3 w-full bg-white dark:bg-gray-950/50 px-6 py-4 rounded-2xl border border-slate-200 dark:border-gray-800 shadow-sm cursor-pointer hover:bg-slate-50 dark:hover:bg-gray-900/50 transition-all">
-                <input type="checkbox" name="low_stock" id="low_stock" value="1" {{ request('low_stock') ? 'checked' : '' }} class="h-5 w-5 rounded-lg border-slate-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-blue-600 focus:ring-blue-500 transition-all">
-                <span class="text-xs font-black text-slate-500 dark:text-gray-400 uppercase tracking-widest">Solo Stock Bajo</span>
+    <x-search-filter action="{{ route('products.index') }}" searchPlaceholder="Producto, categoría, código o proveedor">
+        <x-select label="Categoría" name="category">
+            <option value="">Todas</option>
+            @foreach($categories as $category)
+                <option value="{{ $category }}" @selected(request('category') == $category)>{{ $category }}</option>
+            @endforeach
+        </x-select>
+        <div class="flex items-end">
+            <label for="low_stock" class="flex h-10 cursor-pointer items-center gap-2 text-sm font-medium">
+                <input type="checkbox" name="low_stock" id="low_stock" value="1" @checked(request('low_stock'))
+                       class="size-4 cursor-pointer rounded border-input text-primary focus:ring-2 focus:ring-ring/30">
+                Solo stock bajo
             </label>
         </div>
     </x-search-filter>
 
-    <x-card class="overflow-hidden p-0">
-        <x-table :headers="['PRODUCTO', 'CATEGORÍA', 'PROVEEDOR', 'PRECIO COMPRA', 'PRECIO VENTA', 'GANANCIA', 'STOCK', 'ACCIONES']">
-            @forelse($products as $product)
-                <tr class="{{ $product->trashed() ? 'opacity-50 bg-slate-50 dark:bg-slate-900/30' : '' }}">
-                    <td class="px-6 py-4">
-                        <div class="flex items-center gap-3">
-                            <div class="flex h-10 w-10 items-center justify-center rounded-xl {{ $product->trashed() ? 'bg-slate-100 dark:bg-slate-800 text-slate-400' : 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' }}">
-                                <i data-lucide="package" class="h-5 w-5"></i>
-                            </div>
-                            <div>
-                                <div class="text-sm font-bold text-slate-900 dark:text-white">{{ $product->name }}</div>
+    <x-card flush>
+        @if($products->isNotEmpty())
+            <x-table :headers="['Producto', 'Proveedor', ['label' => 'Costo', 'align' => 'right'], ['label' => 'Venta', 'align' => 'right'], ['label' => 'Margen', 'align' => 'right'], ['label' => 'Stock', 'align' => 'right'], ['label' => '', 'align' => 'right']]">
+                @foreach($products as $product)
+                    @php
+                        $profit = $product->sale_price - $product->purchase_price;
+                        $profitPercent = $product->purchase_price > 0 ? round(($profit / $product->purchase_price) * 100) : null;
+                    @endphp
+                    <tr @class(['transition-colors hover:bg-muted/50', 'text-muted-foreground' => $product->trashed()])>
+                        <td class="px-4 py-3">
+                            <div class="flex flex-wrap items-center gap-2">
                                 @if($product->trashed())
-                                    <x-badge variant="slate" class="mt-1 text-[10px]">Inactivo</x-badge>
+                                    <span class="font-medium">{{ $product->name }}</span>
+                                    <x-status-badge>Inactivo</x-status-badge>
+                                @else
+                                    <a href="{{ route('products.show', $product) }}" class="font-medium text-primary hover:underline">{{ $product->name }}</a>
                                 @endif
                             </div>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4">
-                        <x-badge variant="slate">{{ $product->category }}</x-badge>
-                    </td>
-                    <td class="px-6 py-4 text-sm font-medium text-slate-600">
-                        {{ $product->suppliers->pluck('name')->join(', ') ?: 'N/A' }}
-                    </td>
-                    <td class="px-6 py-4 text-sm font-bold text-slate-600">
-                        ${{ number_format($product->purchase_price, 0, ',', '.') }}
-                    </td>
-                    <td class="px-6 py-4 text-sm font-bold text-slate-900">
-                        ${{ number_format($product->sale_price, 0, ',', '.') }}
-                    </td>
-                    <td class="px-6 py-4">
-                        @php
-                            $profit = $product->sale_price - $product->purchase_price;
-                            $profitPercent = $product->purchase_price > 0 ? ($profit / $product->purchase_price) * 100 : 0;
-                        @endphp
-                        <div class="text-sm font-bold text-emerald-600">${{ number_format($profit, 0, ',', '.') }}</div>
-                        <div class="text-[10px] font-bold text-emerald-500">({{ round($profitPercent) }}%)</div>
-                    </td>
-                    <td class="px-6 py-4">
-                        @php
-                            $stockVariant = ($product->stock <= $product->min_stock) ? 'red' : 'emerald';
-                        @endphp
-                        <x-badge :variant="$product->trashed() ? 'slate' : $stockVariant" class="px-3 py-1 rounded-full text-xs">
-                            {{ $product->stock }} unidades
-                        </x-badge>
-                    </td>
-                    <td class="px-6 py-4 text-right text-sm font-medium">
-                        <div class="flex justify-end gap-2">
-                            @if($product->trashed())
-                                {{-- Reactivar --}}
-                                <form action="{{ route('products.restore', $product->id) }}" method="POST" class="inline">
-                                    @csrf
-                                    @method('PATCH')
-                                    <button type="submit"
-                                        title="Reactivar producto"
-                                        class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold text-emerald-600 border border-emerald-200 hover:bg-emerald-50 transition-colors">
-                                        <i data-lucide="refresh-cw" class="h-3.5 w-3.5"></i>
-                                        Reactivar
-                                    </button>
-                                </form>
-                            @else
-                                {{-- Editar --}}
-                                <a href="{{ route('products.edit', $product) }}" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
-                                    <i data-lucide="pencil" class="h-4 w-4"></i>
-                                </a>
-                                {{-- Eliminar / Desactivar --}}
-                                <form action="{{ route('products.destroy', $product) }}" method="POST" class="inline"
-                                    onsubmit="return confirm('¿Eliminar producto? Si tiene historial de movimientos será desactivado en lugar de eliminado.')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="rounded-lg p-2 text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer">
-                                        <i data-lucide="trash-2" class="h-4 w-4"></i>
-                                    </button>
-                                </form>
+                            <p class="mt-0.5 text-xs text-muted-foreground">{{ $product->category }}</p>
+                        </td>
+                        <td class="max-w-48 truncate px-4 py-3 text-muted-foreground" title="{{ $product->suppliers->pluck('name')->join(', ') }}">
+                            {{ $product->suppliers->pluck('name')->join(', ') ?: '—' }}
+                        </td>
+                        <td class="whitespace-nowrap px-4 py-3 text-right tabular-nums text-muted-foreground">{{ money($product->purchase_price) }}</td>
+                        <td class="whitespace-nowrap px-4 py-3 text-right font-medium tabular-nums">{{ money($product->sale_price) }}</td>
+                        <td class="whitespace-nowrap px-4 py-3 text-right tabular-nums">
+                            {{ money($profit) }}
+                            @if($profitPercent !== null)
+                                <span class="text-xs text-muted-foreground">({{ $profitPercent }} %)</span>
                             @endif
-                        </div>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="8" class="px-6 py-12 text-center text-slate-500">
-                        No hay productos registrados en el inventario.
-                    </td>
-                </tr>
-            @endforelse
-        </x-table>
+                        </td>
+                        <td class="whitespace-nowrap px-4 py-3 text-right">
+                            @if($product->trashed() || ! $product->isLowStock())
+                                <span class="tabular-nums">{{ $product->stock }}</span>
+                            @else
+                                <x-status-badge :tone="$product->stockTone()" :title="$product->stockLabel() . ' (mínimo ' . $product->min_stock . ')'">
+                                    <span class="tabular-nums">{{ $product->stock }}</span>
+                                </x-status-badge>
+                            @endif
+                        </td>
+                        <td class="whitespace-nowrap px-4 py-2 text-right">
+                            <div class="flex items-center justify-end gap-1">
+                                @if($product->trashed())
+                                    @can('admin')
+                                        <form action="{{ route('products.restore', $product->id) }}" method="POST">
+                                            @csrf
+                                            @method('PATCH')
+                                            <x-button type="submit" variant="secondary" size="sm">Reactivar</x-button>
+                                        </form>
+                                    @endcan
+                                @else
+                                    <x-button variant="ghost" size="icon" href="{{ route('products.edit', $product) }}" title="Editar producto">
+                                        <i data-lucide="pencil" class="size-4"></i>
+                                        <span class="sr-only">Editar {{ $product->name }}</span>
+                                    </x-button>
+                                    @can('admin')
+                                        <form action="{{ route('products.destroy', $product) }}" method="POST"
+                                              data-confirm="¿Eliminar «{{ $product->name }}»?"
+                                              data-confirm-description="Si ya tiene ventas o movimientos, queda desactivado en vez de eliminado, para conservar el historial."
+                                              data-confirm-label="Eliminar producto"
+                                              data-confirm-destructive>
+                                            @csrf
+                                            @method('DELETE')
+                                            <x-button type="submit" variant="ghost" size="icon" class="hover:!text-destructive-text" title="Eliminar producto">
+                                                <i data-lucide="trash-2" class="size-4"></i>
+                                                <span class="sr-only">Eliminar {{ $product->name }}</span>
+                                            </x-button>
+                                        </form>
+                                    @endcan
+                                @endif
+                            </div>
+                        </td>
+                    </tr>
+                @endforeach
+            </x-table>
+        @else
+            <div class="p-5">
+                <x-empty-state icon="package">
+                    {{ request()->except('page') ? 'Ningún producto coincide con la búsqueda.' : 'Aún no hay productos en el inventario.' }}
+                    @unless(request()->except('page'))
+                        <x-slot name="action"><x-button href="{{ route('products.create') }}">Nuevo producto</x-button></x-slot>
+                    @endunless
+                </x-empty-state>
+            </div>
+        @endif
+
         @if($products->hasPages())
-        <div class="px-6 py-4 border-t border-slate-200">
-            {{ $products->links() }}
-        </div>
+            <x-slot name="footer">{{ $products->links() }}</x-slot>
         @endif
     </x-card>
+</div>
 </x-app-layout>
-

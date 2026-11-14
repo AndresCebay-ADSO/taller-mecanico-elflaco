@@ -1,182 +1,121 @@
 <x-app-layout>
-    <x-page-header title="Ventas" subtitle="Registro de ventas directas de productos">
+<div class="ds">
+    <x-page-header title="Ventas directas" subtitle="Ventas de mostrador de repuestos y productos">
         <x-slot name="actions">
-            <x-button variant="primary" onclick="window.location.href='{{ route('sales.create') }}'">
-                <i data-lucide="plus" class="mr-2 h-4 w-4"></i>
-                Nueva Venta
-            </x-button>
+            <x-button href="{{ route('sales.create') }}">Nueva venta</x-button>
         </x-slot>
     </x-page-header>
 
-    <!-- Tarjeta de Resumen -->
-    <div class="mb-6 bg-white dark:bg-gray-900/50 rounded-xl shadow-sm border border-slate-200 dark:border-gray-800 border-t-4 border-t-emerald-500 overflow-hidden">
-        <div class="p-6">
-            <div class="flex justify-between items-start">
-                <div>
-                    <p class="text-sm font-medium text-slate-500 mb-1">Ventas de Hoy</p>
-                    <h3 class="text-3xl font-bold text-slate-900">${{ number_format($todayTotal) }}</h3>
-                    <p class="text-sm text-slate-500 mt-1">{{ $todayCount }} venta(s)</p>
-                </div>
-                <div class="bg-emerald-100 dark:bg-emerald-900/30 p-4 rounded-xl flex items-center justify-center">
-                    <i data-lucide="shopping-cart" class="w-8 h-8 text-emerald-600 dark:text-emerald-400"></i>
-                </div>
+    {{-- Resumen de hoy --}}
+    <x-card class="mb-4">
+        <div class="flex flex-col gap-6 md:flex-row md:items-start">
+            <div class="md:w-56 md:shrink-0">
+                <p class="text-sm font-medium text-muted-foreground">Ventas de hoy</p>
+                <p class="mt-1 text-2xl font-semibold tabular-nums">{{ money($todayTotal) }}</p>
+                <p class="mt-1 text-xs text-muted-foreground">{{ $todayCount }} {{ $todayCount === 1 ? 'venta' : 'ventas' }}</p>
             </div>
-            
+
             @if($todayByMethod->isNotEmpty())
-            <div class="mt-5 pt-5 border-t border-slate-100 dark:border-gray-800">
-                <p class="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-widest mb-4">Desglose de Ingresos</p>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-5">
+                <div class="grid flex-1 grid-cols-1 gap-x-8 gap-y-4 border-t border-border pt-4 sm:grid-cols-2 md:border-l md:border-t-0 md:pl-6 md:pt-0 lg:grid-cols-3">
                     @foreach($todayByMethod as $method)
-                    @php
-                        $percentage = $todayTotal > 0 ? round(($method->total / $todayTotal) * 100) : 0;
-                        $icon = match($method->payment_method) {
-                            'Efectivo' => 'banknotes',
-                            'Nequi' => 'smartphone',
-                            'Daviplata' => 'smartphone',
-                            'Transferencia' => 'landmark',
-                            'Tarjeta' => 'credit-card',
-                            default => 'circle-ellipsis'
-                        };
-                    @endphp
-                    <div>
-                        <div class="flex justify-between items-center mb-2">
-                            <div class="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-gray-300">
-                                <i data-lucide="{{ $icon }}" class="w-4 h-4 text-slate-400 dark:text-gray-500"></i>
-                                {{ $method->payment_method }}
+                        @php $percentage = $todayTotal > 0 ? round(($method->total / $todayTotal) * 100) : 0; @endphp
+                        <div>
+                            <div class="mb-1.5 flex items-baseline justify-between gap-3 text-sm">
+                                <span class="text-muted-foreground">{{ $method->payment_method }}</span>
+                                <span class="font-medium tabular-nums">{{ money($method->total) }}</span>
                             </div>
-                            <div class="text-right">
-                                <span class="block text-sm font-black text-emerald-600 dark:text-emerald-400">${{ number_format($method->total) }}</span>
+                            <div class="h-1.5 w-full overflow-hidden rounded-full bg-muted" title="{{ $percentage }} % del total de hoy">
+                                <div class="h-full rounded-full bg-foreground/30" style="width: {{ $percentage }}%"></div>
                             </div>
                         </div>
-                        <div class="w-full bg-slate-100 dark:bg-gray-800 rounded-full h-1.5 overflow-hidden">
-                            <div class="bg-emerald-500 dark:bg-emerald-400 h-1.5 rounded-full" style="width: {{ $percentage }}%"></div>
-                        </div>
-                    </div>
                     @endforeach
                 </div>
-            </div>
             @endif
         </div>
-    </div>
+    </x-card>
 
-    <x-search-filter action="{{ route('sales.index') }}" searchPlaceholder="Cliente, producto, ID...">
-        <div>
-            <label for="status" class="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">Estado de Venta</label>
-            <select name="status" id="status" class="w-full rounded-2xl border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-950/50 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 dark:text-gray-300 transition-all">
-                <option value="">Cualquier estado</option>
-                <option value="completada" {{ request('status') == 'completada' ? 'selected' : '' }}>Completada</option>
-                <option value="anulada" {{ request('status') == 'anulada' ? 'selected' : '' }}>Anulada</option>
-            </select>
-        </div>
-        <div>
-            <label for="payment_method" class="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1">Método de Pago</label>
-            <select name="payment_method" id="payment_method" class="w-full rounded-2xl border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-950/50 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 dark:text-gray-300 transition-all">
-                <option value="">Cualquier método</option>
-                <option value="Efectivo" {{ request('payment_method') == 'Efectivo' ? 'selected' : '' }}>Efectivo</option>
-                <option value="Nequi" {{ request('payment_method') == 'Nequi' ? 'selected' : '' }}>Nequi</option>
-                <option value="Daviplata" {{ request('payment_method') == 'Daviplata' ? 'selected' : '' }}>Daviplata</option>
-                <option value="Transferencia" {{ request('payment_method') == 'Transferencia' ? 'selected' : '' }}>Transferencia</option>
-                <option value="Tarjeta" {{ request('payment_method') == 'Tarjeta' ? 'selected' : '' }}>Tarjeta</option>
-                <option value="Otro" {{ request('payment_method') == 'Otro' ? 'selected' : '' }}>Otro</option>
-            </select>
-        </div>
-        <div>
-            <label for="date_start" class="block text-xs font-bold text-slate-400 dark:text-gray-500 uppercase mb-2 ml-1">Fecha</label>
-            <input type="date" name="date_start" id="date_start" value="{{ request('date_start') }}" class="w-full rounded-2xl border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-950/50 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-4 px-4 text-sm font-bold text-slate-700 dark:text-gray-300 transition-all text-center">
-        </div>
+    <x-search-filter action="{{ route('sales.index') }}" searchPlaceholder="Cliente, producto o número de venta">
+        <x-select label="Estado" name="status">
+            <option value="">Todos</option>
+            <option value="completada" @selected(request('status') === 'completada')>Completada</option>
+            <option value="anulada" @selected(request('status') === 'anulada')>Anulada</option>
+        </x-select>
+        <x-select label="Método de pago" name="payment_method">
+            <option value="">Todos</option>
+            @foreach(\App\Support\PaymentMethod::ALL as $method)
+                <option value="{{ $method }}" @selected(request('payment_method') === $method)>{{ $method }}</option>
+            @endforeach
+        </x-select>
+        <x-input type="date" label="Fecha" name="date_start" :value="request('date_start')" />
     </x-search-filter>
 
-    <!-- Tabla -->
-    <div class="bg-white dark:bg-gray-900/50 rounded-xl shadow-sm border border-slate-200 dark:border-gray-800 overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <thead class="bg-slate-50 dark:bg-white/[0.02] border-b border-slate-200 dark:border-gray-800 text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider">
-                    <tr>
-                        <th class="px-6 py-4">Fecha</th>
-                        <th class="px-6 py-4">Cliente / Info</th>
-                        <th class="px-6 py-4">Productos</th>
-                        <th class="px-6 py-4">Total</th>
-                        <th class="px-6 py-4 text-right">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-200 dark:divide-gray-800">
-                    @forelse($sales as $sale)
-                        <tr class="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
-                            <td class="px-6 py-4">
-                                <div class="text-sm font-bold text-slate-900">{{ \Carbon\Carbon::parse($sale->created_at)->translatedFormat('d M Y') }}</div>
-                                <div class="text-xs text-slate-500 mt-0.5">{{ \Carbon\Carbon::parse($sale->created_at)->format('H:i') }} | #S{{ str_pad($sale->id, 4, '0', STR_PAD_LEFT) }}</div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="text-sm font-bold text-slate-900">{{ $sale->customer_name }}</div>
-                                <div class="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5">
-                                    <span class="inline-block px-1.5 py-0.5 bg-slate-100 rounded text-slate-600">{{ $sale->payment_method }}</span>
-                                    <span>•</span>
-                                    <span>Resp: {{ $sale->user?->name ?? 'Sistema' }}</span>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="space-y-1.5">
-                                    @foreach($sale->saleProducts as $item)
-                                        <div class="flex items-center text-sm text-slate-700">
-                                            <i data-lucide="package" class="w-3.5 h-3.5 text-blue-500 mr-2 flex-shrink-0"></i>
-                                            <span class="truncate max-w-[200px]">{{ $item->product?->name ?? 'Producto eliminado' }}</span>
-                                            <span class="text-slate-500 ml-1.5 font-medium">x{{ $item->quantity }}</span>
-                                        </div>
-                                    @endforeach
-                                    <div class="text-xs text-slate-400 mt-1 font-medium">
-                                        Total: {{ $sale->total_items }} artículo(s)
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <span class="text-sm font-bold {{ $sale->status === 'completada' ? 'text-emerald-600' : 'text-slate-400 line-through' }}">
-                                    ${{ number_format($sale->total_amount, 2) }}
-                                </span>
-                                @if($sale->status !== 'completada')
-                                    <div class="text-xs text-rose-500 font-medium mt-0.5"><i data-lucide="x-circle" class="w-3 h-3 inline mr-1"></i>Anulada</div>
+    <x-card flush>
+        @if($sales->isNotEmpty())
+            <x-table :headers="['Venta', 'Cliente', 'Productos', 'Estado', ['label' => 'Total', 'align' => 'right'], ['label' => '', 'align' => 'right']]">
+                @foreach($sales as $sale)
+                    <tr class="transition-colors hover:bg-muted/50">
+                        <td class="whitespace-nowrap px-4 py-3 align-top">
+                            <a href="{{ route('sales.show', $sale) }}" class="font-mono font-medium text-primary hover:underline">{{ $sale->displayNumber() }}</a>
+                            <p class="mt-0.5 text-xs text-muted-foreground">{{ $sale->created_at->format('d/m/Y h:i a') }}</p>
+                        </td>
+                        <td class="px-4 py-3 align-top">
+                            <p class="font-medium">{{ $sale->customer_name ?: 'Venta mostrador' }}</p>
+                            <p class="mt-0.5 text-xs text-muted-foreground">{{ $sale->payment_method }} · {{ $sale->user?->name ?? 'Sistema' }}</p>
+                        </td>
+                        <td class="px-4 py-3 align-top">
+                            <ul class="space-y-0.5">
+                                @foreach($sale->saleProducts as $item)
+                                    <li class="flex gap-1.5">
+                                        <span class="max-w-56 truncate" title="{{ $item->product?->name }}">{{ $item->product?->name ?? 'Producto eliminado' }}</span>
+                                        <span class="shrink-0 tabular-nums text-muted-foreground">× {{ $item->quantity }}</span>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </td>
+                        <td class="px-4 py-3 align-top">
+                            <x-status-badge :tone="$sale->statusTone()">{{ $sale->statusLabel() }}</x-status-badge>
+                        </td>
+                        <td @class(['whitespace-nowrap px-4 py-3 text-right align-top font-medium tabular-nums', 'text-muted-foreground line-through' => $sale->isCancelled()])>
+                            {{ money($sale->total_amount) }}
+                        </td>
+                        <td class="whitespace-nowrap px-4 py-2 text-right align-top">
+                            <div class="flex items-center justify-end gap-1">
+                                <x-button variant="ghost" size="icon" href="{{ route('documents.sale', ['sale' => $sale, 'auto' => 1]) }}" target="_blank" title="Imprimir comprobante">
+                                    <i data-lucide="printer" class="size-4"></i>
+                                    <span class="sr-only">Imprimir comprobante de la venta {{ $sale->displayNumber() }}</span>
+                                </x-button>
+                                @if(! $sale->isCancelled() && auth()->user()->can('admin'))
+                                    <form action="{{ route('sales.cancel', $sale) }}" method="POST"
+                                          data-confirm="¿Anular la venta {{ $sale->displayNumber() }}?"
+                                          data-confirm-description="Los productos vuelven al inventario. La venta queda registrada como anulada."
+                                          data-confirm-label="Anular venta"
+                                          data-confirm-destructive>
+                                        @csrf
+                                        <x-button type="submit" variant="ghost" size="icon" class="hover:!text-destructive-text" title="Anular venta">
+                                            <i data-lucide="ban" class="size-4"></i>
+                                            <span class="sr-only">Anular la venta {{ $sale->displayNumber() }}</span>
+                                        </x-button>
+                                    </form>
                                 @endif
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="flex flex-col items-end gap-2">
-                                    <div class="flex items-center gap-2">
-                                        <a href="{{ route('sales.show', $sale) }}" class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Ver detalle">
-                                            <i data-lucide="eye" class="w-4 h-4"></i>
-                                        </a>
-                                        <button onclick="window.open('{{ route('sales.show', $sale) }}?print=1', '_blank')" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors" title="Imprimir recibo">
-                                            <i data-lucide="printer" class="w-4 h-4"></i>
-                                        </button>
-                                        @if($sale->status === 'completada')
-                                        <form action="{{ route('sales.cancel', $sale) }}" method="POST" onsubmit="return confirm('¿Estás seguro de anular esta venta? El stock será devuelto.')" class="inline">
-                                            @csrf
-                                            <button type="submit" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Anular venta">
-                                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                            </button>
-                                        </form>
-                                        @endif
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="px-6 py-12 text-center text-slate-500">
-                                <div class="flex flex-col items-center justify-center">
-                                    <div class="bg-slate-50 p-3 rounded-full mb-3">
-                                        <i data-lucide="shopping-cart" class="w-6 h-6 text-slate-400"></i>
-                                    </div>
-                                    <p>No hay ventas registradas.</p>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                            </div>
+                        </td>
+                    </tr>
+                @endforeach
+            </x-table>
+        @else
+            <div class="p-5">
+                <x-empty-state icon="shopping-cart">
+                    {{ request()->except('page') ? 'Ninguna venta coincide con la búsqueda.' : 'Aún no hay ventas registradas.' }}
+                    @unless(request()->except('page'))
+                        <x-slot name="action"><x-button href="{{ route('sales.create') }}">Nueva venta</x-button></x-slot>
+                    @endunless
+                </x-empty-state>
+            </div>
+        @endif
 
         @if($sales->hasPages())
-        <div class="px-6 py-4 border-t border-slate-200 dark:border-gray-800">
-            {{ $sales->links() }}
-        </div>
+            <x-slot name="footer">{{ $sales->links() }}</x-slot>
         @endif
-    </div>
+    </x-card>
+</div>
 </x-app-layout>

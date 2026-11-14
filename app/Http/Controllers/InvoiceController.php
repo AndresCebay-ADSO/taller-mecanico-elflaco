@@ -2,53 +2,32 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\BusinessRuleException;
 use App\Models\Invoice;
 use App\Models\ServiceOrder;
-use App\Services\BranchService;
+use App\Models\Setting;
+use App\Services\InvoiceService;
+use App\Support\PaymentMethod;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class InvoiceController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(BranchService $branchService)
+    public function index()
     {
-        $branchId = $branchService->getCurrentBranch()?->id;
-        $invoices = Invoice::with('serviceOrder')
+        $branchId = $this->currentBranchId();
+
+        $invoices = Invoice::with(['serviceOrder', 'cancelledBy'])
             ->whereHas('serviceOrder', function ($q) use ($branchId) {
                 $q->forBranch($branchId);
             })
             ->latest('invoice_date')
             ->latest('id')
             ->paginate(15);
+
         return view('invoices.index', compact('invoices'));
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        return view('invoices.create');
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'invoice_number' => 'required|string|unique:invoices,invoice_number',
-            'amount' => 'required|numeric|min:0',
-            'invoice_date' => 'required|date',
-            'service_order_id' => 'required|exists:service_orders,id',
-        ]);
-
-        Invoice::create($validated);
-
-        return redirect()->route('invoices.index')->with('success', 'Factura generada.');
     }
 
     /**
@@ -56,80 +35,57 @@ class InvoiceController extends Controller
      */
     public function show(Invoice $invoice)
     {
-        return view('invoices.show', compact('invoice'));
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Invoice $invoice)
-    {
-        return view('invoices.edit', compact('invoice'));
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Invoice $invoice)
-    {
-        $validated = $request->validate([
-            'amount' => 'required|numeric|min:0',
+        $invoice->load([
+            'cancelledBy',
+            'serviceOrder.branch',
+            'serviceOrder.workshopJobs.jobType',
+            'serviceOrder.workshopJobs.mechanic',
+            'serviceOrder.workshopJobs.jobProducts.product' => fn ($q) => $q->withTrashed(),
         ]);
 
-        $invoice->update($validated);
+        $this->ensureCurrentBranch($invoice->serviceOrder?->branch_id);
 
-        return redirect()->route('invoices.index')->with('success', 'Factura actualizada.');
+        $settings = Setting::pluck('value', 'key')->all();
+
+        return view('invoices.show', compact('invoice', 'settings'));
     }
 
     /**
      * Generate an invoice from a Service Order.
      */
-    public function generateFromServiceOrder(ServiceOrder $serviceOrder)
+    public function generateFromServiceOrder(Request $request, ServiceOrder $serviceOrder, InvoiceService $invoiceService)
     {
-        $invoice = DB::transaction(function () use ($serviceOrder) {
-            $lockedServiceOrder = ServiceOrder::whereKey($serviceOrder->id)
-                ->lockForUpdate()
-                ->firstOrFail();
+        $this->ensureCurrentBranch($serviceOrder->branch_id);
 
-            if ($lockedServiceOrder->invoices()->exists()) {
-                return null;
-            }
+        $validated = $request->validate(
+            ['payment_method' => 'required|string|' . PaymentMethod::rule()],
+            [
+                'payment_method.required' => 'Elige cómo pagó el cliente.',
+                'payment_method.in' => 'Elige un método de pago de la lista.',
+            ],
+        );
 
-            $lockedServiceOrder->load('workshopJobs.jobProducts');
-
-            $totalLabor = $lockedServiceOrder->workshopJobs->sum('labor_cost');
-            $totalProducts = $lockedServiceOrder->workshopJobs->sum(
-                fn ($job) => $job->jobProducts->sum('total_price')
-            );
-
-            $invoice = Invoice::create([
-                'invoice_number' => 'FAC-' . strtoupper(bin2hex(random_bytes(8))),
-                'service_order_id' => $lockedServiceOrder->id,
-                'amount' => $totalLabor + $totalProducts,
-                'invoice_date' => now(),
-            ]);
-
-            $lockedServiceOrder->update([
-                'status' => 'completed',
-                'completed_at' => $lockedServiceOrder->completed_at ?? now(),
-            ]);
-
-            return $invoice;
-        });
-
-        if (!$invoice) {
-            return back()->with('error', 'Esta orden ya tiene una factura vinculada.');
+        try {
+            $invoice = $invoiceService->generateFor($serviceOrder, $validated['payment_method']);
+        } catch (BusinessRuleException $exception) {
+            return back()->with('error', $exception->getMessage());
         }
 
         return redirect()->route('invoices.show', $invoice)->with('success', 'Factura consolidada generada con éxito.');
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Anula la factura sin borrarla (solo administradores).
      */
-    public function destroy(Invoice $invoice)
+    public function cancel(Invoice $invoice, InvoiceService $invoiceService)
     {
-        $invoice->delete();
-        return redirect()->route('invoices.index')->with('success', 'Factura eliminada.');
+        $this->ensureCurrentBranch($invoice->serviceOrder?->branch_id);
+
+        if (!$invoiceService->cancel($invoice, auth()->id())) {
+            return back()->with('error', "La factura {$invoice->invoice_number} ya estaba anulada.");
+        }
+
+        return redirect()->route('invoices.show', $invoice)
+            ->with('success', "Factura {$invoice->invoice_number} anulada. La orden puede facturarse de nuevo.");
     }
 }

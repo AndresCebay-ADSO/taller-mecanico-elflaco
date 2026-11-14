@@ -1,60 +1,33 @@
 <x-app-layout>
-    <x-page-header title="Nueva Orden de Servicio" subtitle="Registra la entrada de un vehículo al taller.">
-        <x-slot name="actions">
-            <x-button variant="outline" onclick="window.location.href='{{ route('service-orders.index') }}'">
-                Cancelar
-            </x-button>
-        </x-slot>
-    </x-page-header>
+<div class="ds mx-auto max-w-3xl">
+    <x-page-header title="Nueva orden de servicio" subtitle="Registra la entrada de una moto al taller"
+                   :back="route('service-orders.index')" back-label="Órdenes" />
 
-    <div class="max-w-4xl">
-        <x-card>
-            <form action="{{ route('service-orders.store') }}" method="POST" class="space-y-8">
-                @csrf
-                
-                <!-- Customer Section -->
-                <div class="space-y-4">
-                    <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
-                        <i data-lucide="user" class="h-5 w-5 text-blue-600"></i>
-                        Información del Cliente
-                    </h3>
-                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                        <x-input label="Nombre del Cliente" name="customer_name" required placeholder="Ej. Carlos Rodríguez" maxlength="255" />
-                        <x-input label="Teléfono de Contacto" name="customer_phone" placeholder="Ej. 300 456 7890" maxlength="10" />
-                    </div>
-                </div>
+    <form action="{{ route('service-orders.store') }}" method="POST" class="space-y-6">
+        @csrf
 
-                <hr class="border-slate-100">
-
-                <!-- Vehicle Section -->
-                <div class="space-y-4">
-                    <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
-                        <i data-lucide="bike" class="h-5 w-5 text-blue-600"></i>
-                        Información del Vehículo
-                    </h3>
-                    <x-input label="Detalles del Vehículo" name="vehicle_info" required placeholder="Ej. Pulsar NS 200 - Negra - Placa XYZ123" />
-                </div>
-
-                <hr class="border-slate-100">
-
-                <!-- Service Section -->
-                <div class="space-y-4">
-                    <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
-                        <i data-lucide="clipboard-list" class="h-5 w-5 text-blue-600"></i>
-                        Descripción del Servicio
-                    </h3>
-                    <div class="space-y-1.5">
-                        <label for="service_description" class="block text-sm font-semibold text-slate-700">Motivo de Ingreso / Fallas Reportadas <span class="text-red-500">*</span></label>
-                        <textarea id="service_description" name="service_description" rows="4" required class="block w-full rounded-xl border border-slate-300 px-4 py-2.5 text-slate-900 shadow-sm transition-all duration-200 focus:border-blue-500 focus:ring-blue-500 sm:text-sm placeholder:text-slate-400" placeholder="Describe el problema o el servicio solicitado..."></textarea>
-                    </div>
-                </div>
-
-                <div class="flex justify-end pt-4 border-t border-slate-100">
-                    <x-button variant="primary" type="submit" class="w-full md:w-auto">
-                        Crear Orden de Servicio
-                    </x-button>
-                </div>
-            </form>
+        <x-card title="Cliente">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <x-input label="Nombre" name="customer_name" required placeholder="Ej.: Carlos Rodríguez" maxlength="255" />
+                <x-input label="Teléfono" name="customer_phone" type="tel" inputmode="tel" placeholder="Ej.: 3004567890" maxlength="10" />
+                <x-input label="C.C. o NIT" name="customer_document" placeholder="Opcional" maxlength="20"
+                         help="Sale en el comprobante y en la orden de ingreso." />
+            </div>
         </x-card>
-    </div>
+
+        <x-card title="Moto y servicio">
+            <div class="space-y-4">
+                <x-input label="Vehículo" name="vehicle_info" required maxlength="255" placeholder="Ej.: Pulsar NS 200 - Negra - XYZ12A"
+                         help="Marca, modelo, color y placa." />
+                <x-textarea label="Motivo de ingreso" name="service_description" required
+                            placeholder="Qué le pasa a la moto o qué servicio pide el cliente" />
+            </div>
+        </x-card>
+
+        <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
+            <x-button variant="secondary" href="{{ route('service-orders.index') }}">Cancelar</x-button>
+            <x-button type="submit">Crear orden</x-button>
+        </div>
+    </form>
+</div>
 </x-app-layout>

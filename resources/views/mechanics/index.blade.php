@@ -1,74 +1,58 @@
 <x-app-layout>
-    <x-page-header title="Mecánicos" subtitle="Gestiona el equipo técnico del taller.">
+<div class="ds">
+    <x-page-header title="Mecánicos" subtitle="Equipo técnico del taller">
         <x-slot name="actions">
-            <x-button variant="primary" onclick="window.location.href='{{ route('mechanics.create') }}'">
-                <i data-lucide="plus" class="mr-2 h-4 w-4"></i>
-                Nuevo Mecánico
-            </x-button>
+            <x-button href="{{ route('mechanics.create') }}">Nuevo mecánico</x-button>
         </x-slot>
     </x-page-header>
-    
-    <x-search-filter action="{{ route('mechanics.index') }}" searchPlaceholder="Nombre del mecánico o teléfono..."></x-search-filter>
 
-    <x-card class="overflow-hidden p-0">
-        <x-table :headers="['MECÁNICO', 'TELÉFONO', 'EMAIL', 'FECHA CONTRATACIÓN', 'ESTADO', 'ACCIONES']">
-            @forelse($mechanics as $mechanic)
-                <tr>
-                    <td class="px-6 py-4">
-                        <div class="flex items-center gap-3">
-                            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30 font-bold text-blue-700 dark:text-blue-400">
-                                {{ strtoupper(substr($mechanic->name, 0, 1)) }}
-                            </div>
-                            <div class="text-sm font-bold text-slate-900 dark:text-white">{{ $mechanic->name }}</div>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 text-sm font-medium text-slate-600">
-                        {{ $mechanic->phone }}
-                    </td>
-                    <td class="px-6 py-4 text-sm text-slate-500">
-                        {{ $mechanic->email ?? 'N/A' }}
-                    </td>
-                    <td class="px-6 py-4 text-sm text-slate-500">
-                        <div class="flex items-center gap-2">
-                            <i data-lucide="calendar" class="h-3 w-3 text-slate-400"></i>
-                            {{ \Carbon\Carbon::parse($mechanic->hire_date)->format('d/m/Y') }}
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 text-sm">
-                        @php
-                            $badgeVariant = $mechanic->is_active ? 'emerald' : 'red';
-                        @endphp
-                        <x-badge :variant="$badgeVariant" class="px-3">
-                            {{ $mechanic->is_active ? 'Activo' : 'Inactivo' }}
-                        </x-badge>
-                    </td>
-                    <td class="px-6 py-4 text-right text-sm font-medium">
-                        <div class="flex justify-end gap-2">
-                            <a href="{{ route('mechanics.edit', $mechanic) }}" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
-                                <i data-lucide="pencil" class="h-4 w-4"></i>
-                            </a>
-                            <form action="{{ route('mechanics.destroy', $mechanic) }}" method="POST" class="inline" onsubmit="return confirm('¿Eliminar mecánico?')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="rounded-lg p-2 text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors">
-                                    <i data-lucide="trash-2" class="h-4 w-4"></i>
-                                </button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="6" class="px-6 py-12 text-center text-slate-500">
-                        No hay mecánicos registrados.
-                    </td>
-                </tr>
-            @endforelse
-        </x-table>
+    <x-search-filter action="{{ route('mechanics.index') }}" searchPlaceholder="Nombre o teléfono" />
+
+    <x-card flush>
+        @if($mechanics->isNotEmpty())
+            <x-table :headers="['Mecánico', 'Teléfono', 'Correo', 'Ingreso', 'Estado', ['label' => '', 'align' => 'right']]">
+                @foreach($mechanics as $mechanic)
+                    <tr class="transition-colors hover:bg-muted/50">
+                        <td class="px-4 py-3">
+                            <a href="{{ route('mechanics.edit', $mechanic) }}" class="font-medium text-primary hover:underline">{{ $mechanic->name }}</a>
+                        </td>
+                        <td class="whitespace-nowrap px-4 py-3 tabular-nums">{{ $mechanic->phone }}</td>
+                        <td class="px-4 py-3 text-muted-foreground">{{ $mechanic->email ?: '—' }}</td>
+                        <td class="whitespace-nowrap px-4 py-3 tabular-nums text-muted-foreground">{{ $mechanic->hire_date ? \Carbon\Carbon::parse($mechanic->hire_date)->format('d/m/Y') : '—' }}</td>
+                        <td class="px-4 py-3"><x-active-badge :active="$mechanic->is_active" /></td>
+                        <td class="whitespace-nowrap px-4 py-2 text-right">
+                            @can('admin')
+                                <form action="{{ route('mechanics.destroy', $mechanic) }}" method="POST"
+                                      data-confirm="¿Eliminar a {{ $mechanic->name }}?"
+                                      data-confirm-description="Si ya tiene trabajos registrados, queda desactivado para conservar el historial y las comisiones."
+                                      data-confirm-label="Eliminar mecánico"
+                                      data-confirm-destructive>
+                                    @csrf
+                                    @method('DELETE')
+                                    <x-button type="submit" variant="ghost" size="icon" class="hover:!text-destructive-text" title="Eliminar mecánico">
+                                        <i data-lucide="trash-2" class="size-4"></i>
+                                        <span class="sr-only">Eliminar a {{ $mechanic->name }}</span>
+                                    </x-button>
+                                </form>
+                            @endcan
+                        </td>
+                    </tr>
+                @endforeach
+            </x-table>
+        @else
+            <div class="p-5">
+                <x-empty-state icon="users">
+                    {{ request('search') ? 'Ningún mecánico coincide con la búsqueda.' : 'Aún no hay mecánicos registrados.' }}
+                    @unless(request('search'))
+                        <x-slot name="action"><x-button href="{{ route('mechanics.create') }}">Nuevo mecánico</x-button></x-slot>
+                    @endunless
+                </x-empty-state>
+            </div>
+        @endif
+
         @if($mechanics->hasPages())
-        <div class="px-6 py-4 border-t border-slate-200">
-            {{ $mechanics->links() }}
-        </div>
+            <x-slot name="footer">{{ $mechanics->links() }}</x-slot>
         @endif
     </x-card>
+</div>
 </x-app-layout>

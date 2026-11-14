@@ -1,12 +1,9 @@
 @props(['active' => false, 'icon' => 'circle'])
 
-@php
-$classes = $active 
-    ? 'flex items-center gap-3 rounded-2xl bg-brand-500 px-4 py-3.5 text-white transition-all duration-300 shadow-lg shadow-brand-500/20 group cursor-pointer'
-    : 'flex items-center gap-3 rounded-2xl px-4 py-3.5 text-gray-500 dark:text-gray-400 transition-all duration-300 hover:bg-white/5 hover:text-white group cursor-pointer';
-@endphp
-
-<a {{ $attributes->merge(['class' => $classes]) }}>
-    <i data-lucide="{{ $icon }}" class="h-5 w-5 {{ $active ? 'text-white' : 'text-gray-500 dark:text-gray-400 transition-colors duration-300 group-hover:text-brand-400' }}"></i>
-    <span class="text-sm font-bold tracking-tight">{{ $slot }}</span>
+<a {{ $attributes->merge(['class' => 'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer ' . ($active
+        ? 'bg-sidebar-accent text-sidebar-active'
+        : 'text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-active')]) }}
+   @if($active) aria-current="page" @endif>
+    <i data-lucide="{{ $icon }}" class="size-4 shrink-0"></i>
+    <span class="truncate">{{ $slot }}</span>
 </a>

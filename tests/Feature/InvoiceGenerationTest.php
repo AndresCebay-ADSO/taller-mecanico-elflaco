@@ -6,11 +6,10 @@ use App\Models\JobProduct;
 use App\Models\Mechanic;
 use App\Models\Product;
 use App\Models\ServiceOrder;
-use App\Models\User;
 use App\Models\WorkshopJob;
 
 it('does not generate a second invoice for the same service order', function () {
-    $user = User::factory()->create();
+    [$user, $branch] = branchUser();
 
     $serviceOrder = ServiceOrder::create([
         'customer_name' => 'Carlos Perez',
@@ -19,6 +18,7 @@ it('does not generate a second invoice for the same service order', function () 
         'service_description' => 'Mantenimiento general',
         'status' => 'in_progress',
         'started_at' => now(),
+        'branch_id' => $branch->id,
     ]);
 
     $mechanic = Mechanic::create([
@@ -27,6 +27,7 @@ it('does not generate a second invoice for the same service order', function () 
         'email' => 'juan@example.com',
         'hire_date' => now()->subYear()->toDateString(),
         'is_active' => true,
+        'branch_id' => $branch->id,
     ]);
 
     $jobType = JobType::create([
@@ -47,6 +48,7 @@ it('does not generate a second invoice for the same service order', function () 
         'sale_price' => 50,
         'stock' => 10,
         'min_stock' => 1,
+        'branch_id' => $branch->id,
     ]);
 
     $job = WorkshopJob::create([
@@ -58,9 +60,6 @@ it('does not generate a second invoice for the same service order', function () 
         'vehicle_info' => $serviceOrder->vehicle_info,
         'description' => 'Cambio de aceite completo',
         'labor_cost' => 200,
-        'mechanic_cost' => 100,
-        'workshop_cost' => 100,
-        'total_amount' => 200,
         'status' => 'completed',
         'started_at' => now()->subHour(),
         'completed_at' => now(),
@@ -75,15 +74,18 @@ it('does not generate a second invoice for the same service order', function () 
     ]);
 
     $this->actingAs($user)
-        ->post(route('invoices.generate', $serviceOrder))
+        ->withSession(['current_branch_id' => $branch->id])
+        ->post(route('invoices.generate', $serviceOrder), ['payment_method' => 'Efectivo'])
         ->assertRedirect();
 
     expect(Invoice::count())->toBe(1)
+        ->and((float) Invoice::first()->amount)->toBe(250.0)
         ->and($serviceOrder->fresh()->status)->toBe('completed');
 
     $this->from(route('service-orders.show', $serviceOrder))
         ->actingAs($user)
-        ->post(route('invoices.generate', $serviceOrder))
+        ->withSession(['current_branch_id' => $branch->id])
+        ->post(route('invoices.generate', $serviceOrder), ['payment_method' => 'Efectivo'])
         ->assertRedirect(route('service-orders.show', $serviceOrder))
         ->assertSessionHas('error', 'Esta orden ya tiene una factura vinculada.');
 

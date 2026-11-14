@@ -60,6 +60,31 @@ class BranchTransfer extends Model
         return $this->belongsTo(User::class, 'completed_by');
     }
 
+    public const STATUS_LABELS = [
+        self::STATUS_PENDING => 'Pendiente',
+        self::STATUS_IN_TRANSIT => 'En tránsito',
+        self::STATUS_COMPLETED => 'Completada',
+        self::STATUS_CANCELLED => 'Cancelada',
+    ];
+
+    public function statusLabel(): string
+    {
+        return self::STATUS_LABELS[$this->status] ?? (string) $this->status;
+    }
+
+    /** Tono de la píldora de estado (DESIGN.md §3). */
+    public function statusTone(): string
+    {
+        return match ($this->status) {
+            self::STATUS_PENDING => 'warning',
+            self::STATUS_IN_TRANSIT => 'info',
+            // Terminado o cancelado: no pide acción, no lleva color (DESIGN.md §3).
+            self::STATUS_COMPLETED => 'neutral',
+            self::STATUS_CANCELLED => 'neutral',
+            default => 'neutral',
+        };
+    }
+
     public function canTransitionTo(string $newStatus): bool
     {
         if ($newStatus === $this->status) {

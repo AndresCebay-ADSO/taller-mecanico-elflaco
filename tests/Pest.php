@@ -1,5 +1,12 @@
 <?php
 
+use App\Models\Batch;
+use App\Models\Branch;
+use App\Models\JobType;
+use App\Models\Mechanic;
+use App\Models\Product;
+use App\Models\ServiceOrder;
+use App\Services\InventoryService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -44,7 +51,82 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * Crea un usuario asignado a una sucursal (se crea una si no se indica).
+ *
+ * @return array{0: \App\Models\User, 1: \App\Models\Branch}
+ */
+function branchUser(bool $admin = false, ?\App\Models\Branch $branch = null): array
 {
-    // ..
+    $branch ??= \App\Models\Branch::create(['name' => 'Sede Test ' . uniqid(), 'is_active' => true]);
+
+    $user = \App\Models\User::factory()->create();
+    $user->forceFill(['is_admin' => $admin, 'is_active' => true])->save();
+    $user->branches()->attach($branch);
+
+    return [$user, $branch];
+}
+
+function stockedProduct(Branch $branch, int $quantity, float $cost = 10000, float $price = 20000): Product
+{
+    $product = Product::create([
+        'name' => 'Repuesto ' . uniqid(),
+        'category' => 'Repuestos',
+        'branch_id' => $branch->id,
+        'purchase_price' => $cost,
+        'sale_price' => $price,
+        'stock' => 0,
+        'min_stock' => 0,
+    ]);
+
+    app(InventoryService::class)->registerPurchaseBatch([
+        'product_id' => $product->id,
+        'cost_price' => $cost,
+        'sale_price' => $price,
+        'quantity' => $quantity,
+    ]);
+
+    return $product->fresh();
+}
+
+function batchStock(Product $product): int
+{
+    return (int) Batch::where('product_id', $product->id)->sum('remaining_stock');
+}
+
+function demoJobType(array $overrides = []): JobType
+{
+    return JobType::create(array_merge([
+        'name' => 'Mantenimiento ' . uniqid(),
+        'description' => 'Mantenimiento preventivo',
+        'calculation_type' => 'percentage',
+        'mechanic_percentage' => 60,
+        'workshop_percentage' => 40,
+        'allow_products' => true,
+        'allow_custom_labor' => true,
+        'is_active' => true,
+    ], $overrides));
+}
+
+function branchMechanic(Branch $branch): Mechanic
+{
+    return Mechanic::create([
+        'name' => 'Mecanico ' . substr(uniqid(), -5),
+        'phone' => '3001234567',
+        'hire_date' => now()->subYear()->toDateString(),
+        'branch_id' => $branch->id,
+        'is_active' => true,
+    ]);
+}
+
+function branchOrder(Branch $branch, string $status = 'pending'): ServiceOrder
+{
+    return ServiceOrder::create([
+        'customer_name' => 'Cliente Demo',
+        'customer_phone' => '3009998877',
+        'vehicle_info' => 'Yamaha FZ 2.0 - ABC12D',
+        'service_description' => 'Revision general',
+        'branch_id' => $branch->id,
+        'status' => $status,
+    ]);
 }

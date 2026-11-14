@@ -1,150 +1,165 @@
-@import 'tailwindcss';
+/*
+ * Fuentes de clases explícitas (source(none) apaga la detección automática): el CSS depende solo
+ * del código, no de lo que haya en storage/ (vistas compiladas, páginas de error de las pruebas).
+ * app/ va porque App\Support\Tone y los modelos devuelven clases de tono.
+ */
+@import 'tailwindcss' source(none);
+
+/* Fuente incluida en la app (funciona sin internet). Ver DESIGN.md §4. */
+@import '@fontsource/instrument-sans/latin-400.css';
+@import '@fontsource/instrument-sans/latin-500.css';
+@import '@fontsource/instrument-sans/latin-600.css';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
+@source '../views';
+@source '../js';
+@source '../../app';
 
 /* Enable class-based dark mode for Tailwind 4 */
 @variant dark (&:where(.dark, .dark *));
 
+/*
+ * Tokens del sistema de diseño (DESIGN.md §2). Cambiar un color = cambiar el token aquí.
+ * Contraste verificado (WCAG >= 4,5:1) en ambos temas.
+ */
+:root {
+    --background: #f9fafb;
+    --foreground: #101828;
+    --card: #ffffff;
+    --muted: #f2f4f7;
+    --muted-foreground: #475467;
+    --border: #e4e7ec;
+    --input: #d0d5dd;
+    --ring: #465fff;
+    --primary: #3641f5;
+    --primary-hover: #2a31d8;
+    --primary-foreground: #ffffff;
+    --destructive: #d92d20;
+    --destructive-hover: #b42318;
+    --destructive-foreground: #ffffff;
+    --success: #12b76a;
+    --warning: #f79009;
+    --info: #0ba5ec;
+    --success-text: #067647;
+    --warning-text: #8a5a00;
+    --info-text: #026aa2;
+    --destructive-text: #be123c;
+    --sidebar: #0c111d;
+    --sidebar-foreground: #98a2b3;
+    --sidebar-accent: #1d2939;
+    --sidebar-active: #ffffff;
+    --sidebar-border: #1d2939;
+    --overlay: rgb(16 24 40 / 0.45);
+    /* Serie única de gráficos: validada (banda de luminosidad y contraste >= 3:1) contra card. */
+    --chart-1: #465fff;
+}
+
+.dark {
+    --background: #0c111d;
+    --foreground: #f2f4f7;
+    --card: #101828;
+    --muted: #1d2939;
+    --muted-foreground: #98a2b3;
+    --border: #1d2939;
+    --input: #344054;
+    --ring: #7592ff;
+    --primary: #7592ff;
+    --primary-hover: #9cb9ff;
+    --primary-foreground: #0c111d;
+    --success-text: #32d583;
+    --warning-text: #fdb022;
+    --info-text: #36bffa;
+    --destructive-text: #f97066;
+    --sidebar: #0c111d;
+    --sidebar-accent: #1d2939;
+    --sidebar-border: #1d2939;
+    --overlay: rgb(0 0 0 / 0.6);
+    --chart-1: #6178ff;
+}
+
+@theme inline {
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    --color-primary: var(--primary);
+    --color-primary-hover: var(--primary-hover);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-destructive: var(--destructive);
+    --color-destructive-hover: var(--destructive-hover);
+    --color-destructive-foreground: var(--destructive-foreground);
+    --color-success: var(--success);
+    --color-warning: var(--warning);
+    --color-info: var(--info);
+    --color-success-text: var(--success-text);
+    --color-warning-text: var(--warning-text);
+    --color-info-text: var(--info-text);
+    --color-destructive-text: var(--destructive-text);
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-active: var(--sidebar-active);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-overlay: var(--overlay);
+    --color-chart-1: var(--chart-1);
+}
+
 @theme {
-    /* Brand Portfolio - Electronic Blue */
-    --color-brand-25: #f2f7ff;
-    --color-brand-50: #ecf3ff;
-    --color-brand-100: #dde9ff;
-    --color-brand-200: #c2d6ff;
-    --color-brand-300: #9cb9ff;
-    --color-brand-400: #7592ff;
-    --color-brand-500: #465fff;
-    --color-brand-600: #3641f5;
-    --color-brand-700: #2a31d8;
-    --color-brand-800: #252dae;
-    --color-brand-900: #262e89;
-    --color-brand-950: #161950;
-
-    /* Gray Scale - Neutrals */
-    --color-gray-25: #fcfcfd;
-    --color-gray-50: #f9fafb;
-    --color-gray-100: #f2f4f7;
-    --color-gray-200: #e4e7ec;
-    --color-gray-300: #d0d5dd;
-    --color-gray-400: #98a2b3;
-    --color-gray-500: #667085;
-    --color-gray-600: #475467;
-    --color-gray-700: #344054;
-    --color-gray-800: #1d2939;
-    --color-gray-900: #101828;
-    --color-gray-950: #0c111d;
-
-    /* Semantic Colors */
-    --color-success-50: #ecfdf3;
-    --color-success-500: #12b76a;
-    --color-success-600: #039855;
-
-    --color-error-50: #fef3f2;
-    --color-error-500: #f04438;
-    --color-error-600: #d92d20;
-
-    --color-warning-50: #fffaeb;
-    --color-warning-500: #f79009;
-    --color-warning-600: #dc6803;
-
-    /* Typography & Effects */
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
-
-    --shadow-theme-xs: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
-    --shadow-theme-sm: 0px 1px 3px 0px rgba(16, 24, 40, 0.1), 0px 1px 2px 0px rgba(16, 24, 40, 0.06);
-    --shadow-theme-md: 0px 4px 8px -2px rgba(16, 24, 40, 0.1), 0px 2px 4px -2px rgba(16, 24, 40, 0.06);
-    --shadow-theme-lg: 0px 12px 16px -4px rgba(16, 24, 40, 0.08), 0px 4px 6px -2px rgba(16, 24, 40, 0.03);
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 @layer base {
-    :root {
-        --body-bg: var(--color-gray-50);
-        --body-text: var(--color-gray-900);
+    /*
+     * El <html> también lleva el fondo: entre una página y otra el navegador nunca muestra blanco,
+     * y `color-scheme` pinta barras de scroll y controles nativos del tema activo.
+     */
+    html {
+        background-color: var(--background);
+        color-scheme: light;
     }
 
-    .dark {
-        --body-bg: var(--color-gray-950);
-        --body-text: #f9fafb;
-        /* gray-50 */
-    }
-
-    /* Global Background and Border Overrides for Dark Mode */
-    .dark .bg-white {
-        background-color: var(--color-gray-900) !important;
-        border-color: var(--color-gray-800) !important;
-    }
-
-    .dark .bg-slate-50, 
-    .dark .bg-gray-50,
-    .dark .bg-slate-100,
-    .dark .bg-gray-100 {
-        background-color: var(--color-gray-800) !important;
-        border-color: var(--color-gray-700) !important;
-    }
-
-    .dark .border-slate-200,
-    .dark .border-gray-200,
-    .dark .border-slate-100,
-    .dark .border-gray-100 {
-        border-color: var(--color-gray-800) !important;
-    }
-
-    .dark .border-slate-300,
-    .dark .border-gray-300 {
-        border-color: var(--color-gray-700) !important;
-    }
-
-    .dark .text-slate-900,
-    .dark .text-gray-900,
-    .dark .text-slate-800,
-    .dark .text-gray-800,
-    .dark h1,
-    .dark h2,
-    .dark h3 {
-        color: #ffffff !important;
-    }
-
-    .dark .text-slate-500,
-    .dark .text-gray-500,
-    .dark .text-slate-400,
-    .dark .text-gray-400,
-    .dark p,
-    .dark span:not(.text-white) {
-        color: #94a3b8 !important;
-        /* Lighter subtext */
-    }
-
-    /* Table Specific Dark Mode Overrides */
-    .dark table thead th,
-    .dark table thead {
-        background-color: var(--color-gray-900) !important;
-        border-color: var(--color-gray-800) !important;
-        color: var(--color-gray-300) !important;
-    }
-
-    .dark table tbody tr {
-        border-color: var(--color-gray-800) !important;
-    }
-
-    .dark table tbody td {
-        border-color: var(--color-gray-800) !important;
-    }
-
-    .dark table tbody tr:hover {
-        background-color: var(--color-gray-800) !important;
+    html.dark {
+        color-scheme: dark;
     }
 
     body {
-        background-color: var(--body-bg);
-        color: var(--body-text);
-        @apply transition-colors duration-500;
+        background-color: var(--background);
+        color: var(--foreground);
+        /* Una palabra larguísima (un código, una referencia pegada) se corta antes que salirse de su caja. */
+        overflow-wrap: break-word;
+    }
+
+    /* Los iconos ocupan su lugar antes de que Lucide los dibuje: el texto no salta al cargar. */
+    i[data-lucide] {
+        display: inline-block;
+        flex-shrink: 0;
     }
 }
 
-
 [x-cloak] {
     display: none !important;
+}
+
+/*
+ * Cambio de página suave entre pantallas de la app (navegadores Chromium): el menú lateral
+ * queda quieto y solo el contenido hace un fundido corto. Sin efecto si el sistema pide menos movimiento.
+ */
+@media (prefers-reduced-motion: no-preference) {
+    @view-transition {
+        navigation: auto;
+    }
+
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+        animation-duration: 120ms;
+    }
+}
+
+.app-sidebar {
+    view-transition-name: app-sidebar;
 }

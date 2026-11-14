@@ -1,277 +1,194 @@
 <x-app-layout>
-    <x-page-header title="Movimientos de Inventario" subtitle="Trazabilidad completa de entradas y salidas.">
+<div class="ds" x-data="batchCorrection()">
+    <x-page-header title="Trazabilidad" subtitle="Cada entrada y salida de inventario, con su lote y precio">
         <x-slot name="actions">
-            <x-button variant="secondary" onclick="window.location.href='{{ route('inventory.adjustment') }}'">
-                <i data-lucide="sliders" class="mr-2 h-4 w-4"></i>
-                Ajuste Manual
-            </x-button>
-            <x-button variant="primary" onclick="window.location.href='{{ route('inventory.purchase') }}'">
-                <i data-lucide="shopping-cart" class="mr-2 h-4 w-4"></i>
-                Registrar Compra
-            </x-button>
+            @can('admin')
+                <x-button variant="secondary" href="{{ route('inventory.adjustment') }}">Ajuste manual</x-button>
+            @endcan
+            <x-button href="{{ route('inventory.purchase') }}">Registrar compra</x-button>
         </x-slot>
     </x-page-header>
 
-    <x-search-filter action="{{ route('inventory.index') }}" searchPlaceholder="Producto, proveedor o referencia...">
-        <div class="space-y-2">
-            <label for="type" class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Tipo de Movimiento</label>
-            <select name="type" id="type" class="w-full rounded-2xl border-slate-200 bg-white shadow-sm focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 py-4 px-4 text-sm font-bold text-slate-700 transition-all dark:bg-slate-950/40 dark:border-slate-800 dark:text-white dark:focus:bg-slate-950/60">
-                <option value="">Todos los tipos</option>
-                <option value="purchase" {{ request('type') == 'purchase' ? 'selected' : '' }}>Compra</option>
-                <option value="sale" {{ request('type') == 'sale' ? 'selected' : '' }}>Venta</option>
-                <option value="job_usage" {{ request('type') == 'job_usage' ? 'selected' : '' }}>Uso en Orden</option>
-                <option value="adjustment" {{ request('type') == 'adjustment' ? 'selected' : '' }}>Ajuste</option>
-                <option value="reversal" {{ request('type') == 'reversal' ? 'selected' : '' }}>Anulación</option>
-            </select>
-        </div>
+    <x-search-filter action="{{ route('inventory.index') }}" searchPlaceholder="Producto, proveedor o referencia">
+        <x-select label="Tipo de movimiento" name="type">
+            <option value="">Todos</option>
+            @foreach(\App\Models\InventoryMovement::TYPE_LABELS as $value => $label)
+                <option value="{{ $value }}" @selected(request('type') === $value)>{{ $label }}</option>
+            @endforeach
+        </x-select>
     </x-search-filter>
 
-    <div x-data="batchCorrection()">
-    <x-card>
-        <x-table :headers="['Fecha', 'Producto', 'Tipo', 'Cantidad', 'Precio Unit.', 'Proveedor / Ref', 'Acciones']">
-            @forelse($movements as $mov)
-            <tr>
-                <td class="px-6 py-4 text-sm text-slate-500 font-medium">
-                    {{ $mov->movement_date->format('d/m/Y') }}
-                </td>
-                <td class="px-6 py-4">
-                    <div class="text-sm font-bold text-slate-900">{{ $mov->product?->name ?? 'Producto eliminado' }}</div>
-                    <div class="text-[10px] text-slate-400 font-bold uppercase">{{ $mov->product?->category ?? '-' }}</div>
-                </td>
-                <td class="px-6 py-4">
-                    @php
-                        $typeBadge = match($mov->movement_type) {
-                            'purchase'  => 'emerald',
-                            'sale'      => 'blue',
-                            'job_usage' => 'amber',
-                            'adjustment'=> 'slate',
-                            'reversal'  => 'red',
-                            default     => 'slate'
-                        };
-                        $typeLabel = match($mov->movement_type) {
-                            'purchase'  => 'Compra',
-                            'sale'      => 'Venta',
-                            'job_usage' => 'Uso en Orden',
-                            'adjustment'=> 'Ajuste',
-                            'reversal'  => 'Anulación',
-                            default     => $mov->movement_type
-                        };
-                    @endphp
-                    <x-badge :variant="$typeBadge" class="uppercase text-[9px]">
-                        {{ $typeLabel }}
-                    </x-badge>
-                </td>
-                <td class="px-6 py-4 text-sm font-black {{ $mov->quantity > 0 ? 'text-emerald-600' : 'text-red-600' }}">
-                    {{ $mov->quantity > 0 ? '+' : '' }}{{ $mov->quantity }}
-                </td>
-                <td class="px-6 py-4 text-sm font-bold text-slate-600">
-                    ${{ number_format($mov->unit_price, 0, ',', '.') }}
-                </td>
-                <td class="px-6 py-4">
-                    <div class="text-sm text-slate-700 font-medium">{{ $mov->supplier->name ?? $mov->reference ?? 'N/A' }}</div>
-                </td>
-                <td class="px-6 py-4 text-right text-sm font-medium">
-                    <div class="flex justify-end gap-2">
-                        <!-- Eye Icon -->
-                        <button type="button" 
-                                @click='openDetails(@json($mov))' 
-                                class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors cursor-pointer" 
-                                title="Ver Detalles">
-                            <i data-lucide="eye" class="h-4 w-4"></i>
-                        </button>
-                        
-                        <!-- Pencil Icon -->
-                        @if($mov->movement_type === 'purchase' && $mov->batch)
-                            <button type="button" 
-                                    @click='openModal(@json($mov->batch))' 
-                                    class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors cursor-pointer" 
-                                    title="Corregir Lote">
-                                <i data-lucide="pencil" class="h-4 w-4"></i>
-                            </button>
-                        @endif
-                    </div>
-                </td>
-            </tr>
-            @empty
-            <tr>
-                <td colspan="7" class="px-6 py-12 text-center text-slate-500">
-                    No hay movimientos registrados.
-                </td>
-            </tr>
-            @endforelse
-        </x-table>
-        <div class="mt-4">
-            {{ $movements->links() }}
-        </div>
-
-        <!-- Details Modal -->
-        <template x-if="showDetailsModal">
-            <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm"
-                 @click.self="showDetailsModal = false"
-                 x-transition:enter="transition ease-out duration-300"
-                 x-transition:enter-start="opacity-0"
-                 x-transition:enter-end="opacity-100">
-                <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden"
-                     x-transition:enter="transition ease-out duration-300 transform"
-                     x-transition:enter-start="scale-95 opacity-0"
-                     x-transition:enter-end="scale-100 opacity-100">
-                    <div class="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-700">
-                        <h3 class="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Detalles del Movimiento</h3>
-                        <button type="button" @click="showDetailsModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer">
-                            ✕
-                        </button>
-                    </div>
-
-                    <div class="p-6 space-y-4">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <span class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Tipo</span>
-                                <p class="text-sm font-bold text-slate-900 dark:text-white mt-1" x-text="movement?.movement_type === 'purchase' ? 'Compra' : (movement?.movement_type === 'sale' ? 'Venta' : (movement?.movement_type === 'adjustment' ? 'Ajuste' : (movement?.movement_type === 'job_usage' ? 'Uso en Orden' : 'Anulación')))"></p>
+    <x-card flush>
+        @if($movements->isNotEmpty())
+            <x-table :headers="['Fecha', 'Producto', 'Movimiento', ['label' => 'Cantidad', 'align' => 'right'], ['label' => 'Precio unit.', 'align' => 'right'], 'Proveedor o referencia', ['label' => '', 'align' => 'right']]">
+                @foreach($movements as $mov)
+                    <tr class="transition-colors hover:bg-muted/50">
+                        <td class="whitespace-nowrap px-4 py-3 tabular-nums text-muted-foreground">{{ $mov->movement_date->format('d/m/Y') }}</td>
+                        <td class="px-4 py-3">
+                            <p class="font-medium">{{ $mov->product?->name ?? 'Producto eliminado' }}</p>
+                            <p class="mt-0.5 text-xs text-muted-foreground">{{ $mov->product?->category ?? '—' }}</p>
+                        </td>
+                        <td class="px-4 py-3">
+                            <x-status-badge :tone="$mov->directionTone()" :icon="$mov->directionIcon()">{{ $mov->typeLabel() }}</x-status-badge>
+                        </td>
+                        <td class="whitespace-nowrap px-4 py-3 text-right font-medium tabular-nums {{ \App\Support\Tone::text($mov->directionTone()) }}">{{ $mov->signedQuantity() }}</td>
+                        <td class="whitespace-nowrap px-4 py-3 text-right tabular-nums text-muted-foreground">{{ money($mov->unit_price) }}</td>
+                        <td class="max-w-56 truncate px-4 py-3" title="{{ $mov->supplier->name ?? $mov->reference }}">{{ $mov->supplier->name ?? $mov->reference ?? '—' }}</td>
+                        <td class="whitespace-nowrap px-4 py-2 text-right">
+                            <div class="flex items-center justify-end gap-1">
+                                <button type="button" x-on:click="openDetails({{ \Illuminate\Support\Js::from($mov) }})" title="Ver detalle"
+                                        class="inline-flex size-9 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+                                    <i data-lucide="eye" class="size-4"></i>
+                                    <span class="sr-only">Ver detalle del movimiento</span>
+                                </button>
+                                @if($mov->movement_type === 'purchase' && $mov->batch && auth()->user()->can('admin'))
+                                    <button type="button" x-on:click="openModal({{ \Illuminate\Support\Js::from($mov->batch) }})" title="Corregir lote"
+                                            class="inline-flex size-9 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+                                        <i data-lucide="pencil" class="size-4"></i>
+                                        <span class="sr-only">Corregir el lote de esta compra</span>
+                                    </button>
+                                @endif
                             </div>
-                            <div>
-                                <span class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Fecha</span>
-                                <p class="text-sm font-bold text-slate-900 dark:text-white mt-1" x-text="movement ? new Date(movement.movement_date).toLocaleDateString('es-ES') : ''"></p>
-                            </div>
-                            <div>
-                                <span class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Producto</span>
-                                <p class="text-sm font-bold text-slate-900 dark:text-white mt-1" x-text="movement?.product?.name || 'Producto eliminado'"></p>
-                            </div>
-                            <div>
-                                <span class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Cantidad</span>
-                                <p class="text-sm font-bold mt-1" :class="movement?.quantity > 0 ? 'text-emerald-600' : 'text-red-600'" x-text="movement ? (movement.quantity > 0 ? '+' : '') + movement.quantity : ''"></p>
-                            </div>
-                            <div>
-                                <span class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Precio Unitario</span>
-                                <p class="text-sm font-bold text-slate-900 dark:text-white mt-1" x-text="movement ? '$' + Number(movement.unit_price).toLocaleString('es-CO') : ''"></p>
-                            </div>
-                            <div>
-                                <span class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Proveedor / Ref</span>
-                                <p class="text-sm font-bold text-slate-900 dark:text-white mt-1" x-text="movement?.supplier?.name || movement?.reference || 'N/A'"></p>
-                            </div>
-                            <div class="col-span-2">
-                                <span class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Notas</span>
-                                <p class="text-sm text-slate-700 dark:text-slate-300 mt-1 italic" x-text="movement?.notes || 'Sin notas registradas.'"></p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 flex justify-end">
-                        <button type="button" @click="showDetailsModal = false" class="px-4 py-2 text-sm font-bold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors">Cerrar</button>
-                    </div>
-                </div>
+                        </td>
+                    </tr>
+                @endforeach
+            </x-table>
+        @else
+            <div class="p-5">
+                <x-empty-state icon="history">
+                    {{ request()->except('page') ? 'Ningún movimiento coincide con la búsqueda.' : 'Aún no hay movimientos de inventario.' }}
+                </x-empty-state>
             </div>
-        </template>
+        @endif
 
-        <!-- Correction Modal -->
-        <template x-if="showModal">
-            <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm"
-                 @click.self="showModal = false"
-                 x-transition:enter="transition ease-out duration-300"
-                 x-transition:enter-start="opacity-0"
-                 x-transition:enter-end="opacity-100">
-                <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden"
-                     x-transition:enter="transition ease-out duration-300 transform"
-                     x-transition:enter-start="scale-95 opacity-0"
-                     x-transition:enter-end="scale-100 opacity-100">
-                    <div class="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-700">
-                        <h3 class="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Corregir Lote de Compra</h3>
-                        <button type="button" @click="showModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer">
-                            ✕
-                        </button>
-                    </div>
-
-                    <form :action="'{{ url('batches') }}/' + batch?.id" method="POST" class="p-6 space-y-6 text-left">
-                        @csrf
-                        @method('PATCH')
-                        
-                        <div>
-                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                                Proveedor <span class="text-red-500">*</span>
-                            </label>
-                            <div class="relative">
-                                <select name="supplier_id" x-model="form.supplier_id" required class="block w-full rounded-2xl border border-gray-300 px-4 py-3 bg-white text-gray-950 shadow-sm transition-all duration-200 focus:border-brand-500 focus:ring-4 focus:ring-brand-50 dark:bg-gray-900 dark:border-gray-700 dark:text-white sm:text-sm">
-                                    <option value="">Seleccione un proveedor...</option>
-                                    @foreach($activeSuppliers as $supplier)
-                                        <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <x-input label="Costo Unitario" type="number" step="0.01" name="cost_price" required x-model="form.cost_price" />
-                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium" x-show="form.cost_price" x-cloak>
-                                    $ <span x-text="Number(form.cost_price).toLocaleString('es-CO')"></span>
-                                </p>
-                            </div>
-                            <div>
-                                <x-input label="Precio Venta" type="number" step="0.01" name="sale_price" required x-model="form.sale_price" />
-                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium" x-show="form.sale_price" x-cloak>
-                                    $ <span x-text="Number(form.sale_price).toLocaleString('es-CO')"></span>
-                                </p>
-                            </div>
-                        </div>
-                        <div>
-                            <x-input label="Cantidad" type="number" name="quantity" required x-model="form.quantity" x-bind:disabled="!canEditQuantity" x-bind:class="{'opacity-50 bg-slate-50 dark:bg-slate-800 cursor-not-allowed': !canEditQuantity}" />
-                            <p x-show="!canEditQuantity" class="mt-2 text-xs text-amber-600 dark:text-amber-500 font-bold flex gap-1 items-start">
-                                <i data-lucide="info" class="w-4 h-4 shrink-0"></i> 
-                                <span>Este lote ya tiene ventas registradas. Para modificar el stock general usa <a href="{{ route('inventory.adjustment') }}" class="underline hover:text-amber-700 dark:hover:text-amber-400">Ajuste Manual</a>.</span>
-                            </p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                                Motivo de corrección <span class="text-red-500">*</span>
-                            </label>
-                            <textarea name="notes" x-model="form.notes" required minlength="10" rows="3" class="block w-full rounded-2xl border border-gray-300 px-4 py-3 bg-white text-gray-950 shadow-sm transition-all duration-200 placeholder:text-gray-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-50 dark:bg-gray-900 dark:border-gray-700 dark:text-white dark:placeholder:text-gray-500 sm:text-sm" placeholder="Especificar el porqué de la corrección..."></textarea>
-                            <p class="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">Se requieren al menos 10 caracteres.</p>
-                        </div>
-                        
-                        <div class="pt-5 flex justify-end gap-3 border-t border-slate-100 dark:border-slate-700">
-                            <button type="button" @click="showModal = false" class="inline-flex items-center justify-center font-bold rounded-2xl transition-all duration-200 active:scale-95 cursor-pointer focus:outline-none focus:ring-4 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 focus:ring-slate-100 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 px-5 py-3 text-sm">
-                                Cancelar
-                            </button>
-                            <button type="submit" class="inline-flex items-center justify-center font-bold rounded-2xl transition-all duration-200 active:scale-95 cursor-pointer focus:outline-none focus:ring-4 bg-brand-500 text-white hover:bg-brand-600 focus:ring-brand-500/20 shadow-sm dark:bg-brand-500 dark:hover:bg-brand-600 px-5 py-3 text-sm">
-                                Guardar Cambios
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </template>
-
+        @if($movements->hasPages())
+            <x-slot name="footer">{{ $movements->links() }}</x-slot>
+        @endif
     </x-card>
-    </div>
 
-    <script>
-        function batchCorrection() {
-            return {
-                showModal: false,
-                showDetailsModal: false,
-                batch: null,
-                movement: null,
-                form: {
-                    supplier_id: '',
-                    cost_price: '',
-                    sale_price: '',
-                    quantity: '',
-                    notes: '',
-                },
-                get canEditQuantity() {
-                    return this.batch && this.batch.remaining_stock == this.batch.quantity;
-                },
-                openModal(batch) {
-                    this.batch = batch;
-                    this.form.supplier_id = batch.supplier_id;
-                    this.form.cost_price = batch.cost_price;
-                    this.form.sale_price = batch.sale_price;
-                    this.form.quantity = batch.quantity;
-                    this.form.notes = '';
-                    this.showModal = true;
-                },
-                openDetails(movement) {
-                    this.movement = movement;
-                    this.showDetailsModal = true;
-                }
-            }
-        }
-    </script>
+    {{-- Detalle del movimiento --}}
+    <template x-if="showDetailsModal">
+        <div class="ds fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="movement-title"
+             x-on:keydown.escape.window="showDetailsModal = false">
+            <div class="absolute inset-0 bg-overlay" @click="showDetailsModal = false"></div>
+            <div class="relative w-full max-w-lg overflow-hidden rounded-lg border border-border bg-card text-foreground shadow-lg">
+                <div class="flex items-center justify-between border-b border-border px-5 py-4">
+                    <h2 id="movement-title" class="text-base font-semibold">Detalle del movimiento</h2>
+                    <button type="button" @click="showDetailsModal = false" class="-m-1 cursor-pointer rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground" title="Cerrar">
+                        <i data-lucide="x" class="size-4"></i>
+                        <span class="sr-only">Cerrar</span>
+                    </button>
+                </div>
+                <dl class="grid grid-cols-2 gap-4 p-5 text-sm">
+                    <div>
+                        <dt class="text-xs font-medium text-muted-foreground">Tipo</dt>
+                        <dd class="mt-0.5" x-text="(@js(\App\Models\InventoryMovement::TYPE_LABELS))[movement?.movement_type] || movement?.movement_type"></dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-muted-foreground">Fecha</dt>
+                        <dd class="mt-0.5 tabular-nums" x-text="movement ? new Date(movement.movement_date).toLocaleDateString('es-CO', { timeZone: 'UTC' }) : ''"></dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-muted-foreground">Producto</dt>
+                        <dd class="mt-0.5" x-text="movement?.product?.name || 'Producto eliminado'"></dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-muted-foreground">Cantidad</dt>
+                        <dd class="mt-0.5 font-medium tabular-nums" x-text="movement ? (movement.quantity > 0 ? '+' : '−') + Math.abs(movement.quantity) : ''"></dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-muted-foreground">Precio unitario</dt>
+                        <dd class="mt-0.5 tabular-nums" x-text="movement ? formatCurrency(movement.unit_price) : ''"></dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-muted-foreground">Proveedor o referencia</dt>
+                        <dd class="mt-0.5" x-text="movement?.supplier?.name || movement?.reference || '—'"></dd>
+                    </div>
+                    <div class="col-span-2">
+                        <dt class="text-xs font-medium text-muted-foreground">Notas</dt>
+                        <dd class="mt-0.5 whitespace-pre-wrap" x-text="movement?.notes || 'Sin notas.'"></dd>
+                    </div>
+                </dl>
+                <div class="flex justify-end border-t border-border px-5 py-4">
+                    <x-button variant="secondary" @click="showDetailsModal = false">Cerrar</x-button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    {{-- Corrección de lote (solo administrador) --}}
+    <template x-if="showModal">
+        <div class="ds fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="batch-title"
+             x-on:keydown.escape.window="showModal = false">
+            <div class="absolute inset-0 bg-overlay" @click="showModal = false"></div>
+            <form :action="'{{ url('batches') }}/' + batch?.id" method="POST"
+                  class="relative flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-border bg-card text-foreground shadow-lg">
+                @csrf
+                @method('PATCH')
+                <div class="flex items-center justify-between border-b border-border px-5 py-4">
+                    <h2 id="batch-title" class="text-base font-semibold">Corregir lote de compra</h2>
+                    <button type="button" @click="showModal = false" class="-m-1 cursor-pointer rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground" title="Cerrar">
+                        <i data-lucide="x" class="size-4"></i>
+                        <span class="sr-only">Cerrar</span>
+                    </button>
+                </div>
+
+                <div class="flex-1 space-y-4 overflow-y-auto p-5">
+                    <x-select label="Proveedor" name="supplier_id" id="batch-supplier" required x-model="form.supplier_id">
+                        <option value="">Selecciona un proveedor</option>
+                        @foreach($activeSuppliers as $supplier)
+                            <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
+                        @endforeach
+                    </x-select>
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <x-input label="Costo unitario" name="cost_price" inputmode="decimal" required x-model="form.cost_price" />
+                        <x-input label="Precio de venta" name="sale_price" inputmode="decimal" required x-model="form.sale_price" />
+                    </div>
+                    <div>
+                        <x-input label="Cantidad" name="quantity" inputmode="numeric" pattern="[0-9]*" required x-model="form.quantity"
+                                 x-bind:readonly="!canEditQuantity" />
+                        <p x-show="!canEditQuantity" class="mt-1.5 text-xs text-warning-text">
+                            Este lote ya tiene ventas. Para cambiar el stock usa el <a href="{{ route('inventory.adjustment') }}" class="underline">ajuste manual</a>.
+                        </p>
+                    </div>
+                    <x-textarea label="Motivo de la corrección" name="notes" required minlength="10" rows="3" x-model="form.notes"
+                                placeholder="Por qué se corrige este lote" help="Mínimo 10 caracteres." />
+                </div>
+
+                <div class="flex flex-col-reverse gap-2 border-t border-border px-5 py-4 sm:flex-row sm:justify-between">
+                    <x-button variant="secondary" @click="showModal = false">Cancelar</x-button>
+                    <x-button type="submit">Guardar cambios</x-button>
+                </div>
+            </form>
+        </div>
+    </template>
+</div>
+
+<script>
+    function batchCorrection() {
+        return {
+            showModal: false,
+            showDetailsModal: false,
+            batch: null,
+            movement: null,
+            form: { supplier_id: '', cost_price: '', sale_price: '', quantity: '', notes: '' },
+            get canEditQuantity() {
+                return this.batch && this.batch.remaining_stock == this.batch.quantity;
+            },
+            openModal(batch) {
+                this.batch = batch;
+                this.form.supplier_id = batch.supplier_id;
+                this.form.cost_price = Number(batch.cost_price);
+                this.form.sale_price = Number(batch.sale_price);
+                this.form.quantity = batch.quantity;
+                this.form.notes = '';
+                this.showModal = true;
+            },
+            openDetails(movement) {
+                this.movement = movement;
+                this.showDetailsModal = true;
+            },
+        };
+    }
+</script>
 </x-app-layout>

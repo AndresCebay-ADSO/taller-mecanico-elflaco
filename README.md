@@ -21,19 +21,20 @@ Sistema integral de gestión administrativa y operativa diseñado para talleres 
 │                       CONTROLLERS                               │
 │  Dashboard │ Sales │ ServiceOrder │ WorkshopJob │ Inventory     │
 │  Product │ Supplier │ Mechanic │ JobType │ Invoice │ Report     │
-│  Batch │ Setting                                                │
+│  Batch │ Setting │ Branch │ BranchTransfer │ User │ Profile     │
 ├─────────────────────────────────────────────────────────────────┤
 │                        SERVICES                                 │
-│           InventoryService (FIFO · Lotes · Reversiones)         │
+│  InventoryService (FIFO · Lotes · Reversiones) · SaleService    │
+│  WorkshopJobService · InvoiceService · BranchTransferService    │
+│  ReportService · BranchService                                  │
 ├─────────────────────────────────────────────────────────────────┤
-│                     ELOQUENT MODELS (15)                        │
+│                     ELOQUENT MODELS                             │
 │  Product (SoftDeletes) · Batch · InventoryMovement · Supplier   │
 │  Sale · SaleProduct · ServiceOrder · WorkshopJob · JobType      │
-│  Mechanic · JobProduct · Invoice · ProductPurchase · Setting    │
-│  User                                                           │
+│  Mechanic · JobProduct · Invoice · Setting · Branch             │
+│  BranchTransfer · User                                          │
 ├─────────────────────────────────────────────────────────────────┤
 │                    MySQL / MariaDB                              │
-│                    20 migraciones                               │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -74,27 +75,27 @@ Sistema integral de gestión administrativa y operativa diseñado para talleres 
 
 ### 📊 Dashboard en Tiempo Real
 
-- Ganancias del día y del mes (ventas + órdenes completadas).
+- Ingresos del día y del mes (ventas de mostrador + órdenes entregadas).
 - Órdenes activas y pendientes de entrega.
 - Últimas 5 ventas con detalle de productos y vendedor.
 - Productos con stock bajo.
 - Resumen de ventas del día por método de pago.
-- Performance de mecánicos activos: trabajos completados y ganancias del mes.
+- Comisiones de los mecánicos en el mes: trabajos completados y monto.
 
 ### 🧾 Facturación
 
-- Generación automática de facturas desde órdenes de servicio completadas.
+- Generación de facturas desde órdenes con todos sus trabajos completados.
 - Consolidación: suma mano de obra + repuestos de todos los trabajos asociados.
 - Al facturar, la orden se marca como `completed`.
-- Número de factura único auto-generado (`FAC-XXXX`).
+- Numeración consecutiva (`FAC-000001`) y factura imprimible con los datos del taller.
+- **Anulación con registro**: la factura anulada se conserva (fecha y usuario) y la orden puede facturarse de nuevo.
 
-### 📈 Reportes
+### 📈 Reportes (por mes y sucursal)
 
-- Ingresos totales y utilidad estimada del taller.
-- Trabajos del mes en curso.
-- Valorización del inventario (a costo y a precio de venta).
-- Conteo de productos con stock bajo.
-- Listado de mecánicos activos.
+- Ingresos del mes (órdenes + ventas) y ganancia estimada (parte del taller en la mano de obra + margen de repuestos al costo real del lote).
+- Ingresos por día, comisiones por mecánico, repuestos más vendidos y ventas por método de pago.
+- Valor del inventario actual al costo de cada lote y a precio de venta.
+- Selector para consultar los últimos 12 meses.
 
 ### ⚙️ Configuración del Taller
 
@@ -140,18 +141,20 @@ Parámetros editables desde la interfaz:
 
 ```
 app/
-├── Exceptions/            # InsufficientStockException
-├── Http/Controllers/      # 14 controladores + Auth/
-├── Models/                # 15 modelos Eloquent
+├── Console/Commands/      # inventory:check (conciliación stock vs lotes)
+├── Exceptions/            # InsufficientStockException, BusinessRuleException
+├── Http/Controllers/      # Controladores + Auth/
+├── Http/Middleware/       # SetCurrentBranch, EnsureAdminUser
+├── Models/                # Modelos Eloquent
 ├── Providers/
-├── Services/              # InventoryService (FIFO)
-└── View/
+└── Services/              # Inventario FIFO, ventas, trabajos, facturas, transferencias, reportes
 database/
-├── migrations/            # 20 migraciones
-├── seeders/               # AdminSeeder, SettingSeeder, SupplierSeeder
+├── migrations/
+├── seeders/               # DatabaseSeeder (config + sede + admin), DemoSeeder (datos de demo)
 resources/views/
-├── components/            # 11 componentes Blade reutilizables
-├── auth/                  # Login, registro (Breeze)
+├── components/            # Componentes Blade reutilizables
+├── auth/                  # Login
+├── branches/, branch-transfers/, users/, profile/  # Administración
 ├── dashboard.blade.php    # Panel principal
 ├── inventory/             # Movimientos, compras, ajustes
 ├── invoices/              # Facturas
@@ -166,6 +169,7 @@ resources/views/
 ├── suppliers/             # Proveedores
 └── welcome.blade.php      # Landing page
 docs/
+├── PRODUCCION_Y_DEMO.md    # Despliegue, respaldos y guion de demo
 ├── IEEE_830_SRS.md         # Especificación de Requerimientos
 ├── guia_tecnica.md         # Guía de Arquitectura
 ├── explicacion_modelos.md  # Modelo de Datos y Eloquent
@@ -217,11 +221,11 @@ docs/
    php artisan migrate
    ```
 
-5. **Poblar datos iniciales (usuario admin + configuración + proveedores):**
+5. **Poblar datos iniciales (configuración, sede principal y administrador):**
    ```bash
-   php artisan db:seed --class=AdminSeeder
-   php artisan db:seed --class=SettingSeeder
-   php artisan db:seed --class=SupplierSeeder
+   # En .env define ADMIN_EMAIL y ADMIN_PASSWORD; si ADMIN_PASSWORD queda vacío,
+   # el seeder genera una contraseña temporal y la muestra en consola.
+   php artisan db:seed
    ```
 
 6. **Levantar el servidor de desarrollo:**
@@ -236,8 +240,19 @@ docs/
 
 7. **Acceder al sistema:**
    - URL: `http://localhost:8000`
-   - Usuario: `admin@tallerflacos.com`
-   - Contraseña: `password`
+   - Usuario: el `ADMIN_EMAIL` de tu `.env` (por defecto `admin@tallerflacos.com`) con la contraseña del paso 5.
+
+### Datos de demostración
+
+Para presentar el sistema con 60 días de operación simulada (dos sedes, ventas, órdenes, facturas y transferencias), usa **una base de datos aparte** y sigue [`docs/PRODUCCION_Y_DEMO.md`](docs/PRODUCCION_Y_DEMO.md):
+
+```bash
+php artisan migrate:fresh --seed --seeder=DemoSeeder   # borra la base configurada en .env
+```
+
+La misma guía incluye el checklist de puesta en producción y copias de seguridad.
+
+Para instalar en una máquina Windows con XAMPP (el caso del cliente) sigue [`docs/INSTALACION_LOCAL.md`](docs/INSTALACION_LOCAL.md). En cualquier máquina, `php artisan taller:verificar` revisa que el entorno esté bien configurado.
 
 ### Script de Setup Rápido
 
@@ -257,6 +272,9 @@ Documentación detallada disponible en la carpeta `/docs`:
 
 | Documento | Contenido |
 |:---|:---|
+| 📄 [INSTALACION_LOCAL.md](docs/INSTALACION_LOCAL.md) | Instalar en Windows con XAMPP: php.ini, MySQL seguro, Apache, respaldos, actualización y problemas conocidos entre máquinas |
+| 📄 [PRODUCCION_Y_DEMO.md](docs/PRODUCCION_Y_DEMO.md) | Puesta en producción, respaldos, guion de demo y preguntas para el cliente |
+| 📄 [DESIGN.md](DESIGN.md) | Contrato de interfaz: colores, estados, tipografía, tablas, formularios y componentes |
 | 📄 [IEEE_830_SRS.md](docs/IEEE_830_SRS.md) | Especificación de Requerimientos del Sistema |
 | 📄 [guia_tecnica.md](docs/guia_tecnica.md) | Arquitectura: Resource Controllers, Route Model Binding, Validación |
 | 📄 [explicacion_modelos.md](docs/explicacion_modelos.md) | Modelo de Datos y relaciones Eloquent |
@@ -278,23 +296,24 @@ composer test
 
 ## 🗺️ Mapa de Rutas
 
-Todas las rutas están protegidas por el middleware `auth`.
+Todas las rutas están protegidas por el middleware `auth` y cada registro se valida contra la sucursal activa. Las marcadas como **admin** requieren el rol administrador.
 
 | Módulo | Ruta Base | Tipo |
 |:---|:---|:---|
 | Dashboard | `/dashboard` | Custom |
-| Proveedores | `/suppliers` | Resource |
-| Productos | `/products` | Resource |
-| Mecánicos | `/mechanics` | Resource |
-| Tipos de Trabajo | `/job-types` | Resource |
+| Proveedores | `/suppliers` | Resource (eliminar/activar: admin) |
+| Productos | `/products` | Resource (eliminar/restaurar: admin) |
+| Mecánicos | `/mechanics` | Resource (eliminar: admin) |
+| Tipos de Trabajo | `/job-types` | Resource — admin |
 | Órdenes de Servicio | `/service-orders` | Resource |
-| Trabajos | `/jobs` | Resource (parcial) |
-| Ventas | `/sales` | Resource |
-| Facturas | `/invoices` | Resource |
-| Inventario | `/inventory` | Custom (index, purchase, adjustment) |
-| Lotes | `/batches/{id}` | PATCH (corrección) |
-| Reportes | `/reports` | Custom |
-| Configuración | `/settings` | Custom (GET, PUT) |
+| Trabajos | `/jobs`, `/service-orders/{id}/jobs` | Custom |
+| Ventas | `/sales` | index, create, show (anular: admin) |
+| Facturas | `/invoices` | index, show, generar (anular: admin) |
+| Inventario | `/inventory` | index, compras (ajustes: admin) |
+| Lotes | `/batches/{id}` | PATCH (corrección) — admin |
+| Reportes | `/reports?month=AAAA-MM` | Custom |
+| Usuarios, Sucursales, Transferencias, Configuración | `/users`, `/branches`, `/branch-transfers`, `/settings` | admin |
+| Perfil | `/profile` | Cambio de contraseña |
 
 ---
 

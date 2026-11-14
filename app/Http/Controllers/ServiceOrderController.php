@@ -2,21 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\BusinessRuleException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use App\Models\Mechanic;
-use App\Models\Product;
 use App\Models\ServiceOrder;
 use App\Models\JobType;
-use App\Services\BranchService;
+use App\Models\WorkshopJob;
+use App\Services\InventoryService;
+use App\Services\WorkshopJobService;
 
 class ServiceOrderController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request, BranchService $branchService)
+    public function index(Request $request)
     {
-        $branchId = $branchService->getCurrentBranch()?->id;
+        $branchId = $this->currentBranchId();
         $request->validate([
             'search' => 'nullable|string|max:255',
             'status' => 'nullable|string|in:pending,in_progress,completed,cancelled',
@@ -79,16 +82,19 @@ class ServiceOrderController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request, BranchService $branchService)
+    public function store(Request $request)
     {
+        $branchId = $this->requireCurrentBranchId();
+
         $validated = $request->validate([
             'customer_name' => 'required|string|max:255',
+            'customer_document' => 'nullable|string|max:20',
             'customer_phone' => 'nullable|digits:10',
-            'vehicle_info' => 'required|string',
-            'service_description' => 'required|string',
+            'vehicle_info' => 'required|string|max:255',
+            'service_description' => 'required|string|max:5000',
         ]);
 
-        $validated['branch_id'] = $branchService->getCurrentBranch()?->id;
+        $validated['branch_id'] = $branchId;
 
         ServiceOrder::create($validated);
 
@@ -100,16 +106,18 @@ class ServiceOrderController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(ServiceOrder $serviceOrder, BranchService $branchService)
+    public function show(ServiceOrder $serviceOrder, InventoryService $inventoryService)
     {
-        $branchId = $branchService->getCurrentBranch()?->id;
-        $serviceOrder->load(['workshopJobs.mechanic', 'workshopJobs.jobType', 'workshopJobs.jobProducts.product' => function($q) {
+        $this->ensureCurrentBranch($serviceOrder->branch_id);
+        $branchId = $serviceOrder->branch_id;
+
+        $serviceOrder->load(['invoices', 'workshopJobs.mechanic', 'workshopJobs.jobType', 'workshopJobs.jobProducts.product' => function ($q) {
             $q->withTrashed();
         }]);
 
-        $mechanics = Mechanic::forBranch($branchId)->where('is_active', true)->get();
-        $jobTypes = JobType::where('is_active', true)->get();
-        $products = Product::forBranch($branchId)->where('stock', '>', 0)->get();
+        $mechanics = Mechanic::forBranch($branchId)->where('is_active', true)->orderBy('name')->get();
+        $jobTypes = JobType::where('is_active', true)->orderBy('name')->get();
+        $products = $inventoryService->sellableProducts($branchId);
 
         return view(
             'service-orders.show',
@@ -122,45 +130,81 @@ class ServiceOrderController extends Controller
      */
     public function edit(ServiceOrder $serviceOrder)
     {
+        $this->ensureCurrentBranch($serviceOrder->branch_id);
+
         return view('service-orders.edit', compact('serviceOrder'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, ServiceOrder $serviceOrder)
+    public function update(Request $request, ServiceOrder $serviceOrder, WorkshopJobService $jobService)
     {
+        $this->ensureCurrentBranch($serviceOrder->branch_id);
+
         $validated = $request->validate([
             'customer_name' => 'required|string|max:255',
+            'customer_document' => 'nullable|string|max:20',
             'customer_phone' => 'nullable|digits:10',
-            'vehicle_info' => 'required|string',
-            'service_description' => 'required|string',
+            'vehicle_info' => 'required|string|max:255',
+            'service_description' => 'required|string|max:5000',
             'status' => 'required|in:pending,in_progress,completed,cancelled',
         ]);
 
-        if (!$serviceOrder->canTransitionTo($validated['status'])) {
+        $newStatus = $validated['status'];
+        $statusChanges = $newStatus !== $serviceOrder->status;
+
+        if (!$serviceOrder->canTransitionTo($newStatus)) {
             return back()->withErrors([
                 'status' => 'La transicion de estado solicitada no es valida para esta orden.',
             ])->withInput();
         }
 
-        $validated['completed_at'] = $validated['status'] === 'completed'
-            ? ($serviceOrder->completed_at ?? now())
-            : null;
+        if ($statusChanges && $newStatus === ServiceOrder::STATUS_COMPLETED) {
+            $jobs = $serviceOrder->workshopJobs()->where('status', '!=', WorkshopJob::STATUS_CANCELLED)->get();
 
-        $serviceOrder->update($validated);
+            if ($jobs->isEmpty() || $jobs->contains(fn (WorkshopJob $job) => $job->status !== WorkshopJob::STATUS_COMPLETED)) {
+                return back()->withErrors([
+                    'status' => 'Completa todos los trabajos de la orden antes de cerrarla (al generar la factura se cierra automáticamente).',
+                ])->withInput();
+            }
+        }
+
+        $details = Arr::except($validated, ['status']);
+
+        // Cancelar devuelve al inventario los repuestos de sus trabajos.
+        if ($statusChanges && $newStatus === ServiceOrder::STATUS_CANCELLED) {
+            try {
+                $jobService->cancelOrder($serviceOrder);
+            } catch (BusinessRuleException $exception) {
+                return back()->withErrors([$exception->field => $exception->getMessage()])->withInput();
+            }
+
+            $serviceOrder->refresh()->update($details);
+
+            return redirect()
+                ->route('service-orders.show', $serviceOrder)
+                ->with('success', 'Orden cancelada. Los repuestos de sus trabajos volvieron al inventario.');
+        }
+
+        $serviceOrder->update($details + [
+            'status' => $newStatus,
+            'completed_at' => $newStatus === ServiceOrder::STATUS_COMPLETED ? ($serviceOrder->completed_at ?? now()) : null,
+        ]);
 
         return redirect()
-            ->route('service-orders.index')
+            ->route('service-orders.show', $serviceOrder)
             ->with('success', 'Orden actualizada correctamente.');
     }
 
     /**
      * Remove the specified resource from storage.
-     * Fix M05: Prevents deletion if jobs exist — protects stock traceability.
+     * Prevents deletion if jobs exist — protects stock traceability.
      */
     public function destroy(ServiceOrder $serviceOrder)
     {
+        $this->ensureCurrentBranch($serviceOrder->branch_id);
+
         if ($serviceOrder->workshopJobs()->exists()) {
             return back()->with('error', 'No se puede eliminar una orden con trabajos asociados. Cancélela primero.');
         }

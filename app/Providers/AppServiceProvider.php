@@ -2,10 +2,13 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\View;
-use Illuminate\Support\Facades\DB;
 use App\Models\Product;
+use App\Models\User;
+use App\Services\BranchService;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -14,7 +17,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Una instancia por peticion: evita repetir consultas de sucursal activa.
+        $this->app->scoped(BranchService::class);
     }
 
     /**
@@ -22,10 +26,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::define('admin', fn (User $user) => (bool) $user->is_admin);
+
+        // Paginación con los tokens de la app (resources/views/pagination/app.blade.php).
+        Paginator::defaultView('pagination.app');
+        Paginator::defaultSimpleView('pagination.app');
+
         View::composer('components.app-layout', function ($view) {
             try {
-                $count = Product::where('stock', '<=', DB::raw('min_stock'))
-                    ->whereNull('deleted_at')
+                $branchId = app(BranchService::class)->getCurrentBranchId();
+                $count = Product::forBranch($branchId)
+                    ->whereColumn('stock', '<=', 'min_stock')
                     ->count();
                 $view->with('lowStockCount', $count);
             } catch (\Exception $e) {

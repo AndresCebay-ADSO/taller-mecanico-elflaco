@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use InvalidArgumentException;
 
 class ServiceOrder extends Model
@@ -15,6 +16,7 @@ class ServiceOrder extends Model
 
     protected $fillable = [
         'customer_name',
+        'customer_document',
         'customer_phone',
         'vehicle_info',
         'service_description',
@@ -58,9 +60,20 @@ class ServiceOrder extends Model
         return $this->hasMany(WorkshopJob::class);
     }
 
+    /**
+     * Todas las facturas de la orden, incluidas las anuladas.
+     */
     public function invoices()
     {
         return $this->hasMany(Invoice::class);
+    }
+
+    /**
+     * La factura vigente: como máximo una por orden (InvoiceService lo garantiza).
+     */
+    public function activeInvoice(): HasOne
+    {
+        return $this->hasOne(Invoice::class)->whereNull('cancelled_at');
     }
 
     public function canTransitionTo(string $newStatus): bool
@@ -79,6 +92,30 @@ class ServiceOrder extends Model
         return in_array($newStatus, $validTransitions[$this->status] ?? [], true);
     }
 
+    public function statusLabel(): string
+    {
+        return match ($this->status) {
+            self::STATUS_PENDING => 'Pendiente',
+            self::STATUS_IN_PROGRESS => 'En progreso',
+            self::STATUS_COMPLETED => 'Completada',
+            self::STATUS_CANCELLED => 'Cancelada',
+            default => (string) $this->status,
+        };
+    }
+
+    /** Tono de la píldora de estado (DESIGN.md §3). */
+    public function statusTone(): string
+    {
+        return match ($this->status) {
+            self::STATUS_PENDING => 'warning',
+            self::STATUS_IN_PROGRESS => 'info',
+            // Terminado o cancelado: no pide acción, no lleva color (DESIGN.md §3).
+            self::STATUS_COMPLETED => 'neutral',
+            self::STATUS_CANCELLED => 'neutral',
+            default => 'neutral',
+        };
+    }
+
     public function canReceiveJobs(): bool
     {
         return in_array($this->status, [self::STATUS_PENDING, self::STATUS_IN_PROGRESS], true);
@@ -94,6 +131,6 @@ class ServiceOrder extends Model
         if ($branchId) {
             return $query->where('branch_id', $branchId);
         }
-        return $query;
+        return $query->whereRaw('1 = 0');
     }
 }

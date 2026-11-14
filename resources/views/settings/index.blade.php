@@ -1,106 +1,81 @@
 @php
     $settings = \App\Models\Setting::pluck('value', 'key')->all();
+    $hasLogo = ! empty($settings['workshop_logo']);
 @endphp
 
 <x-app-layout>
-<div class="py-6" x-data="{ activeTab: 'general' }">
-    <div class="max-w-4xl mx-auto">
-        <!-- Header -->
-        <div class="mb-8">
-            <h1 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Configuración del Sistema</h1>
-            <p class="mt-2 text-slate-500 dark:text-gray-400 font-medium">Administra los datos de tu taller, facturación y preferencias globales.</p>
-        </div>
+<div class="ds mx-auto max-w-3xl">
+    <x-page-header title="Configuración" subtitle="Datos del taller que salen en los comprobantes y en la orden de ingreso" />
 
-        @if (session('status'))
-            <div class="mb-6 p-4 bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
-                <div class="h-8 w-8 bg-green-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-green-500/20">
-                    <i data-lucide="check" class="h-5 w-5"></i>
+    <form action="{{ route('settings.update') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+        @csrf
+        @method('PUT')
+
+        <x-card title="Taller">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <x-input label="Nombre del taller" name="workshop_name" :value="$settings['workshop_name'] ?? ''" placeholder="MotoTaller El Flaco" maxlength="255" />
+                <x-input label="NIT o cédula" name="workshop_nit" :value="$settings['workshop_nit'] ?? ''" placeholder="123456789-0" maxlength="50" />
+                <x-input label="Régimen tributario" name="workshop_tax_regime" :value="$settings['workshop_tax_regime'] ?? ''" maxlength="100"
+                         placeholder="Ej.: No responsable de IVA" help="Sale debajo del NIT. Confírmalo en el RUT." />
+                <x-input label="Teléfono" name="workshop_phone" type="tel" :value="$settings['workshop_phone'] ?? ''" placeholder="321 000 0000" maxlength="30" />
+                <x-input label="Correo" name="workshop_email" type="email" :value="$settings['workshop_email'] ?? ''" placeholder="Opcional" maxlength="255" />
+                <x-input label="Dirección" name="workshop_address" :value="$settings['workshop_address'] ?? ''" placeholder="Calle 1 # 2-3, municipio" maxlength="255" />
+            </div>
+        </x-card>
+
+        <x-card title="Logo" description="Opcional. Sin logo, los documentos llevan el nombre del taller.">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
+                <div class="flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-md border border-dashed border-border bg-muted">
+                    @if($hasLogo)
+                        <img src="{{ route('branding.logo') }}?v={{ md5($settings['workshop_logo']) }}" alt="Logo actual" class="max-h-full max-w-full object-contain">
+                    @else
+                        <i data-lucide="image" class="size-6 text-muted-foreground"></i>
+                    @endif
                 </div>
-                <p class="text-sm font-bold text-green-800 dark:text-green-400">{{ session('status') }}</p>
-            </div>
-        @endif
-
-        <div class="flex flex-col md:flex-row gap-8">
-            <!-- Sidebar Navigation -->
-            <div class="w-full md:w-64 space-y-1">
-                <button 
-                    @click="activeTab = 'general'"
-                    :class="activeTab === 'general' ? 'bg-[#3B3BF9] text-white shadow-lg shadow-blue-500/20' : 'text-slate-600 dark:text-gray-400 hover:bg-slate-200 dark:hover:bg-gray-900'"
-                    class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200"
-                >
-                    <i data-lucide="settings" class="h-5 w-5"></i>
-                    General
-                </button>
-                <button 
-                    @click="activeTab = 'billing'"
-                    :class="activeTab === 'billing' ? 'bg-[#3B3BF9] text-white shadow-lg shadow-blue-500/20' : 'text-slate-600 dark:text-gray-400 hover:bg-slate-200 dark:hover:bg-gray-900'"
-                    class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200"
-                >
-                    <i data-lucide="receipt" class="h-5 w-5"></i>
-                    Facturación
-                </button>
-            </div>
-
-            <!-- Content Area -->
-            <div class="flex-1 bg-white dark:bg-gray-900/50 rounded-3xl shadow-sm border border-slate-200 dark:border-gray-800 overflow-hidden">
-                <form action="{{ route('settings.update') }}" method="POST" class="p-8">
-                    @csrf
-                    @method('PUT')
-
-                    <!-- General Tab -->
-                    <div x-show="activeTab === 'general'" x-cloak class="space-y-6">
-                        <div class="grid grid-cols-1 gap-6">
-                            <div>
-                                <label class="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-2">Nombre del Taller</label>
-                                <input type="text" name="workshop_name" value="{{ $settings['workshop_name'] ?? '' }}" class="w-full rounded-2xl border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-gray-950 px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-[#3B3BF9] transition-all dark:text-white" placeholder="MotoTaller El Flaco">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-2">NIT / Identificación</label>
-                                <input type="text" name="workshop_nit" value="{{ $settings['workshop_nit'] ?? '' }}" class="w-full rounded-2xl border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-gray-950 px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-[#3B3BF9] transition-all dark:text-white" placeholder="123456789-0">
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-2">Teléfono</label>
-                                    <input type="text" name="workshop_phone" value="{{ $settings['workshop_phone'] ?? '' }}" class="w-full rounded-2xl border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-gray-950 px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-[#3B3BF9] transition-all dark:text-white" placeholder="+57 321 000 0000">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-2">Correo Electrónico</label>
-                                    <input type="email" name="workshop_email" value="{{ $settings['workshop_email'] ?? '' }}" class="w-full rounded-2xl border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-gray-950 px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-[#3B3BF9] transition-all dark:text-white" placeholder="contacto@elflaco.com">
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-2">Dirección</label>
-                                <input type="text" name="workshop_address" value="{{ $settings['workshop_address'] ?? '' }}" class="w-full rounded-2xl border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-gray-950 px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-[#3B3BF9] transition-all dark:text-white" placeholder="Calle 123 # 45 - 67, Medellín">
-                            </div>
-                        </div>
+                <div class="flex-1 space-y-3">
+                    <div class="space-y-1.5">
+                        <label for="workshop_logo" class="block text-sm font-medium">{{ $hasLogo ? 'Cambiar logo' : 'Subir logo' }}</label>
+                        <input id="workshop_logo" name="workshop_logo" type="file" accept="image/png,image/jpeg,image/webp"
+                               class="block w-full cursor-pointer text-sm text-muted-foreground file:mr-3 file:cursor-pointer file:rounded-md file:border file:border-border file:bg-card file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-foreground hover:file:bg-muted">
+                        @error('workshop_logo')
+                            <p class="text-xs text-destructive-text">{{ $message }}</p>
+                        @else
+                            <p class="text-xs text-muted-foreground">PNG, JPG o WEBP, hasta 1 MB. Mejor con fondo transparente.</p>
+                        @enderror
                     </div>
-
-                    <!-- Billing Tab -->
-                    <div x-show="activeTab === 'billing'" x-cloak class="space-y-6">
-                        <div class="grid grid-cols-1 gap-6">
-                            <div>
-                                <label class="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-2">Porcentaje de Impuesto (IVA %)</label>
-                                <div class="relative">
-                                    <input type="number" step="0.01" name="tax_percentage" value="{{ $settings['tax_percentage'] ?? '19' }}" class="w-full rounded-2xl border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-gray-950 pl-4 pr-12 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-[#3B3BF9] transition-all dark:text-white">
-                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">%</span>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-2">Pie de Página de Factura</label>
-                                <textarea name="footer_text_invoice" rows="4" class="w-full rounded-2xl border-slate-200 dark:border-gray-800 bg-slate-50 dark:bg-gray-950 px-4 py-3 focus:ring-4 focus:ring-blue-500/10 focus:border-[#3B3BF9] transition-all dark:text-white" placeholder="Gracias por confiar en MotoTaller El Flaco.">{{ $settings['footer_text_invoice'] ?? '' }}</textarea>
-                                <p class="mt-2 text-xs text-slate-400 italic">Este texto aparecerá al final de todas tus facturas y órdenes generadas.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mt-10 pt-6 border-t border-slate-100 dark:border-gray-800 flex justify-end">
-                        <button type="submit" class="bg-[#3B3BF9] text-white px-8 py-4 rounded-2xl font-black shadow-lg shadow-blue-500/20 hover:bg-blue-600 active:scale-[0.98] transition-all">
-                            Guardar Cambios
-                        </button>
-                    </div>
-                </form>
+                    @if($hasLogo)
+                        <x-checkbox name="remove_logo" label="Quitar el logo" />
+                    @endif
+                </div>
             </div>
+        </x-card>
+
+        <x-card title="Documentos">
+            <div class="space-y-4">
+                <x-textarea label="Mensaje de agradecimiento" name="footer_text_invoice" rows="2" maxlength="1000"
+                            :value="$settings['footer_text_invoice'] ?? ''" placeholder="¡Gracias por su confianza!"
+                            help="Va al pie de los comprobantes de servicio y de venta." />
+                <x-textarea label="Condiciones y garantía" name="document_conditions" rows="4" maxlength="1500"
+                            :value="$settings['document_conditions'] ?? ''"
+                            placeholder="Ej.: Garantía de 30 días en mano de obra por el mismo trabajo. Los repuestos tienen la garantía de su fabricante. No cubre mal uso ni accidentes."
+                            help="Sale en los comprobantes. Vacío: no se muestra." />
+                <x-textarea label="Condiciones de la orden de ingreso" name="intake_conditions" rows="4" maxlength="1500"
+                            :value="$settings['intake_conditions'] ?? ''"
+                            placeholder="Ej.: El taller no responde por objetos dejados en la moto. Motos no reclamadas después de 30 días de terminadas pagan parqueadero."
+                            help="Sale en la orden de ingreso, que firma el cliente al dejar la moto." />
+                <x-input label="Nota legal" name="document_legal_note" maxlength="255" :value="$settings['document_legal_note'] ?? ''"
+                         placeholder="Documento interno de soporte. No es factura electrónica de venta."
+                         help="Línea pequeña al final de cada documento. Vacío: se usa el texto de ejemplo." />
+                <div class="max-w-48">
+                    <x-input label="IVA (%)" name="tax_percentage" inputmode="decimal" :value="$settings['tax_percentage'] ?? '19'"
+                             help="Se guarda, pero hoy no se aplica." />
+                </div>
+            </div>
+        </x-card>
+
+        <div class="flex justify-end">
+            <x-button type="submit">Guardar configuración</x-button>
         </div>
-    </div>
+    </form>
 </div>
 </x-app-layout>

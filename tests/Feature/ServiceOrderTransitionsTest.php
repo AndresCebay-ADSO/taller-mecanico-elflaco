@@ -3,10 +3,9 @@
 use App\Models\JobType;
 use App\Models\Mechanic;
 use App\Models\ServiceOrder;
-use App\Models\User;
 
 it('rejects invalid backward transitions for service orders', function () {
-    $user = User::factory()->create();
+    [$user, $branch] = branchUser();
 
     $serviceOrder = ServiceOrder::create([
         'customer_name' => 'Maria Gomez',
@@ -16,10 +15,12 @@ it('rejects invalid backward transitions for service orders', function () {
         'status' => 'completed',
         'started_at' => now()->subDay(),
         'completed_at' => now(),
+        'branch_id' => $branch->id,
     ]);
 
     $this->from(route('service-orders.edit', $serviceOrder))
         ->actingAs($user)
+        ->withSession(['current_branch_id' => $branch->id])
         ->put(route('service-orders.update', $serviceOrder), [
             'customer_name' => $serviceOrder->customer_name,
             'customer_phone' => $serviceOrder->customer_phone,
@@ -34,7 +35,7 @@ it('rejects invalid backward transitions for service orders', function () {
 });
 
 it('rejects new jobs on completed service orders', function () {
-    $user = User::factory()->create();
+    [$user, $branch] = branchUser();
 
     $serviceOrder = ServiceOrder::create([
         'customer_name' => 'Pedro Ruiz',
@@ -44,6 +45,7 @@ it('rejects new jobs on completed service orders', function () {
         'status' => 'completed',
         'started_at' => now()->subDay(),
         'completed_at' => now(),
+        'branch_id' => $branch->id,
     ]);
 
     $mechanic = Mechanic::create([
@@ -52,6 +54,7 @@ it('rejects new jobs on completed service orders', function () {
         'email' => 'luis@example.com',
         'hire_date' => now()->subMonths(6)->toDateString(),
         'is_active' => true,
+        'branch_id' => $branch->id,
     ]);
 
     $jobType = JobType::create([
@@ -67,6 +70,7 @@ it('rejects new jobs on completed service orders', function () {
 
     $this->from(route('service-orders.show', $serviceOrder))
         ->actingAs($user)
+        ->withSession(['current_branch_id' => $branch->id])
         ->post(route('service-orders.jobs.store', $serviceOrder), [
             'job_type_id' => $jobType->id,
             'mechanic_id' => $mechanic->id,

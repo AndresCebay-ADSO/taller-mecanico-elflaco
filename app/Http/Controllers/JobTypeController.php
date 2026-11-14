@@ -22,11 +22,21 @@ class JobTypeController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'description' => 'required|string',
-            'default_description' => 'nullable|string',
+            'description' => 'required|string|max:255',
+            'default_description' => 'nullable|string|max:2000',
             'calculation_type' => 'required|in:percentage,fixed',
             // Percentage fields
-            'mechanic_percentage' => 'nullable|required_if:calculation_type,percentage|numeric|min:0|max:100',
+            'mechanic_percentage' => [
+                'nullable', 'required_if:calculation_type,percentage', 'numeric', 'min:0', 'max:100',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($request->input('calculation_type') !== 'percentage' || !$request->filled('workshop_percentage')) {
+                        return;
+                    }
+                    if (abs(((float) $value + (float) $request->input('workshop_percentage')) - 100) > 0.01) {
+                        $fail('El porcentaje del mecánico y el del taller deben sumar exactamente 100%.');
+                    }
+                },
+            ],
             'workshop_percentage' => 'nullable|required_if:calculation_type,percentage|numeric|min:0|max:100',
             'percentage_fixed_total' => 'nullable|numeric|min:0',
             // Fixed fields
@@ -46,7 +56,8 @@ class JobTypeController extends Controller
 
         $validated['allow_products'] = $request->has('allow_products');
         $validated['allow_custom_labor'] = $request->has('allow_custom_labor');
-        $validated['is_active'] = $request->boolean('is_active', true); // Default to active true if not present
+        // Casilla desmarcada = el formulario no la envía = inactivo (igual que al actualizar).
+        $validated['is_active'] = $request->boolean('is_active');
 
         JobType::create($validated);
 
@@ -62,10 +73,20 @@ class JobTypeController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'description' => 'required|string',
-            'default_description' => 'nullable|string',
+            'description' => 'required|string|max:255',
+            'default_description' => 'nullable|string|max:2000',
             'calculation_type' => 'required|in:percentage,fixed',
-            'mechanic_percentage' => 'nullable|required_if:calculation_type,percentage|numeric|min:0|max:100',
+            'mechanic_percentage' => [
+                'nullable', 'required_if:calculation_type,percentage', 'numeric', 'min:0', 'max:100',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($request->input('calculation_type') !== 'percentage' || !$request->filled('workshop_percentage')) {
+                        return;
+                    }
+                    if (abs(((float) $value + (float) $request->input('workshop_percentage')) - 100) > 0.01) {
+                        $fail('El porcentaje del mecánico y el del taller deben sumar exactamente 100%.');
+                    }
+                },
+            ],
             'workshop_percentage' => 'nullable|required_if:calculation_type,percentage|numeric|min:0|max:100',
             'percentage_fixed_total' => 'nullable|numeric|min:0',
             'fixed_mechanic_amount' => 'nullable|required_if:calculation_type,fixed|numeric|min:0',
@@ -88,6 +109,14 @@ class JobTypeController extends Controller
     {
         if ($jobType->is_system) {
             return back()->with('error', 'Los tipos de sistema no pueden eliminarse.');
+        }
+
+        // Con trabajos registrados no se puede borrar (historial y comisiones): se desactiva.
+        if ($jobType->workshopJobs()->exists()) {
+            $jobType->update(['is_active' => false]);
+
+            return redirect()->route('job-types.index')
+                ->with('info', "\"{$jobType->name}\" tiene trabajos registrados y fue desactivado: ya no aparecerá al crear trabajos.");
         }
 
         $jobType->delete();
