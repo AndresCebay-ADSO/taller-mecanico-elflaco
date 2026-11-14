@@ -23,3 +23,11 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# Los archivos de public/build/assets llevan un hash en el nombre: cambian de nombre en cada `npm run build`.
+# El navegador puede guardarlos un año y no volver a pedirlos en cada pantalla.
+<IfModule mod_headers.c>
+    <If "%{REQUEST_URI} =~ m#/build/assets/#">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </If>
+</IfModule>

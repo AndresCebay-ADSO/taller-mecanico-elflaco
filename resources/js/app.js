@@ -1,17 +1,24 @@
-import './bootstrap';
 
 import Alpine from 'alpinejs';
-import { createIcons, icons } from 'lucide';
+import { createIcons } from 'lucide';
+import icons from 'virtual:lucide-icons';
 
 window.Alpine = Alpine;
 
 /**
  * Iconos Lucide empaquetados localmente (la app no depende de internet para mostrarlos).
+ * Solo los que se usan: ver resources/js/lucide-used-icons.js.
  * `inTemplates` también convierte los iconos dentro de <template>, así las filas que
  * Alpine agrega después (x-for / x-if) ya traen su SVG.
  */
 window.lucide = {
-    createIcons: (options = {}) => createIcons({ icons, inTemplates: true, ...options }),
+    createIcons: (options = {}) => {
+        createIcons({ icons, inTemplates: true, ...options });
+
+        // Un <i data-lucide> que sigue ahí es un icono que no quedó en el paquete.
+        const missing = [...document.querySelectorAll('i[data-lucide]')].map((i) => i.dataset.lucide);
+        if (missing.length) console.warn('Iconos Lucide sin empaquetar (ver lucide-used-icons.js):', [...new Set(missing)]);
+    },
 };
 
 /**

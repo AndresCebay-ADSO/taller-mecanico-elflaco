@@ -273,6 +273,7 @@ Si `git pull` se queja de cambios locales, **no** forzar: revisar con `git statu
 | Cada página tarda en aparecer | OPcache apagado (XAMPP lo trae así) | §2. `taller:verificar` avisa. |
 | Todo ~160 ms más lento en un equipo | Se entra por `localhost` | Usar `127.0.0.1` en el acceso directo y en `APP_URL`. |
 | Página sin estilos (solo texto) | Falta `npm run build`, o quedó `public/hot` de un `npm run dev` mal cerrado | `npm run build`; borrar `public/hot`. `taller:verificar` lo detecta. |
+| Un icono sale en blanco | Solo se empaquetan los iconos cuyo nombre aparece escrito entre comillas en el código (la consola del navegador lo avisa) | Escribir el nombre completo (`'chevron-down'`, no armado por partes) y `npm run build`. Ver `resources/js/lucide-used-icons.js`. |
 | Cambié el `.env` y no pasa nada | La configuración está en caché | `php artisan config:cache` después de cada cambio al `.env`. |
 | Ventas de la noche con fecha de mañana | Zona horaria distinta de `America/Bogota` | `APP_TIMEZONE=America/Bogota`. Los datos creados antes del 2026-09 están en UTC. |
 | Un cálculo da distinto en MySQL que en las pruebas | MySQL devuelve `SUM()` como texto (`'2'`); SQLite como número | Nunca comparar sumas con `===`; convertir con `(int)` / `(float)`. |
