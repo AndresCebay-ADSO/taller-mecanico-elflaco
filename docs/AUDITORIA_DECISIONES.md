@@ -42,3 +42,20 @@ Estado: **pendiente de revisar** salvo que diga otra cosa.
     comprobante, la orden debería volver a «En progreso»?
 12. **Una orden se puede marcar «Completada» sin generar el comprobante.** Entonces ese cobro no aparece en la caja
     ni en «Cobrado hoy por método». ¿Obligar a que completar la orden sea generando el comprobante?
+
+## Reportes y documentos (módulo 7)
+
+13. **«Ingresos» y «Cobrado» son cifras distintas a propósito, y pueden no coincidir.** «Ingresos de hoy/del mes»
+    (dashboard y reportes) cuenta las ventas y las **órdenes entregadas** ese día. «Cobrado hoy por método» y la
+    caja cuentan las ventas y los **comprobantes generados** ese día. Difieren cuando una orden se entrega un día y
+    se cobra otro, cuando se completa sin comprobante (ver 12) o cuando el comprobante se anula y no se vuelve a
+    generar (la orden sigue sumando como ingreso). ¿Está bien así, o «Ingresos» debería contar comprobantes?
+14. **Los empleados ven Reportes completos:** utilidad, comisiones de cada mecánico y valor del inventario al costo.
+    Igual que el punto 7: hoy da igual, importa si algún día hay empleados con usuario.
+
+## Conocido, sin corregir (impacto bajo)
+
+- **Reimprimir un comprobante anulado puede mostrar líneas que no suman su total.** El comprobante guarda el total,
+  pero las líneas se leen de la orden en el momento de imprimir. Si después de anularlo se borra un trabajo de la
+  orden, la reimpresión del anulado muestra las líneas nuevas con el total viejo. Los comprobantes vigentes no se
+  afectan: con comprobante activo no se pueden borrar trabajos.
