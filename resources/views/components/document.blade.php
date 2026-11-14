@@ -46,7 +46,8 @@
             .doc-toolbar { display: none !important; }
             .doc-page { padding: 0 !important; }
             .doc-sheet { box-shadow: none !important; border: 0 !important; margin: 0 !important; padding: 14mm 16mm !important; max-width: none !important; }
-            .doc-sheet tr, .doc-sheet section { break-inside: avoid; }
+            /* Un trabajo (con sus repuestos) no se parte entre páginas; la tabla completa sí puede. */
+            .doc-sheet tr, .doc-sheet tbody { break-inside: avoid; }
         }
         /* Los colores de las líneas y el título se imprimen tal cual (sin que el navegador los quite). */
         .doc-sheet { -webkit-print-color-adjust: exact; print-color-adjust: exact; }

@@ -23,14 +23,13 @@
     </x-slot>
 
     <x-document.lines>
-        @foreach($sale->saleProducts as $item)
-            <tr>
-                <td class="px-2 py-2.5 text-center tabular-nums">{{ $item->quantity }}</td>
-                <td class="px-2 py-2.5">{{ $item->product?->name ?? 'Producto eliminado' }}</td>
-                <td class="px-2 py-2.5 text-right tabular-nums">{{ money($item->unit_price) }}</td>
-                <td class="px-2 py-2.5 text-right tabular-nums">{{ money($item->total_price) }}</td>
-            </tr>
-        @endforeach
+        <tbody class="divide-y divide-border">
+            @foreach($sale->saleProducts as $item)
+                <x-document.line :quantity="$item->quantity" unit="Und." :price="$item->unit_price" :total="$item->total_price">
+                    {{ $item->product?->name ?? 'Producto eliminado' }}
+                </x-document.line>
+            @endforeach
+        </tbody>
     </x-document.lines>
 
     <x-slot name="totals">

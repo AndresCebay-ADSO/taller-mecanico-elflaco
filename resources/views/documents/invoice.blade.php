@@ -31,27 +31,7 @@
         @endif
     </x-slot>
 
-    <x-document.lines>
-        @foreach($jobs as $job)
-            <tr>
-                <td class="px-2 py-2.5 text-center tabular-nums">1</td>
-                <td class="px-2 py-2.5">
-                    <p class="font-medium">{{ $job->jobType?->name ?? 'Servicio' }}</p>
-                    <p class="text-xs text-muted-foreground">{{ $job->description }} · Mecánico: {{ $job->mechanic?->name ?? 'Sin asignar' }}</p>
-                </td>
-                <td class="px-2 py-2.5 text-right tabular-nums">{{ money($job->total_amount) }}</td>
-                <td class="px-2 py-2.5 text-right tabular-nums">{{ money($job->total_amount) }}</td>
-            </tr>
-            @foreach($job->jobProducts as $part)
-                <tr>
-                    <td class="px-2 py-2 text-center tabular-nums">{{ $part->quantity }}</td>
-                    <td class="px-2 py-2 pl-6 text-muted-foreground">{{ $part->product?->name ?? 'Producto eliminado' }}</td>
-                    <td class="px-2 py-2 text-right tabular-nums">{{ money($part->unit_price) }}</td>
-                    <td class="px-2 py-2 text-right tabular-nums">{{ money($part->total_price) }}</td>
-                </tr>
-            @endforeach
-        @endforeach
-    </x-document.lines>
+    <x-document.job-lines :jobs="$jobs" />
 
     <x-slot name="totals">
         <dl class="space-y-1.5">

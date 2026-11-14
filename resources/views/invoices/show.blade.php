@@ -91,40 +91,7 @@
         </section>
 
         <div class="overflow-x-auto py-6">
-            <table class="min-w-full text-sm">
-                <thead>
-                    <tr class="border-b border-border text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                        <th class="pb-3 pr-4">Concepto</th>
-                        <th class="px-4 pb-3 text-right">Cant.</th>
-                        <th class="px-4 pb-3 text-right">Valor unit.</th>
-                        <th class="pb-3 pl-4 text-right">Total</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-border">
-                    @foreach($jobs as $job)
-                        <tr>
-                            <td class="py-3 pr-4">
-                                <p class="font-medium">{{ $job->jobType?->name ?? 'Servicio' }}</p>
-                                <p class="text-xs text-muted-foreground">{{ $job->description }} · Mecánico: {{ $job->mechanic?->name ?? 'Sin asignar' }}</p>
-                            </td>
-                            <td class="px-4 py-3 text-right tabular-nums">1</td>
-                            <td class="px-4 py-3 text-right tabular-nums">{{ money($job->total_amount) }}</td>
-                            <td class="py-3 pl-4 text-right font-medium tabular-nums">{{ money($job->total_amount) }}</td>
-                        </tr>
-                        @foreach($job->jobProducts as $part)
-                            <tr>
-                                <td class="py-3 pl-4 pr-4">
-                                    <p>{{ $part->product?->name ?? 'Producto eliminado' }}</p>
-                                    <p class="text-xs text-muted-foreground">Repuesto</p>
-                                </td>
-                                <td class="px-4 py-3 text-right tabular-nums">{{ $part->quantity }}</td>
-                                <td class="px-4 py-3 text-right tabular-nums">{{ money($part->unit_price) }}</td>
-                                <td class="py-3 pl-4 text-right font-medium tabular-nums">{{ money($part->total_price) }}</td>
-                            </tr>
-                        @endforeach
-                    @endforeach
-                </tbody>
-            </table>
+            <x-document.job-lines :jobs="$jobs" />
         </div>
 
         <div class="flex justify-end border-t border-border pt-6">

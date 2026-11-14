@@ -213,7 +213,10 @@ Comprobante de servicio, comprobante de venta y orden de ingreso usan `<x-docume
 de la app), tamaño carta y **siempre en tema claro**, que se abre en otra pestaña con `?auto=1` y lanza la impresión.
 Nunca se imprime una pantalla de la app con `window.print()`.
 
-- Mismos tokens y componentes; las piezas propias son `<x-document.party>`, `.meta`, `.lines` y `.signature`.
+- Mismos tokens y componentes; las piezas propias son `<x-document.party>`, `.meta`, `.lines`, `.line`, `.job-lines` y
+  `.signature`. El detalle va «Descripción · Cantidad · Unidad · Precio · Importe» (sin IVA mientras no se aplique);
+  en el comprobante de servicio cada trabajo es un grupo: fila sombreada con servicio y mecánico, su mano de obra,
+  sus repuestos y su subtotal.
 - Excepción de este archivo: títulos y rótulos del documento van en mayúsculas con `tracking-wide`, como un
   documento comercial.
 - Lleva solo la marca del taller (logo opcional desde Configuración, guardado fuera de `public/`).
