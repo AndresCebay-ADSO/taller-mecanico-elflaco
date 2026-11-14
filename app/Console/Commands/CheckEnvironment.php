@@ -31,6 +31,7 @@ class CheckEnvironment extends Command
         $this->checkEnv();
         $this->checkDatabase();
         $this->checkFiles();
+        $this->checkBackups();
 
         $this->table(['', 'Revisión', 'Detalle'], $this->rows);
 
@@ -126,6 +127,19 @@ class CheckEnvironment extends Command
         // public/hot queda si `npm run dev` se cerró mal: la app busca estilos en un servidor de Vite que ya no existe.
         $hot = file_exists(public_path('hot'));
         $this->add($hot ? 'ERROR' : 'OK', 'Sin public/hot', $hot ? 'Existe: borrar public/hot (la página saldría sin estilos)' : 'Correcto');
+    }
+
+    private function checkBackups(): void
+    {
+        $backups = \App\Support\BackupStatus::fromConfig();
+
+        if (! $backups->isConfigured()) {
+            $this->add('AVISO', 'Respaldos', 'RESPALDOS_DIR sin configurar en .env: la app no puede avisar si los respaldos se detienen');
+
+            return;
+        }
+
+        $this->add($backups->needsAttention() ? 'AVISO' : 'OK', 'Respaldos', $backups->describe());
     }
 
     private function add(string $status, string $check, string $detail): void

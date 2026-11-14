@@ -8,6 +8,14 @@
         </x-slot>
     </x-page-header>
 
+    @if($backupStatus?->needsAttention())
+        <div class="mb-4 flex items-start gap-3 rounded-lg border px-4 py-3 text-sm {{ \App\Support\Tone::alert('danger') }}" role="alert">
+            <i data-lucide="database-backup" class="mt-0.5 size-4 shrink-0"></i>
+            <p><span class="font-medium">Los datos no se están respaldando.</span> {{ $backupStatus->describe() }}
+                Revisa que el portátil tenga Google Drive abierto o ejecuta <span class="font-mono">respaldo.bat</span>.</p>
+        </div>
+    @endif
+
     @if($lowStockCount > 0)
         <div class="mb-6 flex flex-col gap-2 rounded-lg border px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between {{ \App\Support\Tone::alert('warning') }}">
             <p class="flex items-center gap-2 font-medium">

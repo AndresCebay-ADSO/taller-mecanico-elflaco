@@ -139,6 +139,8 @@ ADMIN_EMAIL=correo@del-cliente
 ADMIN_PASSWORD=contraseña-fuerte-que-luego-cambia-ella
 
 SESSION_SECURE_COOKIE=false   # true solo si se sirve con HTTPS
+
+RESPALDOS_DIR=C:\taller\respaldos   # el dashboard avisa si los respaldos se detienen (§6)
 ```
 
 Luego:
@@ -207,10 +209,18 @@ nada.
 
 ## 6. Copias de seguridad (obligatorio)
 
-El portátil se puede caer, mojar o perder. Sin copia, se pierde todo el historial.
+El portátil se puede caer, mojar o perder. Sin copia, se pierde todo el historial. Los scripts están en
+`scripts\windows\` y leen sus rutas de `config.bat` (ajustarlo una vez si alguna ruta cambia).
+
+| Script | Qué hace |
+| :-- | :-- |
+| `respaldo.bat` | Exporta la base, **verifica que quedó completa**, agrega el logo, comprime en `taller_AAAA-MM-DD_HHMMSS.zip`, copia a Google Drive y borra los locales de más de 30 días. Deja `respaldo.log`. |
+| `instalar-respaldo-automatico.bat` | Programa el respaldo diario a las 7 p. m.; si el portátil estaba apagado, corre apenas se encienda. |
+| `restaurar.bat` | Recupera un respaldo. Antes guarda uno del estado actual y pide escribir RESTAURAR. |
 
 1. Instalar **Google Drive para escritorio** con la cuenta del cliente y crear la carpeta `Respaldos Taller`.
-2. Crear `C:\taller\respaldo.cnf` (solo lectura para el usuario; **no** dentro del proyecto):
+   Revisar la letra de la unidad (normalmente `G:`) y ajustar `RESPALDOS_NUBE` en `config.bat` si es otra.
+2. Crear `C:\taller\respaldo.cnf` (**fuera** del proyecto; es la clave de MySQL):
 
    ```ini
    [client]
@@ -218,63 +228,27 @@ El portátil se puede caer, mojar o perder. Sin copia, se pierde todo el histori
    password=una-contraseña-larga
    ```
 
-3. Crear `C:\taller\respaldo.bat` (ajustar la letra de la unidad de Google Drive, normalmente `G:`):
+3. Probar a mano: `scripts\windows\respaldo.bat`. Debe terminar en «Listo» y el `.zip` aparecer en
+   `C:\taller\respaldos` y en Google Drive.
+4. Programarlo: `scripts\windows\instalar-respaldo-automatico.bat` (otra hora: `instalar-respaldo-automatico.bat 18:30`).
+5. En el `.env`, `RESPALDOS_DIR=C:\taller\respaldos`. Con eso, **el dashboard le avisa al administrador si pasan más
+   de 3 días sin un respaldo nuevo** (Google Drive cerrado, tarea borrada, MySQL apagado…), y `taller:verificar`
+   también lo revisa. Nadie mira el Programador de tareas: el aviso es lo que evita enterarse tarde.
+6. **Probar una restauración** antes de entregar: `scripts\windows\restaurar.bat` sin argumentos lista los
+   respaldos y pregunta cuál. Para practicar sin tocar los datos reales, en una consola:
+   `set DB_NAME=prueba_restauracion` (base creada vacía antes) y luego `scripts\windows\restaurar.bat`.
 
-   ```bat
-   @echo off
-   setlocal
-   for /f %%i in ('powershell -NoProfile -Command "Get-Date -Format yyyy-MM-dd_HHmm"') do set FECHA=%%i
-   set LOCAL=C:\taller\respaldos
-   set NUBE=G:\Mi unidad\Respaldos Taller
-   if not exist "%LOCAL%" mkdir "%LOCAL%"
-
-   "C:\xampp\mysql\bin\mysqldump.exe" --defaults-extra-file=C:\taller\respaldo.cnf --single-transaction --routines taller_el_flaco > "%LOCAL%\taller_%FECHA%.sql"
-   if errorlevel 1 exit /b 1
-
-   if exist "%NUBE%" copy /y "%LOCAL%\taller_%FECHA%.sql" "%NUBE%\" >nul
-   forfiles /p "%LOCAL%" /m taller_*.sql /d -30 /c "cmd /c del @path" 2>nul
-   ```
-
-4. Programarlo (en una consola como administrador). A las 7 p. m., porque a las 2 a. m. el portátil suele estar
-   apagado:
-
-   ```bat
-   schtasks /create /tn "Taller - Respaldo diario" /tr "C:\taller\respaldo.bat" /sc daily /st 19:00
-   ```
-
-   En el *Programador de tareas*, en esa tarea → *Configuración*, marcar **«Ejecutar la tarea lo antes posible si no se
-   inició en el momento programado»**.
-
-5. **Probar una restauración** antes de entregar (en una base aparte):
-
-   ```bat
-   C:\xampp\mysql\bin\mysql.exe -u root -p -e "CREATE DATABASE prueba_restauracion"
-   C:\xampp\mysql\bin\mysql.exe -u root -p prueba_restauracion < C:\taller\respaldos\taller_AAAA-MM-DD_HHMM.sql
-   ```
+Si algo falla, `C:\taller\respaldos\respaldo.log` dice qué fue (cada línea empieza con OK, AVISO o ERROR).
 
 ---
 
 ## 7. Actualizar a una versión nueva
 
-Por AnyDesk, en `C:\taller\taller-mecanico-elflaco`:
+Por AnyDesk: `scripts\windows\actualizar.bat`. Hace, en orden: respaldo (sin respaldo no sigue), modo mantenimiento,
+`git pull`, dependencias, interfaz, migraciones, cachés y `taller:verificar`. Si un paso falla, deja el sistema en línea
+con lo que tenía y dice qué hacer.
 
-```bat
-C:\taller\respaldo.bat
-php artisan down
-git pull --ff-only
-composer install --no-dev --optimize-autoloader
-npm ci
-npm run build
-php artisan migrate --force
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-php artisan up
-php artisan taller:verificar
-```
-
-Primero el respaldo, siempre. Si `git pull` se queja de cambios locales, **no** forzar: revisar qué cambió en esa
-máquina.
+Si `git pull` se queja de cambios locales, **no** forzar: revisar con `git status` qué cambió en esa máquina.
 
 ---
 
@@ -284,7 +258,9 @@ máquina.
 - [ ] Reiniciar el portátil: Apache y MySQL arrancan solos; el acceso directo abre el login.
 - [ ] Entrar con el administrador y **cambiar la contraseña** desde *Perfil* junto con el cliente.
 - [ ] Registrar una venta de prueba, una orden con un trabajo y su factura; imprimir la factura. Luego anularlas.
-- [ ] Respaldo ejecutado a mano y visible en Google Drive; restauración probada.
+- [ ] `respaldo.bat` a mano: «Listo» y el `.zip` en Google Drive. Tarea programada instalada.
+- [ ] Restauración probada con `restaurar.bat` sobre una base de práctica.
+- [ ] `RESPALDOS_DIR` en el `.env` y `taller:verificar` muestra «Respaldos: OK».
 - [ ] AnyDesk con acceso desatendido y contraseña.
 - [ ] Desactivar la suspensión de Windows mientras está enchufado (opcional, evita respaldos perdidos).
 

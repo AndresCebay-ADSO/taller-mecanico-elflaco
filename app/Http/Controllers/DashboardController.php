@@ -92,7 +92,11 @@ class DashboardController extends Controller
             ], 'mechanic_cost')
             ->get();
 
+        // Solo el administrador puede hacer algo con un respaldo atrasado.
+        $backupStatus = auth()->user()?->is_admin ? \App\Support\BackupStatus::fromConfig() : null;
+
         return view('dashboard', compact(
+            'backupStatus',
             'activeOrders',
             'pendingOrders',
             'todayEarnings',
