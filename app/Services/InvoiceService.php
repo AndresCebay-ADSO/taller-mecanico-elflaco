@@ -56,6 +56,7 @@ class InvoiceService
                 'amount' => $amount,
                 // Copia de lo facturado: la factura no cambia aunque después se corrija la orden (decisión 11).
                 'line_items' => Invoice::linesFromJobs($jobs)->all(),
+                'customer_snapshot' => $order->only(Invoice::CUSTOMER_FIELDS),
                 'payment_method' => $paymentMethod,
                 'invoice_date' => now(),
             ]);
@@ -91,6 +92,9 @@ class InvoiceService
             // Con la factura vigente no se podían tocar los trabajos, así que estas líneas son las facturadas.
             if ($locked->line_items === null) {
                 $locked->line_items = $locked->lineItems()->all();
+            }
+            if ($locked->customer_snapshot === null) {
+                $locked->customer_snapshot = $locked->customer();
             }
 
             $locked->forceFill([

@@ -3,7 +3,7 @@
 Cómo se comporta el sistema y por qué, módulo por módulo. Sirve para explicarle el sistema al taller y para
 recordar qué es intencional. Las marcadas **(decidido, N)** salieron de la revisión de `docs/AUDITORIA_DECISIONES.md`.
 
-Actualizado: 2026-11-14 (v1.1.0 en preparación).
+Actualizado: 2026-11-15 (v1.2.0 y la revisión externa previa a la instalación).
 
 ## Usuarios y permisos
 
@@ -58,8 +58,11 @@ Actualizado: 2026-11-14 (v1.1.0 en preparación).
   Para facturar, todos los trabajos tienen que estar completados y debe haber al menos uno.
 - Cancelar una orden devuelve al inventario los repuestos de sus trabajos. No se puede si ya tiene trabajos
   completados: hay que facturarla o eliminar esos trabajos primero.
-- Eliminar un trabajo devuelve sus repuestos. No se puede si la orden tiene una factura vigente.
-- Una orden solo se puede eliminar si no tiene trabajos, y solo el administrador; si tiene trabajos, se cancela.
+- Eliminar un trabajo devuelve sus repuestos. No se puede si la orden tiene una factura vigente. Si la comisión de
+  ese trabajo ya se le pagó al mecánico, la confirmación lo avisa: su saldo queda negativo y se descuenta de lo
+  próximo que gane.
+- Una orden solo se puede eliminar si no tiene trabajos **ni facturas** (aunque estén anuladas), y solo el
+  administrador; si no, se cancela.
 - «Trabajo individual» crea por debajo una orden con ese único trabajo.
 - Comisión del mecánico, según el tipo de trabajo:
   - **por porcentaje:** la mano de obra se escribe en cada trabajo y se reparte entre mecánico y taller con los
@@ -77,7 +80,8 @@ Actualizado: 2026-11-14 (v1.1.0 en preparación).
   (decidido, 11).** Ahí se pueden agregar, eliminar o terminar trabajos y volver a facturar con el siguiente número.
   Si era en efectivo de un día anterior, pregunta por la devolución igual que una venta **(decidido, 2)**.
 - **Una factura no cambia después de emitida (decidido, 11).** Guarda una copia de sus líneas (trabajos, mecánicos y
-  repuestos con sus precios) y siempre se imprime con ella, aunque la orden se corrija después.
+  repuestos con sus precios) y de los datos del cliente y la moto, y siempre se imprime con ella, aunque la orden se
+  corrija después.
 - El IVA está guardado en Configuración (19 %), pero **no se aplica** a ningún valor.
 
 ## Caja diaria
@@ -95,11 +99,18 @@ Actualizado: 2026-11-14 (v1.1.0 en preparación).
   falta.
 - Una caja cerrada no acepta cambios: ni movimientos, ni compras pagadas con ella, ni ventas o facturas en efectivo.
   Solo el administrador la reabre.
-- No se registra caja de días que no han llegado.
+- No se registra caja de días que no han llegado, ni de días anteriores al primero en que se usó la caja.
+- **Días sin cerrar:** se avisan los días abiertos en Caja y también los que tuvieron ventas o facturas en efectivo
+  sin que nadie abriera la Caja. Hay que cerrarlos para que su efectivo pase a la base del día siguiente.
+- Un día cerrado se ve con las cifras de su cierre. Si después se anuló algo de ese día, el aviso «después del cierre
+  cambió» lo dice.
+- Una venta o factura anulada **con devolución** sigue contando en la caja del día en que se pagó (la plata sí entró
+  ese día); la devolución sale de la caja del día en que se devolvió.
 - Si se corrige el costo o la cantidad de una compra pagada con la caja, la salida de caja se ajusta sola. Si ese día
   ya se cerró, pide reabrirlo.
 - **Comisiones por pagar:** lo ganado por cada mecánico en trabajos completados desde el primer día que se usó la
-  caja, menos lo que se le ha pagado desde la caja.
+  caja, menos lo que se le ha pagado desde la caja. A un mecánico desactivado que todavía tiene saldo también se le
+  puede pagar.
 - Anular una venta o factura en efectivo de hoy con la caja ya cerrada avisa que hay que reabrirla y cerrarla de
   nuevo.
 - **Si la base de un día no coincide con lo que quedó al cerrar el día anterior, se avisa (decidido, 3).** Pasa al
@@ -124,6 +135,8 @@ Actualizado: 2026-11-14 (v1.1.0 en preparación).
 - **Corregir lote** (administrador): solo lotes de compra. La cantidad solo se corrige si no se ha vendido nada de
   ese lote. El precio de venta no se cambia ahí, sino en «Editar producto».
 - Stock bajo: cuando el stock llega al mínimo o menos, sale en el inicio y se puede filtrar en Productos.
+- Cada día, el respaldo revisa que el stock de cada producto coincida con sus lotes; si no, lo anota en el registro
+  del respaldo y `taller:verificar` lo muestra.
 - Un producto solo se desactiva con stock en cero (primero se saca con un ajuste). Se puede restaurar.
 - **Transferencias** (administrador): Pendiente → En tránsito → Completada o Cancelada. El stock se mueve al
   completarla. En la sucursal de destino el producto se busca por código, o por nombre y categoría; si no existe, se
@@ -145,10 +158,18 @@ Actualizado: 2026-11-14 (v1.1.0 en preparación).
 
 - Respaldo automático todos los días a las 7:00 p. m.: un .zip con la base de datos y el logo.
 - Se copia a la carpeta de Google Drive y se guarda una copia en el portátil durante 30 días.
-- Si el último respaldo tiene más de 3 días, el inicio se lo avisa al administrador.
+- Si el último respaldo tiene más de 3 días, el inicio se lo avisa al administrador. Lo revisa en el portátil **y en
+  Google Drive**: si Drive deja de recibirlos (cerrado, sin internet), también avisa, porque si el portátil se pierde
+  solo quedan los de la nube.
 - Los respaldos van sin cifrar **(decidido, 15)**: una clave perdida dejaría inservibles todos los respaldos. Lo que
   los protege es la cuenta de Google donde quedan.
-- Para restaurar se usa `restaurar.bat`, con el sistema sin uso (no lo pone en mantenimiento).
+- Para restaurar se usa `restaurar.bat`: guarda primero un respaldo del estado actual, pone el sistema en
+  mantenimiento, reemplaza toda la base por la del respaldo y lo vuelve a abrir. Para practicar sin tocar los datos
+  reales hay un modo práctica (guía de instalación, §6).
+- **Sesión:** dura 12 horas sin uso. Si vence con un formulario abierto, al guardar vuelve al formulario con lo escrito
+  y un aviso para guardar de nuevo.
+- Mientras el NIT, teléfono, correo o dirección del taller sigan siendo los de ejemplo, el inicio lo avisa: salen en
+  todos los comprobantes.
 - Para actualizar se usa `actualizar.bat`: hace un respaldo, baja la versión nueva y aplica los cambios de la base.
 - Importar desde Excel (administrador): primero se revisa y después se confirma. Máximo 5.000 filas por hoja. El
   stock entra como primer lote.

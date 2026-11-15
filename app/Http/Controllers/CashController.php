@@ -37,14 +37,30 @@ class CashController extends Controller
         $date = $request->filled('date') ? CarbonImmutable::parse($request->input('date'))->startOfDay() : CarbonImmutable::today();
 
         $summary = $this->cash->summary($branchId, $date);
-        $mechanics = Mechanic::forBranch($branchId)->where('is_active', true)->orderBy('name')->get(['id', 'name']);
         $balances = $this->cash->mechanicBalances($branchId);
+        // A un mecánico que ya no está también hay que poder pagarle lo que se le debe.
+        $owedIds = $balances->filter(fn (array $row) => $row['balance'] >= 1)->map(fn (array $row) => $row['mechanic']->id);
+        $mechanics = Mechanic::forBranch($branchId)
+            ->where(fn ($query) => $query->where('is_active', true)->orWhereIn('id', $owedIds))
+            ->orderBy('name')
+            ->get(['id', 'name']);
         $startDate = $this->cash->startDate($branchId);
 
         // Un día cerrado guarda sus cifras; si después entró o se anuló algo, se avisa.
         $liveExpected = $summary['cash']['expected'];
         $changedAfterClose = $summary['day']?->isClosed()
             && abs((float) $summary['day']->expected_cash - $liveExpected) >= 0.5;
+
+        // Un día cerrado se muestra con las cifras de su cierre, que suman su total; lo que cambió después lo dice el aviso.
+        if ($summary['day']?->isClosed() && is_array($summary['day']->closing_summary)) {
+            $closing = $summary['day']->closing_summary;
+            $summary['opening'] = (float) $closing['opening'];
+            // El JSON guarda 20000.0 como 20000: se devuelven decimales, como en vivo.
+            $summary['cash'] = ['out_by_type' => collect($closing['cash']['out_by_type'] ?? [])->map(fn ($amount) => (float) $amount)]
+                + array_map('floatval', array_diff_key($closing['cash'], ['out_by_type' => true]));
+            $summary['other_methods'] = collect($closing['other_methods'] ?? []);
+            $summary['counts'] = $closing['counts'] ?? $summary['counts'];
+        }
 
         // Base que no coincide con lo que quedó al cerrar el día anterior: se avisa con botón para corregirla (decisión 3).
         $openingMismatches = $this->cash->openingMismatches($branchId, $date);

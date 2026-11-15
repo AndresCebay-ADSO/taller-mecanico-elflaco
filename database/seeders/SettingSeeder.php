@@ -14,10 +14,11 @@ class SettingSeeder extends Seeder
     {
         $settings = [
             'workshop_name' => 'MotoTaller El Flaco',
-            'workshop_nit' => '123456789-0',
-            'workshop_phone' => '+57 321 000 0000',
-            'workshop_email' => 'contacto@elflaco.com',
-            'workshop_address' => 'Calle 123 # 45 - 67, Medellín',
+            // De ejemplo: el inicio y taller:verificar avisan mientras no se cambien (Setting::EXAMPLE_VALUES).
+            'workshop_nit' => \App\Models\Setting::EXAMPLE_VALUES['workshop_nit'][0],
+            'workshop_phone' => \App\Models\Setting::EXAMPLE_VALUES['workshop_phone'][0],
+            'workshop_email' => \App\Models\Setting::EXAMPLE_VALUES['workshop_email'][0],
+            'workshop_address' => \App\Models\Setting::EXAMPLE_VALUES['workshop_address'][0],
             'tax_percentage' => '19',
             'footer_text_invoice' => 'Gracias por confiar en MotoTaller El Flaco.',
         ];

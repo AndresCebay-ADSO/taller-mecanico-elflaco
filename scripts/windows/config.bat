@@ -13,7 +13,10 @@ if not defined MYSQL_BIN set "MYSQL_BIN=C:\xampp\mysql\bin"
 if not defined PHP_EXE set "PHP_EXE=C:\xampp\php\php.exe"
 
 rem Base de datos y archivo con su usuario y clave (fuera del proyecto, ver docs\INSTALACION_LOCAL.md)
-if not defined DB_NAME set "DB_NAME=taller_el_flaco"
+rem DB_REAL es la base del sistema. DB_NAME es donde trabajan los scripts: si es otra (por ejemplo
+rem prueba_restauracion), restaurar.bat entra en modo practica y no toca la base real.
+if not defined DB_REAL set "DB_REAL=taller_el_flaco"
+if not defined DB_NAME set "DB_NAME=%DB_REAL%"
 if not defined DB_CNF set "DB_CNF=C:\taller\respaldo.cnf"
 
 rem Donde quedan los respaldos. La carpeta de la nube puede no existir (sin internet): se avisa y sigue.

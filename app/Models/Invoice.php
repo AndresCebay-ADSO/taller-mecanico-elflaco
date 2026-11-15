@@ -7,6 +7,7 @@ use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
@@ -17,6 +18,7 @@ class Invoice extends Model
         'service_order_id',
         'amount',
         'line_items',
+        'customer_snapshot',
         'payment_method',
         'invoice_date',
     ];
@@ -25,6 +27,7 @@ class Invoice extends Model
         'invoice_date' => 'date',
         'cancelled_at' => 'datetime',
         'line_items' => 'array',
+        'customer_snapshot' => 'array',
     ];
 
     public function serviceOrder()
@@ -63,6 +66,21 @@ class Invoice extends Model
         ]);
 
         return self::linesFromJobs($this->serviceOrder->workshopJobs->where('status', '!=', WorkshopJob::STATUS_CANCELLED));
+    }
+
+    /** Datos de la orden que salen en la factura y se congelan al emitirla. */
+    public const CUSTOMER_FIELDS = ['customer_name', 'customer_document', 'customer_phone', 'vehicle_info', 'service_description'];
+
+    /**
+     * Cliente y moto como estaban al emitir la factura. Las facturas anteriores a esta copia los leen de su orden.
+     *
+     * @return array{customer_name: ?string, customer_document: ?string, customer_phone: ?string, vehicle_info: ?string, service_description: ?string}
+     */
+    public function customer(): array
+    {
+        $source = $this->customer_snapshot ?? $this->serviceOrder?->only(self::CUSTOMER_FIELDS) ?? [];
+
+        return array_merge(array_fill_keys(self::CUSTOMER_FIELDS, null), array_intersect_key($source, array_flip(self::CUSTOMER_FIELDS)));
     }
 
     /**
@@ -127,6 +145,20 @@ class Invoice extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->whereNull('cancelled_at');
+    }
+
+    /** Salida «Devolución a cliente» de la caja, si al anularla se devolvió la plata (decisión 2). */
+    public function refundMovement(): HasOne
+    {
+        return $this->hasOne(CashMovement::class, 'invoice_id');
+    }
+
+    /** Las que cuentan en la caja de su día: las vigentes y las anuladas con devolución (ver Sale::scopeInCashRegister). */
+    public function scopeInCashRegister(Builder $query): Builder
+    {
+        return $query->where(fn (Builder $query) => $query
+            ->whereNull('cancelled_at')
+            ->orWhereHas('refundMovement'));
     }
 
     /** Facturas de órdenes de esa sucursal (la factura no guarda la sucursal: la toma de su orden). */

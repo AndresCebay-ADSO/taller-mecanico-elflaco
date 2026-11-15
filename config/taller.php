@@ -9,6 +9,13 @@ return [
     */
     'respaldos_dir' => env('RESPALDOS_DIR'),
 
+    /*
+    | Carpeta de Google Drive a donde respaldo.bat copia cada respaldo (la misma RESPALDOS_NUBE de
+    | scripts\windows\config.bat). Con ella configurada, el dashboard avisa si la copia a la nube se
+    | detiene aunque los respaldos locales sigan bien. Vacía: no se revisa.
+    */
+    'respaldos_nube' => env('RESPALDOS_NUBE'),
+
     // Días sin un respaldo nuevo antes de avisar.
     'respaldos_dias_aviso' => (int) env('RESPALDOS_DIAS_AVISO', 3),
 

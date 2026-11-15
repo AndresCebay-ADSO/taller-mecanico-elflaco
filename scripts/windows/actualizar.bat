@@ -44,7 +44,8 @@ exit /b 0
 :fallo_base
 echo.
 echo ERROR al actualizar la base de datos. El codigo nuevo ya esta, pero la base quedo a medias.
-echo Para volver atras: restaurar.bat con el respaldo recien creado y "git reset --hard ORIG_HEAD".
+echo Para volver atras, en este orden: primero "git reset --hard ORIG_HEAD" (codigo anterior)
+echo y despues restaurar.bat con el respaldo recien creado (corre migrate con ese codigo).
 "%PHP_EXE%" artisan up
 exit /b 1
 

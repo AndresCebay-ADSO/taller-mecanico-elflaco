@@ -1,5 +1,6 @@
 @php
     $order = $invoice->serviceOrder;
+    $customer = $invoice->customer();
     $lines = $invoice->lineItems();
     $laborTotal = $lines->sum('labor');
     $partsTotal = $lines->sum(fn ($line) => collect($line['parts'])->sum('total_price'));
@@ -12,13 +13,13 @@
             :back="route('invoices.show', $invoice)" :cancelled="$cancelled">
     <x-slot name="parties">
         <x-document.party title="Cliente">
-            <p class="font-medium">{{ $order->customer_name }}</p>
-            @if($order->customer_document)<p>C.C./NIT {{ $order->customer_document }}</p>@endif
-            @if($order->customer_phone)<p class="tabular-nums">Tel. {{ $order->customer_phone }}</p>@endif
+            <p class="font-medium">{{ $customer['customer_name'] }}</p>
+            @if($customer['customer_document'])<p>C.C./NIT {{ $customer['customer_document'] }}</p>@endif
+            @if($customer['customer_phone'])<p class="tabular-nums">Tel. {{ $customer['customer_phone'] }}</p>@endif
         </x-document.party>
         <x-document.party title="Vehículo">
-            <p class="font-medium">{{ $order->vehicle_info }}</p>
-            <p class="text-muted-foreground">{{ \Illuminate\Support\Str::limit($order->service_description, 120) }}</p>
+            <p class="font-medium">{{ $customer['vehicle_info'] }}</p>
+            <p class="text-muted-foreground">{{ \Illuminate\Support\Str::limit($customer['service_description'], 120) }}</p>
         </x-document.party>
     </x-slot>
 

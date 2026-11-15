@@ -359,7 +359,7 @@
                                 </div>
                                 <div class="flex shrink-0 items-center gap-2">
                                     <span class="text-sm font-medium tabular-nums">{{ money($row['balance']) }}</span>
-                                    @if(! $isClosed && $row['balance'] >= 1 && $row['mechanic']->is_active)
+                                    @if(! $isClosed && $row['balance'] >= 1)
                                         <x-button variant="secondary" size="sm"
                                                   x-data
                                                   x-on:click="$dispatch('cash-pay-mechanic', { id: {{ $row['mechanic']->id }}, amount: '{{ ltrim(money($row['balance']), '$') }}' })">

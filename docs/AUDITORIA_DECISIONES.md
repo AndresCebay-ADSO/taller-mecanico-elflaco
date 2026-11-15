@@ -110,5 +110,5 @@ Estado: **todas decididas el 2026-11-14** (cambios en v1.1.0). Cada punto dice q
 - **Reimprimir un comprobante anulado puede mostrar líneas que no suman su total.** Corregido con la decisión 11
   para todo lo que se emita o anule desde v1.1.0. Solo queda en los comprobantes anulados antes de esa versión si
   después se borró un trabajo de su orden.
-- **Restaurar no pone la app en mantenimiento.** Si alguien registra algo mientras `restaurar.bat` carga la base, ese
-  registro se pierde. Con un solo usuario no pasa: se restaura con el sistema sin uso.
+- **Restaurar no pone la app en mantenimiento.** Corregido en la revisión externa (2026-11-15): `restaurar.bat` pone
+  el sistema en mantenimiento, borra y recrea la base, carga el respaldo, corre `migrate` y lo vuelve a abrir.

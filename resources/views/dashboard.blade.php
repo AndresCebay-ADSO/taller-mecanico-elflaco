@@ -10,11 +10,20 @@
         </x-slot>
     </x-page-header>
 
-    @if($backupStatus?->needsAttention())
+    @foreach($backupAlerts as $backup)
         <div class="mb-4 flex items-start gap-3 rounded-lg border px-4 py-3 text-sm {{ \App\Support\Tone::alert('danger') }}" role="alert">
             <i data-lucide="database-backup" class="mt-0.5 size-4 shrink-0"></i>
-            <p><span class="font-medium">Los datos no se están respaldando.</span> {{ $backupStatus->describe() }}
-                Revisa que el portátil tenga Google Drive abierto o ejecuta <span class="font-mono">respaldo.bat</span>.</p>
+            <p><span class="font-medium">{{ $backup->headline() }}</span> {{ $backup->describe() }} {{ $backup->hint() }}</p>
+        </div>
+    @endforeach
+
+    @if($exampleSettings)
+        <div class="mb-4 flex flex-col gap-2 rounded-lg border px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between {{ \App\Support\Tone::alert('warning') }}" role="alert">
+            <p class="flex items-start gap-2">
+                <i data-lucide="file-pen-line" class="mt-0.5 size-4 shrink-0"></i>
+                <span><span class="font-medium">Los comprobantes salen con datos de ejemplo</span> ({{ implode(', ', $exampleSettings) }}). Pon los datos reales del taller.</span>
+            </p>
+            <a href="{{ route('settings') }}" class="font-medium underline-offset-4 hover:underline">Ir a Configuración</a>
         </div>
     @endif
 

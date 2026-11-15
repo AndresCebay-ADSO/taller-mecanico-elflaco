@@ -47,10 +47,13 @@ class DashboardController extends Controller
         $mechanics = auth()->user()?->can('admin') ? $reports->commissions($branchId, $today->startOfMonth(), $today) : collect();
 
         // Solo el administrador puede hacer algo con un respaldo atrasado.
-        $backupStatus = auth()->user()?->is_admin ? BackupStatus::fromConfig() : null;
+        $backupAlerts = auth()->user()?->is_admin ? BackupStatus::alerts() : [];
+        // Datos de ejemplo del taller que saldrían impresos en los comprobantes.
+        $exampleSettings = auth()->user()?->is_admin ? \App\Models\Setting::examplesInUse() : [];
 
         return view('dashboard', compact(
-            'backupStatus',
+            'backupAlerts',
+            'exampleSettings',
             'activeOrders',
             'pendingOrders',
             'todayEarnings',

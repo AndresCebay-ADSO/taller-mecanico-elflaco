@@ -48,11 +48,7 @@ class ReportService
         $jobs = $invoices->flatMap(fn (Invoice $invoice) => $invoice->serviceOrder->workshopJobs);
         $workshopLabor = (float) $jobs->sum('workshop_cost');
         $partsRevenue = (float) $jobs->sum(fn (WorkshopJob $job) => $job->jobProducts->sum('total_price'));
-        $partsCost = $this->costOfMovements('job_usage', $jobs->flatMap(fn (WorkshopJob $job) => [
-            "Trabajo #{$job->id}",
-            "Trabajo Individual #{$job->id}",
-            "Trabajo #{$job->id} - Orden #{$job->service_order_id}",
-        ]));
+        $partsCost = $this->costOfMovements('job_usage', $jobs->flatMap(fn (WorkshopJob $job) => $job->inventoryReferences()));
 
         $mechanics = $this->commissions($branchId, $from, $to);
 

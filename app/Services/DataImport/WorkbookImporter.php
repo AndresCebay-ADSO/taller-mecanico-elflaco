@@ -282,6 +282,7 @@ class WorkbookImporter
         $existing = Mechanic::where('branch_id', $branchId)->pluck('name')
             ->mapWithKeys(fn ($n) => [$this->key($n) => true])->all();
         $seen = [];
+        $seenEmails = [];
 
         foreach ($rows as ['row' => $row, 'data' => $data]) {
             $data['phone'] = $this->digits($data['phone']);
@@ -303,6 +304,16 @@ class WorkbookImporter
             }
             $seen[$key] = $row;
 
+            // El correo es único: dos filas con el mismo fallarían al guardar.
+            $email = $this->key((string) ($data['email'] ?? ''));
+            if ($email !== '' && isset($seenEmails[$email])) {
+                $report->error($sheet, $row, "El correo «{$data['email']}» está repetido en el archivo (fila {$seenEmails[$email]}).");
+                continue;
+            }
+            if ($email !== '') {
+                $seenEmails[$email] = $row;
+            }
+
             isset($existing[$key])
                 ? $report->skip[$sheet][] = $data['name']
                 : $report->create[$sheet][] = $data;
@@ -322,11 +333,17 @@ class WorkbookImporter
                 default => null,
             };
 
+            $percentage = $calculation === 'percentage' ? $this->money($data['mechanic_percentage']) : null;
+            // Una celda con formato % llega como fracción (60 % → 0,6): nadie le da menos de 1 % a un mecánico.
+            if ((is_int($percentage) || is_float($percentage)) && $percentage > 0 && $percentage < 1) {
+                $percentage = round($percentage * 100, 2);
+            }
+
             $clean = [
                 'name' => $data['name'],
                 'description' => $data['description'],
                 'calculation_type' => $calculation,
-                'mechanic_percentage' => $calculation === 'percentage' ? $this->money($data['mechanic_percentage']) : null,
+                'mechanic_percentage' => $percentage,
                 'fixed_mechanic_amount' => $calculation === 'fixed' ? $this->money($data['fixed_mechanic']) : null,
                 'fixed_workshop_amount' => $calculation === 'fixed' ? $this->money($data['fixed_workshop']) : null,
                 'allow_products' => $this->yesNo($data['allow_products']),

@@ -22,9 +22,9 @@ Complementa a [`PRODUCCION_Y_DEMO.md`](PRODUCCION_Y_DEMO.md) (qué cambió para 
 
 | Programa | Versión verificada | Para qué | Notas |
 | :-- | :-- | :-- | :-- |
-| XAMPP | **8.5.12** (PHP 8.5.12, MariaDB 10.11.16, Apache 2.4.65) | Servidor web + base de datos | Laravel 13 pide PHP 8.3 o superior. Las 150 pruebas pasan sobre esta versión. |
+| XAMPP | **8.5.12** (PHP 8.5.12, MariaDB 10.11.16, Apache 2.4.65) | Servidor web + base de datos | Laravel 13 pide PHP 8.3 o superior. Las 174 pruebas pasan sobre esta versión. |
 | Git | cualquiera reciente | Traer y actualizar el código | |
-| Composer | 2.11 | Dependencias de PHP | Composer 2.8 muestra avisos con PHP 8.5: `composer self-update`. |
+| Composer | 2.11 | Dependencias de PHP | Instalar con `Composer-Setup.exe` (getcomposer.org) **después** de XAMPP (§1.1). |
 | Node.js | 20 o superior (verificado 22.15) | Compilar la interfaz | Solo se usa al instalar o actualizar. |
 | AnyDesk | — | Soporte remoto | Configurar acceso desatendido con contraseña. |
 
@@ -38,10 +38,14 @@ ruta (algunas herramientas fallan con `C:\Users\María\Mis documentos\...`).
    archivo se llama `xampp-windows-x64-8.5.12-…-installer.exe`. **No** usar la 8.2.12: tiene fallas graves conocidas
    (CVE-2026-109618 y CVE-2026-109619, ejecución remota de código) y su rama deja de recibir parches el 31-dic-2026.
 2. Si había otro XAMPP, desinstalarlo antes (y respaldar sus bases con `mysqldump`: viven en `C:\xampp\mysql\data`).
-3. Componentes: solo **Apache, MySQL, PHP y phpMyAdmin**. Carpeta: **`C:\xampp`**.
+3. Componentes: solo **Apache, MySQL y PHP**. Carpeta: **`C:\xampp`**. phpMyAdmin no hace falta en el portátil del
+   cliente (en la máquina de desarrollo es opcional).
 4. **Firewall de Windows:** si pregunta por Apache o MySQL, **Cancelar**. El sistema se usa en el mismo portátil
    (`127.0.0.1`) y no necesita ese permiso; «Permitir» lo deja al alcance de cualquiera en el wifi del taller.
 5. Configurar PHP (§2) y la red (§3.1) **antes** de arrancar Apache y MySQL.
+6. Instalar **Git** y **Composer**. En el instalador de Composer (`Composer-Setup.exe`), cuando pida PHP, elegir
+   `C:\xampp\php\php.exe`: así `php` y `composer` quedan en el PATH. **Abrir una consola nueva** después (las que ya
+   estaban abiertas no ven el PATH nuevo) y comprobar con `php -v` (debe decir 8.5.12) y `composer --version`.
 
 ---
 
@@ -96,7 +100,8 @@ mismo wifi puede entrar a la base o al sistema. Guardar copia de cada archivo (`
 - `C:\xampp\apache\conf\httpd.conf`: `Listen 80` → `Listen 127.0.0.1:80`
 - `C:\xampp\apache\conf\extra\httpd-ssl.conf`: `Listen 443` → `Listen 127.0.0.1:443`
 
-Comprobar la sintaxis de Apache: `C:\xampp\apache\bin\httpd -t` debe decir `Syntax OK`. `taller:verificar` revisa
+Comprobar la sintaxis de Apache: `C:\xampp\apache\bin\httpd -t` debe decir `Syntax OK`. Ya con `my.ini` listo, **iniciar
+MySQL** desde el *XAMPP Control Panel* (botón *Start*): §3.2 lo necesita encendido. `taller:verificar` revisa
 las dos cosas («Base de datos solo en este equipo» y «Apache solo en este equipo»). Si el `httpd.conf` está en otra
 ruta, ponerla en `APACHE_CONF` del `.env`.
 
@@ -108,24 +113,36 @@ Desde `C:\xampp\mysql\bin\mysql.exe -u root`:
 CREATE DATABASE taller_el_flaco CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER 'taller'@'localhost' IDENTIFIED BY 'una-contraseña-larga';
 GRANT ALL PRIVILEGES ON taller_el_flaco.* TO 'taller'@'localhost';
+
+-- Base para practicar restauraciones sin tocar la real (§6, paso 6).
+CREATE DATABASE prueba_restauracion CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+GRANT ALL PRIVILEGES ON prueba_restauracion.* TO 'taller'@'localhost';
 FLUSH PRIVILEGES;
 ```
 
-Y ponerle contraseña a `root`:
+XAMPP trae **tres** cuentas `root` sin contraseña (para `localhost`, `127.0.0.1` y `::1`) y una `pma` de phpMyAdmin.
+Ponerles contraseña a las tres `root` y borrar `pma` (sin phpMyAdmin no se usa). `mariadb.sys` es del sistema y viene
+bloqueada: no tocarla.
 
 ```sql
 ALTER USER 'root'@'localhost' IDENTIFIED BY 'otra-contraseña-larga';
+ALTER USER 'root'@'127.0.0.1' IDENTIFIED BY 'otra-contraseña-larga';
+ALTER USER 'root'@'::1' IDENTIFIED BY 'otra-contraseña-larga';
+DROP USER IF EXISTS 'pma'@'localhost';
 ```
 
-> Si se le pone contraseña a `root`, phpMyAdmin deja de entrar hasta editar
-> `C:\xampp\phpMyAdmin\config.inc.php` (`$cfg['Servers'][$i]['password']`). En la máquina del cliente no hace falta
-> phpMyAdmin.
+> **Contraseñas:** usar solo letras, números y guiones (`-`). Un `#` corta la contraseña sin avisar en el `.env` y en
+> `respaldo.cnf`, y un espacio en el `.env` hace que la app no arranque. Si hace falta uno de esos caracteres, poner la
+> contraseña entre comillas dobles en los dos archivos (`DB_PASSWORD="…"`, `password="…"`).
 
 Guardar las contraseñas en el gestor de contraseñas, **no** en un archivo dentro del proyecto.
 
 ---
 
 ## 4. Instalar el proyecto
+
+El repositorio es público: `git clone` no pide usuario ni contraseña. (Si algún día se vuelve privado, `git clone` y
+`actualizar.bat` van a pedir un token de GitHub.)
 
 ```bat
 cd /d C:\taller
@@ -163,8 +180,10 @@ ADMIN_EMAIL=correo@del-cliente
 ADMIN_PASSWORD=contraseña-fuerte-que-luego-cambia-ella
 
 SESSION_SECURE_COOKIE=false   # true solo si se sirve con HTTPS
+SESSION_LIFETIME=720          # 12 horas: un formulario abierto en la mañana se puede guardar en la tarde
 
 RESPALDOS_DIR=C:\taller\respaldos   # el dashboard avisa si los respaldos se detienen (§6)
+RESPALDOS_NUBE='G:\Mi unidad\Respaldos Taller'   # la misma carpeta de config.bat: avisa si Google Drive deja de recibirlos
 ```
 
 Luego:
@@ -218,6 +237,9 @@ En `C:\xampp\apache\conf\extra\httpd-vhosts.conf` (el `httpd.conf` de XAMPP ya l
 </VirtualHost>
 ```
 
+Después, en el panel de XAMPP, **Stop** y **Start** en Apache, y abrir `http://127.0.0.1`: debe salir la pantalla de
+inicio de sesión. Si sale la página de bienvenida de XAMPP, el vhost no se cargó (revisar la ruta y `httpd -t`).
+
 `Require local`: solo se abre desde ese mismo portátil. Si más adelante se quiere usar desde el celular en el wifi del
 taller, cambiar por `Require ip 192.168.` (y revisar el firewall de Windows).
 
@@ -255,12 +277,23 @@ El portátil se puede caer, mojar o perder. Sin copia, se pierde todo el histori
 3. Probar a mano: `scripts\windows\respaldo.bat`. Debe terminar en «Listo» y el `.zip` aparecer en
    `C:\taller\respaldos` y en Google Drive.
 4. Programarlo: `scripts\windows\instalar-respaldo-automatico.bat` (otra hora: `instalar-respaldo-automatico.bat 18:30`).
-5. En el `.env`, `RESPALDOS_DIR=C:\taller\respaldos`. Con eso, **el dashboard le avisa al administrador si pasan más
-   de 3 días sin un respaldo nuevo** (Google Drive cerrado, tarea borrada, MySQL apagado…), y `taller:verificar`
-   también lo revisa. Nadie mira el Programador de tareas: el aviso es lo que evita enterarse tarde.
-6. **Probar una restauración** antes de entregar: `scripts\windows\restaurar.bat` sin argumentos lista los
-   respaldos y pregunta cuál. Para practicar sin tocar los datos reales, en una consola:
-   `set DB_NAME=prueba_restauracion` (base creada vacía antes) y luego `scripts\windows\restaurar.bat`.
+5. En el `.env`, `RESPALDOS_DIR=C:\taller\respaldos` y `RESPALDOS_NUBE` con la misma carpeta de Google Drive que
+   `config.bat`. Con eso, **el dashboard le avisa al administrador si pasan más de 3 días sin un respaldo nuevo** en el
+   portátil (tarea borrada, MySQL apagado…) **o en Google Drive** (Drive cerrado, sin internet). `taller:verificar`
+   revisa las dos. Nadie mira el Programador de tareas ni `respaldo.log`: el aviso es lo que evita enterarse tarde.
+6. **Probar una restauración** antes de entregar, en la base de práctica (§3.2), sin tocar los datos reales. En una
+   consola:
+
+   ```bat
+   set DB_NAME=prueba_restauracion
+   scripts\windows\restaurar.bat
+   ```
+
+   Al ver que `DB_NAME` no es la base real, `restaurar.bat` entra en **modo práctica**: no hace respaldo de seguridad ni
+   toca el logo, y al final muestra cuántas ventas, facturas, productos y órdenes cargó. Compararlas con las del sistema.
+
+   La restauración real (sin `set DB_NAME`) pone el sistema en mantenimiento, guarda un respaldo del estado actual,
+   **borra y vuelve a crear la base**, carga el respaldo, corre `migrate` y vuelve a abrir el sistema.
 
 Si algo falla, `C:\taller\respaldos\respaldo.log` dice qué fue (cada línea empieza con OK, AVISO o ERROR).
 
@@ -291,8 +324,13 @@ Al publicar el arreglo, actualizar también la lista `SAFE_PHP` de `app/Console/
 
 ## 8. Checklist de entrega
 
-- [ ] `php artisan taller:verificar` sin errores, y en «Seguridad de PHP», «Base de datos solo en este equipo» y
-  «Apache solo en este equipo» dice OK.
+- [ ] `php artisan taller:verificar` sin errores, y en «Seguridad de PHP», «Base de datos solo en este equipo»,
+  «Apache solo en este equipo», «Duración de la sesión», «Respaldos», «Respaldos en la nube» y «Datos del taller»
+  dice OK.
+- [ ] **Configuración del taller** (Administración → Configuración): nombre, NIT, teléfono, correo, dirección y logo
+  reales. Salen en todos los comprobantes; mientras sigan los de ejemplo, el inicio lo avisa.
+- [ ] Fecha, hora y zona horaria de Windows: (UTC-05:00) Bogotá, con «Establecer la hora automáticamente». Una hora
+  mal puesta cambia la fecha de las ventas y de la caja.
 - [ ] Reiniciar el portátil: Apache y MySQL arrancan solos; el acceso directo abre el login.
 - [ ] Entrar con el administrador y **cambiar la contraseña** desde *Perfil* junto con el cliente.
 - [ ] Borrar la línea `ADMIN_PASSWORD` del `.env` y correr `php artisan config:cache`: ya no se usa y deja una contraseña escrita en el disco.
@@ -323,6 +361,7 @@ Al publicar el arreglo, actualizar también la lista `SAFE_PHP` de `app/Console/
 | MySQL no arranca | Puerto 3306 ocupado por otro MySQL instalado | Detener el otro servicio o cambiar el puerto (y `DB_PORT`). |
 | `composer install` muy lento | El antivirus revisa cada archivo | Excluir `C:\taller` y `C:\xampp` del análisis en tiempo real. |
 | `composer install` falla: «openspout requires php…» o «laravel/framework requires php ^8.3» | PHP viejo (XAMPP 8.2) | Instalar XAMPP 8.5.12 (§1.1). |
+| «La página estuvo abierta mucho tiempo y la sesión se cerró» | Pasaron más horas que `SESSION_LIFETIME` sin usar el sistema | Revisar los datos y guardar de nuevo (vuelven escritos). Si pasa seguido, subir `SESSION_LIFETIME`. |
 | Al iniciar sesión vuelve a pedir la contraseña tras actualizar | Laravel 13 guarda la sesión como JSON: las sesiones viejas se descartan una vez | Normal: entrar de nuevo. |
 | Apache no arranca después de §3.1 | Error al editar `Listen` | `C:\xampp\apache\bin\httpd -t` dice la línea; comparar con `httpd.conf.original`. |
 | Sin internet, la letra se ve distinta | — | Ya no pasa: fuente e iconos vienen dentro de la app. |

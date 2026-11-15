@@ -264,3 +264,28 @@ it('stops reading a workbook with an absurd number of rows', function () {
     expect(fn () => app(WorkbookImporter::class)->analyze(importWorkbook(['Mecánicos' => $rows]), $branch->id))
         ->toThrow(RuntimeException::class, 'más de 5.000 filas');
 });
+
+describe('revisión externa: importación', function () {
+    it('reports a repeated mechanic e-mail as a row error instead of failing', function () {
+        [, $branch] = branchUser();
+        $workbook = importWorkbook(['Mecánicos' => [
+            ['Juan Pérez', '3101234567', '15/01/2024', 'taller@ejemplo.co'],
+            ['Carlos Díaz', '3109876543', '15/01/2024', 'TALLER@ejemplo.co'],
+        ]]);
+
+        $preview = app(WorkbookImporter::class)->analyze($workbook, $branch->id);
+
+        expect(collect($preview->errors)->flatten()->implode(' '))->toContain('está repetido en el archivo');
+    });
+
+    it('reads a percentage typed in a % formatted cell', function () {
+        [, $branch] = branchUser();
+        $workbook = importWorkbook(['Tipos de trabajo' => [
+            ['Sincronización', 'Ajuste de carburación', 'Porcentaje', 0.6, '', '', 'Sí'],
+        ]]);
+
+        app(WorkbookImporter::class)->import($workbook, $branch->id);
+
+        expect((float) JobType::where('name', 'Sincronización')->value('mechanic_percentage'))->toBe(60.0);
+    });
+});

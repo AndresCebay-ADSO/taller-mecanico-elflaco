@@ -80,9 +80,4 @@ class BranchService
 
         return $user->branches()->active()->orderBy('branches.id')->get();
     }
-
-    public function hasMultipleBranches(): bool
-    {
-        return $this->getAvailableBranches()->count() > 1;
-    }
 }

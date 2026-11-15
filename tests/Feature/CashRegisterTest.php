@@ -13,32 +13,6 @@ use App\Services\SaleService;
 use Carbon\CarbonImmutable;
 
 /** Orden con un trabajo completado (mano de obra $labor, comisión 60 %) lista para facturar. */
-function cashOrder($branch, float $labor = 50000, ?Mechanic $mechanic = null): ServiceOrder
-{
-    $order = ServiceOrder::create([
-        'customer_name' => 'Cliente Caja',
-        'vehicle_info' => 'Suzuki GN 125',
-        'service_description' => 'Revisión',
-        'status' => 'in_progress',
-        'branch_id' => $branch->id,
-    ]);
-
-    $job = app(\App\Services\WorkshopJobService::class)->addToOrder($order, [
-        'job_type_id' => demoJobType()->id,
-        'mechanic_id' => ($mechanic ?? branchMechanic($branch))->id,
-        'description' => 'Revisión general',
-        'labor_cost' => $labor,
-    ]);
-    $job->update(['status' => 'completed', 'completed_at' => now()]);
-
-    return $order->fresh();
-}
-
-function cashSession($branch): array
-{
-    return ['current_branch_id' => $branch->id];
-}
-
 describe('caja diaria', function () {
     it('expects base plus cash sales and receipts minus cash outflows, keeping other methods apart', function () {
         [$admin, $branch] = branchUser(admin: true);
@@ -382,5 +356,98 @@ describe('caja diaria', function () {
 
         $this->actingAs($admin)->withSession($session)->post(route('invoices.cancel', $second), ['refunded' => '0'])->assertSessionHas('success');
         expect($second->fresh()->isCancelled())->toBeTrue();
+    });
+});
+
+describe('revisión externa: caja', function () {
+    it('warns about a day with cash sales that nobody opened in the cash register', function () {
+        [$admin, $branch] = branchUser(admin: true);
+        $product = stockedProduct($branch, 10, cost: 10000, price: 20000);
+        $cash = app(CashService::class);
+        $monday = CarbonImmutable::today()->subDays(2);
+
+        $cash->close($branch->id, $monday, 20000, 0, null, $admin->id);
+        // Martes: dos ventas en efectivo y nadie abrió la Caja.
+        $this->travelTo(now()->subDay());
+        app(SaleService::class)->create($branch->id, $admin->id, null, 'Efectivo', [['id' => $product->id, 'quantity' => 2]]);
+        $this->travelBack();
+
+        expect($cash->unclosedDaysBefore($branch->id, CarbonImmutable::today())->map->toDateString()->all())
+            ->toBe([CarbonImmutable::today()->subDay()->toDateString()]);
+        $this->actingAs($admin)->withSession(cashSession($branch))->get(route('cash.index'))
+            ->assertOk()->assertSee('Quedó un día sin cerrar');
+
+        // Antes del martes no queda nada: el lunes se cerró.
+        expect($cash->unclosedDaysBefore($branch->id, CarbonImmutable::today()->subDay()))->toBeEmpty();
+    });
+
+    it('keeps a refunded sale in the cash of the day it was paid', function () {
+        [$admin, $branch] = branchUser(admin: true);
+        $product = stockedProduct($branch, 10, cost: 10000, price: 20000);
+        $cash = app(CashService::class);
+        $yesterday = CarbonImmutable::today()->subDay();
+
+        $this->travelTo(now()->subDay());
+        $sale = app(SaleService::class)->create($branch->id, $admin->id, null, 'Efectivo', [['id' => $product->id, 'quantity' => 1]])['sale'];
+        $cash->close($branch->id, CarbonImmutable::today(), 20000, 0, null, $admin->id);
+        $this->travelBack();
+
+        $this->actingAs($admin)->withSession(cashSession($branch))
+            ->post(route('sales.cancel', $sale), ['refunded' => '1'])->assertSessionHas('success');
+
+        // Ayer entró la plata y hoy salió: ayer sigue cuadrando, sin aviso de «cambió después del cierre».
+        expect($cash->summary($branch->id, $yesterday)['cash']['expected'])->toBe(20000.0)
+            ->and($cash->summary($branch->id, CarbonImmutable::today())['cash']['expected'])->toBe(0.0);
+        $this->actingAs($admin)->withSession(cashSession($branch))
+            ->get(route('cash.index', ['date' => $yesterday->toDateString()]))
+            ->assertOk()->assertDontSee('Después del cierre cambió');
+    });
+
+    it('lets the cash register pay an inactive mechanic who is still owed', function () {
+        [$admin, $branch] = branchUser(admin: true);
+        // Las comisiones por pagar cuentan desde el primer día de caja.
+        app(CashService::class)->setOpening($branch->id, CarbonImmutable::today(), 0);
+        $mechanic = branchMechanic($branch);
+        $order = cashOrder($branch, 50000, $mechanic);
+        app(InvoiceService::class)->generateFor($order, 'Nequi');
+        $mechanic->update(['is_active' => false]);
+
+        $this->actingAs($admin)->withSession(cashSession($branch))->get(route('cash.index'))
+            ->assertOk()
+            ->assertSee('cash-pay-mechanic', false)
+            ->assertViewHas('mechanics', fn ($mechanics) => $mechanics->contains('id', $mechanic->id));
+    });
+
+    it('shows a closed day with the figures it was closed with', function () {
+        [$admin, $branch] = branchUser(admin: true);
+        $product = stockedProduct($branch, 10, cost: 10000, price: 20000);
+        $sale = app(SaleService::class)->create($branch->id, $admin->id, null, 'Efectivo', [['id' => $product->id, 'quantity' => 1]])['sale'];
+        app(CashService::class)->close($branch->id, CarbonImmutable::today(), 20000, 0, null, $admin->id);
+
+        // Después del cierre se anula la venta (sin devolución, es del mismo día): el cierre no se reescribe.
+        app(SaleService::class)->cancel($sale);
+
+        $this->actingAs($admin)->withSession(cashSession($branch))->get(route('cash.index'))
+            ->assertOk()
+            ->assertViewHas('summary', fn ($summary) => $summary['cash']['sales'] === 20000.0 && $summary['cash']['expected'] === 20000.0)
+            ->assertViewHas('liveExpected', 0.0)
+            ->assertSee('Después del cierre cambió');
+    });
+
+    it('does not create cash days before the first day the register was used', function () {
+        [$admin, $branch] = branchUser(admin: true);
+        $cash = app(CashService::class);
+        $cash->setOpening($branch->id, CarbonImmutable::today()->subDays(3), 0);
+
+        $this->actingAs($admin)->withSession(cashSession($branch))
+            ->put(route('cash.opening'), ['date' => CarbonImmutable::today()->subMonths(2)->toDateString(), 'opening_cash' => 50000])
+            ->assertSessionHas('error', fn ($text) => str_contains($text, 'no se pueden registrar días anteriores'));
+
+        expect(CashDay::count())->toBe(1)
+            ->and($cash->startDate($branch->id)->toDateString())->toBe(CarbonImmutable::today()->subDays(3)->toDateString());
+
+        // Días posteriores al primero, incluidos los pasados, sí se pueden registrar.
+        $cash->setOpening($branch->id, CarbonImmutable::today()->subDay(), 0);
+        expect(CashDay::count())->toBe(2);
     });
 });

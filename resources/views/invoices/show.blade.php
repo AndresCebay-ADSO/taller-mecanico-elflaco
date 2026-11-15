@@ -4,13 +4,14 @@
     $laborTotal = $lines->sum('labor');
     $partsTotal = $lines->sum(fn ($line) => collect($line['parts'])->sum('total_price'));
     $orderNumber = $order->displayNumber();
+    $customer = $invoice->customer();
 @endphp
 
 <x-app-layout>
 <div class="ds">
     <div class="no-print">
         <x-page-header :title="'Factura ' . $invoice->invoice_number"
-                       :subtitle="'Orden ' . $orderNumber . ' · ' . $order->customer_name"
+                       :subtitle="'Orden ' . $orderNumber . ' · ' . $customer['customer_name']"
                        :back="route('invoices.index')" back-label="Facturas">
             <x-slot name="badge">
                 <x-status-badge :tone="$invoice->statusTone()">{{ $invoice->statusLabel() }}</x-status-badge>
@@ -82,13 +83,13 @@
         <section class="grid grid-cols-1 gap-6 border-b border-border py-6 md:grid-cols-2">
             <div>
                 <p class="text-xs font-medium text-muted-foreground">Cliente</p>
-                <p class="mt-1 font-medium">{{ $order->customer_name }}</p>
-                <p class="text-sm tabular-nums text-muted-foreground">{{ $order->customer_phone ?: 'Sin teléfono' }}</p>
+                <p class="mt-1 font-medium">{{ $customer['customer_name'] }}</p>
+                <p class="text-sm tabular-nums text-muted-foreground">{{ $customer['customer_phone'] ?: 'Sin teléfono' }}</p>
             </div>
             <div>
                 <p class="text-xs font-medium text-muted-foreground">Vehículo</p>
-                <p class="mt-1 font-medium">{{ $order->vehicle_info }}</p>
-                <p class="text-sm text-muted-foreground">{{ \Illuminate\Support\Str::limit($order->service_description, 140) }}</p>
+                <p class="mt-1 font-medium">{{ $customer['vehicle_info'] }}</p>
+                <p class="text-sm text-muted-foreground">{{ \Illuminate\Support\Str::limit($customer['service_description'], 140) }}</p>
             </div>
         </section>
 

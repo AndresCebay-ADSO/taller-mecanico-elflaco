@@ -8,6 +8,7 @@ use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
 class Sale extends Model
@@ -45,15 +46,27 @@ class Sale extends Model
         return $this->belongsTo(Branch::class);
     }
 
-    public function getTotalItemsAttribute()
-    {
-        return $this->saleProducts->sum('quantity');
-    }
-
     /** Ventas que cuentan: las no anuladas. */
     public function scopeNotCancelled(Builder $query): Builder
     {
         return $query->where('status', '!=', self::STATUS_CANCELLED);
+    }
+
+    /** Salida «Devolución a cliente» de la caja, si al anularla se devolvió la plata (decisión 2). */
+    public function refundMovement(): HasOne
+    {
+        return $this->hasOne(CashMovement::class, 'sale_id');
+    }
+
+    /**
+     * Las que cuentan en la caja de su día: las no anuladas y las anuladas con devolución. La plata de estas sí entró
+     * ese día; la devolución sale de la caja del día en que se hizo.
+     */
+    public function scopeInCashRegister(Builder $query): Builder
+    {
+        return $query->where(fn (Builder $query) => $query
+            ->where('status', '!=', self::STATUS_CANCELLED)
+            ->orWhereHas('refundMovement'));
     }
 
     /** Ventas con fecha de venta entre esos dos días (incluidos). */

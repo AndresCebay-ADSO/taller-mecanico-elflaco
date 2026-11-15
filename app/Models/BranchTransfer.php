@@ -100,19 +100,4 @@ class BranchTransfer extends Model
 
         return in_array($newStatus, $validTransitions[$this->status] ?? [], true);
     }
-
-    public function scopePending($query)
-    {
-        return $query->where('status', self::STATUS_PENDING);
-    }
-
-    public function scopeInTransit($query)
-    {
-        return $query->where('status', self::STATUS_IN_TRANSIT);
-    }
-
-    public function scopeCompleted($query)
-    {
-        return $query->where('status', self::STATUS_COMPLETED);
-    }
 }

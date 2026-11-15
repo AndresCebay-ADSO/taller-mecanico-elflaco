@@ -38,13 +38,13 @@ class CashService
             : collect();
 
         $sales = Sale::forBranch($branchId)
-            ->notCancelled()
+            ->inCashRegister()
             ->onDates($date, $date)
             ->select('payment_method', DB::raw('SUM(total_amount) as total'), DB::raw('COUNT(*) as items'))
             ->groupBy('payment_method')
             ->get();
 
-        $invoices = Invoice::active()
+        $invoices = Invoice::inCashRegister()
             ->forBranch($branchId)
             ->onDates($date, $date)
             ->select('payment_method', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as items'))
@@ -104,12 +104,41 @@ class CashService
                 'sales' => (int) $sales->sum('items'),
                 'invoices' => (int) $invoices->sum('items'),
             ],
-            'unclosed_before' => CashDay::where('branch_id', $branchId)
-                ->whereNull('closed_at')
-                ->where('date', '<', $date->toDateString())
-                ->orderByDesc('date')
-                ->pluck('date'),
+            'unclosed_before' => $this->unclosedDaysBefore($branchId, $date),
         ];
+    }
+
+    /**
+     * Días anteriores a `$date` que no se cerraron, de más reciente a más antiguo: los abiertos en Caja y también los
+     * que tuvieron ventas o facturas en efectivo sin que nadie abriera la Caja (su efectivo no pasa a la base del día
+     * siguiente hasta cerrarlos). Solo desde el primer día en que se usó la caja.
+     *
+     * @return Collection<int, CarbonImmutable>
+     */
+    public function unclosedDaysBefore(int $branchId, CarbonImmutable $date): Collection
+    {
+        $start = $this->startDate($branchId);
+        if ($start === null || $start->gte($date)) {
+            return collect();
+        }
+
+        $days = CashDay::where('branch_id', $branchId)->where('date', '<', $date->toDateString())->get(['date', 'closed_at'])->toBase();
+        $closed = $days->filter->isClosed()->map(fn (CashDay $day) => $day->date->toDateString());
+        $open = $days->reject->isClosed()->map(fn (CashDay $day) => $day->date->toDateString());
+
+        $yesterday = $date->subDay();
+        $salesDays = Sale::forBranch($branchId)->inCashRegister()->where('payment_method', PaymentMethod::CASH)
+            ->onDates($start, $yesterday)->selectRaw('DATE(sale_date) as day')->distinct()->pluck('day');
+        $invoiceDays = Invoice::inCashRegister()->forBranch($branchId)->where('payment_method', PaymentMethod::CASH)
+            ->onDates($start, $yesterday)->selectRaw('DATE(invoice_date) as day')->distinct()->pluck('day');
+
+        return $open->concat($salesDays)->concat($invoiceDays)
+            ->map(fn ($day) => CarbonImmutable::parse($day)->toDateString())
+            ->unique()
+            ->diff($closed)
+            ->sortDesc()
+            ->map(fn (string $day) => CarbonImmutable::parse($day))
+            ->values();
     }
 
     /** Base sugerida: lo que quedó en el cajón al cerrar el último día anterior. */
@@ -439,6 +468,15 @@ class CashService
         $day = CashDay::where('branch_id', $branchId)->whereDate('date', $date->toDateString())->lockForUpdate()->first();
 
         if (!$day) {
+            // Un día anterior al primero correría hacia atrás el inicio de las comisiones por pagar.
+            $start = $this->startDate($branchId);
+            if ($start !== null && $date->lt($start)) {
+                throw new BusinessRuleException(
+                    'La caja se empezó a usar el ' . $start->format('d/m/Y') . ': no se pueden registrar días anteriores.',
+                    'date'
+                );
+            }
+
             CashDay::insertOrIgnore([
                 'branch_id' => $branchId,
                 'date' => $date->toDateString(),

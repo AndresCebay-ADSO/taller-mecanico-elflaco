@@ -55,3 +55,59 @@ it('completes an order only by generating its receipt', function () {
         ->assertSessionHasNoErrors();
     expect($order->fresh()->customer_name)->toBe('Nombre corregido');
 });
+
+it('does not delete an order that has a cancelled invoice', function () {
+    [$admin, $branch] = branchUser(admin: true);
+    $order = cashOrder($branch, 30000);
+    $invoice = app(\App\Services\InvoiceService::class)->generateFor($order, 'Nequi');
+    app(\App\Services\InvoiceService::class)->cancel($invoice, $admin->id);
+    foreach ($order->workshopJobs as $job) {
+        app(\App\Services\WorkshopJobService::class)->delete($job);
+    }
+
+    $this->actingAs($admin)->withSession(['current_branch_id' => $branch->id])
+        ->from(route('service-orders.show', $order))
+        ->delete(route('service-orders.destroy', $order))
+        ->assertSessionHas('error', fn ($text) => str_contains($text, 'tiene facturas registradas'));
+
+    expect($order->fresh())->not->toBeNull();
+});
+
+it('keeps the customer and vehicle on the invoice as they were when issued', function () {
+    [$admin, $branch] = branchUser(admin: true);
+    $order = cashOrder($branch, 30000);
+    $order->update(['customer_name' => 'Ana Pérez', 'vehicle_info' => 'Honda CB 125F - ABC12D', 'customer_document' => '1075123456']);
+    $invoice = app(\App\Services\InvoiceService::class)->generateFor($order->fresh(), 'Nequi');
+
+    $order->update(['customer_name' => 'Nombre corregido después', 'vehicle_info' => 'Otra moto']);
+
+    expect($invoice->fresh()->customer())->toMatchArray(['customer_name' => 'Ana Pérez', 'customer_document' => '1075123456']);
+    $this->actingAs($admin)->withSession(['current_branch_id' => $branch->id])
+        ->get(route('documents.invoice', $invoice))
+        ->assertOk()->assertSee('Ana Pérez')->assertSee('Honda CB 125F - ABC12D')->assertDontSee('Nombre corregido después');
+
+    // Facturas anteriores a la copia: leen la orden y la guardan al anularse.
+    \App\Models\Invoice::whereKey($invoice->id)->update(['customer_snapshot' => null]);
+    expect($invoice->fresh()->customer()['customer_name'])->toBe('Nombre corregido después');
+    app(\App\Services\InvoiceService::class)->cancel($invoice->fresh(), $admin->id);
+    expect($invoice->fresh()->customer_snapshot['customer_name'])->toBe('Nombre corregido después');
+});
+
+it('warns before deleting a job whose commission was already paid', function () {
+    [$admin, $branch] = branchUser(admin: true);
+    app(\App\Services\CashService::class)->setOpening($branch->id, \Carbon\CarbonImmutable::today(), 100000);
+    $mechanic = branchMechanic($branch);
+    $order = cashOrder($branch, 50000, $mechanic); // comisión del 60 %: 30.000
+    $job = $order->workshopJobs->first();
+    $page = fn () => $this->actingAs($admin)->withSession(['current_branch_id' => $branch->id])->get(route('service-orders.show', $order));
+
+    $page()->assertOk()->assertDontSee('ya cobró esta comisión');
+
+    app(\App\Services\CashService::class)->addMovement($branch->id, \Carbon\CarbonImmutable::today(), [
+        'type' => 'mechanic', 'concept' => 'Pago de comisiones', 'amount' => 30000, 'payment_method' => 'Efectivo', 'mechanic_id' => $mechanic->id,
+    ], $admin->id);
+
+    $page()->assertOk()
+        ->assertViewHas('paidCommissionWarnings', fn ($warnings) => isset($warnings[$job->id]))
+        ->assertSee('ya cobró esta comisión: su saldo de comisiones quedará en −$30.000', false);
+});
