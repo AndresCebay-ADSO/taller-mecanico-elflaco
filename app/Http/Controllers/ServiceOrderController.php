@@ -86,13 +86,7 @@ class ServiceOrderController extends Controller
     {
         $branchId = $this->requireCurrentBranchId();
 
-        $validated = $request->validate([
-            'customer_name' => 'required|string|max:255',
-            'customer_document' => 'nullable|string|max:20',
-            'customer_phone' => 'nullable|digits:10',
-            'vehicle_info' => 'required|string|max:255',
-            'service_description' => 'required|string|max:5000',
-        ]);
+        $validated = $request->validate(ServiceOrder::FORM_RULES);
 
         $validated['branch_id'] = $branchId;
 
@@ -143,12 +137,7 @@ class ServiceOrderController extends Controller
     {
         $this->ensureCurrentBranch($serviceOrder->branch_id);
 
-        $validated = $request->validate([
-            'customer_name' => 'required|string|max:255',
-            'customer_document' => 'nullable|string|max:20',
-            'customer_phone' => 'nullable|digits:10',
-            'vehicle_info' => 'required|string|max:255',
-            'service_description' => 'required|string|max:5000',
+        $validated = $request->validate(ServiceOrder::FORM_RULES + [
             'status' => 'required|in:pending,in_progress,completed,cancelled',
         ]);
 

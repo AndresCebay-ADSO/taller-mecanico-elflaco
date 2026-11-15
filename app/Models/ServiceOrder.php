@@ -17,6 +17,22 @@ class ServiceOrder extends Model
     public const STATUS_COMPLETED = 'completed';
     public const STATUS_CANCELLED = 'cancelled';
 
+    /**
+     * Cliente y moto: iguales al crear o editar una orden y al crear un trabajo individual (que crea su orden).
+     * Si no coinciden, una orden creada por un lado no se puede editar por el otro.
+     */
+    public const CUSTOMER_RULES = [
+        'customer_name' => 'required|string|max:255',
+        'customer_phone' => 'nullable|digits:10',
+        'vehicle_info' => 'required|string|max:255',
+    ];
+
+    /** Formulario de la orden: el cliente y la moto, más el documento y el motivo de ingreso. */
+    public const FORM_RULES = self::CUSTOMER_RULES + [
+        'customer_document' => 'nullable|string|max:20',
+        'service_description' => 'required|string|max:5000',
+    ];
+
     protected $fillable = [
         'customer_name',
         'customer_document',
