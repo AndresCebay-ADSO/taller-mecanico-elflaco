@@ -20,7 +20,14 @@ class CheckEnvironment extends Command
 
     protected $description = 'Revisa PHP, extensiones, .env, base de datos y archivos antes de usar el sistema en una máquina';
 
-    private const REQUIRED_EXTENSIONS = ['pdo_mysql', 'mbstring', 'openssl', 'fileinfo', 'ctype', 'tokenizer', 'xml', 'bcmath'];
+    private const REQUIRED_EXTENSIONS = ['pdo_mysql', 'mbstring', 'openssl', 'fileinfo', 'ctype', 'tokenizer', 'xml', 'bcmath', 'zip'];
+
+    /**
+     * Primera versión de cada rama de PHP sin fallas de seguridad conocidas. Actualizar cuando php.net publique un
+     * aviso de seguridad (https://www.php.net). Última revisión: 2026-11-14, por CVE-2026-109618 y CVE-2026-109619
+     * («PHP2Shell», ejecución remota de código, corregidas el 21-oct-2026).
+     */
+    private const SAFE_PHP = ['8.3' => '8.3.36', '8.4' => '8.4.27', '8.5' => '8.5.12'];
 
     /** @var array<int, array{string, string, string}> */
     private array $rows = [];
@@ -32,6 +39,7 @@ class CheckEnvironment extends Command
         $this->checkDatabase();
         $this->checkFiles();
         $this->checkBackups();
+        $this->checkNetwork();
 
         $this->table(['', 'Revisión', 'Detalle'], $this->rows);
 
@@ -53,7 +61,8 @@ class CheckEnvironment extends Command
 
     private function checkPhp(): void
     {
-        $this->add(version_compare(PHP_VERSION, '8.2.0', '>=') ? 'OK' : 'ERROR', 'PHP 8.2 o superior', PHP_VERSION);
+        $this->add(version_compare(PHP_VERSION, '8.3.0', '>=') ? 'OK' : 'ERROR', 'PHP 8.3 o superior', PHP_VERSION);
+        $this->add(...self::phpSecurity(PHP_VERSION));
 
         $missing = array_values(array_filter(self::REQUIRED_EXTENSIONS, fn ($ext) => ! extension_loaded($ext)));
         $this->add($missing ? 'ERROR' : 'OK', 'Extensiones de PHP', $missing ? 'Faltan: ' . implode(', ', $missing) . ' (activar en php.ini)' : 'Completas');
@@ -62,6 +71,35 @@ class CheckEnvironment extends Command
         $opcacheOn = extension_loaded('Zend OPcache')
             && (bool) ini_get(PHP_SAPI === 'cli' ? 'opcache.enable_cli' : 'opcache.enable');
         $this->add($opcacheOn ? 'OK' : 'AVISO', 'OPcache', $opcacheOn ? 'Activo' : 'Apagado: cada página tarda ~4 veces más (ver php.ini en la guía)');
+
+        // Mitigación de CVE-2026-115560 que recomienda php.net hasta el próximo parche.
+        $uploadProgress = (bool) ini_get('session.upload_progress.enabled');
+        $this->add($uploadProgress ? 'AVISO' : 'OK', 'session.upload_progress', $uploadProgress ? 'Encendido: poner session.upload_progress.enabled = Off en php.ini (guía §2)' : 'Apagado');
+    }
+
+    /**
+     * Si la versión de PHP tiene fallas de seguridad conocidas o su rama ya no recibe parches.
+     *
+     * @return array{string, string, string} estado, revisión y detalle
+     */
+    public static function phpSecurity(string $version): array
+    {
+        $branch = implode('.', array_slice(explode('.', $version), 0, 2));
+        $safe = self::SAFE_PHP[$branch] ?? null;
+
+        if ($safe === null) {
+            $newer = version_compare($branch, (string) max(array_keys(self::SAFE_PHP)), '>');
+
+            return [$newer ? 'OK' : 'AVISO', 'Seguridad de PHP', $newer
+                ? "{$version} (más nueva que la lista revisada)"
+                : "{$version}: esa rama ya no recibe parches de seguridad. Instalar el XAMPP más reciente (guía §1)"];
+        }
+
+        $patched = version_compare($version, $safe, '>=');
+
+        return [$patched ? 'OK' : 'AVISO', 'Seguridad de PHP', $patched
+            ? "{$version}: sin fallas conocidas"
+            : "{$version} tiene fallas graves conocidas (corregidas en {$safe}): instalar el XAMPP más reciente (guía §1)"];
     }
 
     private function checkEnv(): void
@@ -148,6 +186,44 @@ class CheckEnvironment extends Command
         }
 
         $this->add($backups->needsAttention() ? 'AVISO' : 'OK', 'Respaldos', $backups->describe());
+    }
+
+    /** Base de datos y Apache solo deben escuchar en este equipo: si no, cualquiera en el wifi llega a ellos. */
+    private function checkNetwork(): void
+    {
+        if (in_array(DB::connection()->getDriverName(), ['mysql', 'mariadb'], true)) {
+            try {
+                $bind = (string) (DB::selectOne('SELECT @@bind_address AS bind')->bind ?? '');
+                $local = in_array($bind, ['127.0.0.1', 'localhost', '::1'], true);
+                $this->add($local ? 'OK' : 'AVISO', 'Base de datos solo en este equipo', $local
+                    ? $bind
+                    : 'Escucha en «' . ($bind ?: 'toda la red') . '»: poner bind-address=127.0.0.1 en my.ini (guía §3.1)');
+            } catch (Throwable) {
+                // Sin conexión ya se reportó en checkDatabase().
+            }
+        }
+
+        $conf = (string) config('taller.apache_conf');
+        if ($conf === '' || ! is_file($conf)) {
+            return;
+        }
+
+        $files = [$conf, dirname($conf) . DIRECTORY_SEPARATOR . 'extra' . DIRECTORY_SEPARATOR . 'httpd-ssl.conf'];
+        $open = [];
+        foreach ($files as $file) {
+            if (! is_file($file)) {
+                continue;
+            }
+            foreach (preg_split('/\R/', (string) file_get_contents($file)) as $line) {
+                if (preg_match('/^\s*Listen\s+(\S+)/i', $line, $match) && ! preg_match('/^(127\.0\.0\.1|localhost|\[::1\]):/i', $match[1])) {
+                    $open[] = $match[1];
+                }
+            }
+        }
+
+        $this->add($open ? 'AVISO' : 'OK', 'Apache solo en este equipo', $open
+            ? 'Escucha en ' . implode(', ', array_unique($open)) . ': usar Listen 127.0.0.1:80 en httpd.conf (guía §3.1)'
+            : 'Listen 127.0.0.1');
     }
 
     private function add(string $status, string $check, string $detail): void
