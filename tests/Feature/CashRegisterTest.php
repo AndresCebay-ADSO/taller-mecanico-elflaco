@@ -13,32 +13,6 @@ use App\Services\SaleService;
 use Carbon\CarbonImmutable;
 
 /** Orden con un trabajo completado (mano de obra $labor, comisión 60 %) lista para facturar. */
-function cashOrder($branch, float $labor = 50000, ?Mechanic $mechanic = null): ServiceOrder
-{
-    $order = ServiceOrder::create([
-        'customer_name' => 'Cliente Caja',
-        'vehicle_info' => 'Suzuki GN 125',
-        'service_description' => 'Revisión',
-        'status' => 'in_progress',
-        'branch_id' => $branch->id,
-    ]);
-
-    $job = app(\App\Services\WorkshopJobService::class)->addToOrder($order, [
-        'job_type_id' => demoJobType()->id,
-        'mechanic_id' => ($mechanic ?? branchMechanic($branch))->id,
-        'description' => 'Revisión general',
-        'labor_cost' => $labor,
-    ]);
-    $job->update(['status' => 'completed', 'completed_at' => now()]);
-
-    return $order->fresh();
-}
-
-function cashSession($branch): array
-{
-    return ['current_branch_id' => $branch->id];
-}
-
 describe('caja diaria', function () {
     it('expects base plus cash sales and receipts minus cash outflows, keeping other methods apart', function () {
         [$admin, $branch] = branchUser(admin: true);

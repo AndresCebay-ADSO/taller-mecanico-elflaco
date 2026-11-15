@@ -196,6 +196,11 @@ class ServiceOrderController extends Controller
             return back()->with('error', 'No se puede eliminar una orden con trabajos asociados. Cancélela primero.');
         }
 
+        // Una factura, aunque esté anulada, conserva su número y su historia: la orden tampoco se borra.
+        if ($serviceOrder->invoices()->exists()) {
+            return back()->with('error', 'Esta orden tiene facturas registradas (aunque estén anuladas): no se puede eliminar. Cancélala en su lugar.');
+        }
+
         $serviceOrder->delete();
 
         return redirect()

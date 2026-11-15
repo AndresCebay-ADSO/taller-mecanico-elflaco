@@ -129,3 +129,30 @@ function branchOrder(Branch $branch, string $status = 'pending'): ServiceOrder
         'status' => $status,
     ]);
 }
+
+/** Orden en progreso con un trabajo completado (sin repuestos), lista para facturar. */
+function cashOrder($branch, float $labor = 50000, ?Mechanic $mechanic = null): ServiceOrder
+{
+    $order = ServiceOrder::create([
+        'customer_name' => 'Cliente Caja',
+        'vehicle_info' => 'Suzuki GN 125',
+        'service_description' => 'Revisión',
+        'status' => 'in_progress',
+        'branch_id' => $branch->id,
+    ]);
+
+    $job = app(\App\Services\WorkshopJobService::class)->addToOrder($order, [
+        'job_type_id' => demoJobType()->id,
+        'mechanic_id' => ($mechanic ?? branchMechanic($branch))->id,
+        'description' => 'Revisión general',
+        'labor_cost' => $labor,
+    ]);
+    $job->update(['status' => 'completed', 'completed_at' => now()]);
+
+    return $order->fresh();
+}
+
+function cashSession($branch): array
+{
+    return ['current_branch_id' => $branch->id];
+}
