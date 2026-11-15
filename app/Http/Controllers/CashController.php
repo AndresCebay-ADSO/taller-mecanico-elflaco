@@ -51,6 +51,17 @@ class CashController extends Controller
         $changedAfterClose = $summary['day']?->isClosed()
             && abs((float) $summary['day']->expected_cash - $liveExpected) >= 0.5;
 
+        // Un día cerrado se muestra con las cifras de su cierre, que suman su total; lo que cambió después lo dice el aviso.
+        if ($summary['day']?->isClosed() && is_array($summary['day']->closing_summary)) {
+            $closing = $summary['day']->closing_summary;
+            $summary['opening'] = (float) $closing['opening'];
+            // El JSON guarda 20000.0 como 20000: se devuelven decimales, como en vivo.
+            $summary['cash'] = ['out_by_type' => collect($closing['cash']['out_by_type'] ?? [])->map(fn ($amount) => (float) $amount)]
+                + array_map('floatval', array_diff_key($closing['cash'], ['out_by_type' => true]));
+            $summary['other_methods'] = collect($closing['other_methods'] ?? []);
+            $summary['counts'] = $closing['counts'] ?? $summary['counts'];
+        }
+
         // Base que no coincide con lo que quedó al cerrar el día anterior: se avisa con botón para corregirla (decisión 3).
         $openingMismatches = $this->cash->openingMismatches($branchId, $date);
 

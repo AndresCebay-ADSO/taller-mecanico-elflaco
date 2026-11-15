@@ -417,4 +417,20 @@ describe('revisión externa: caja', function () {
             ->assertSee('cash-pay-mechanic', false)
             ->assertViewHas('mechanics', fn ($mechanics) => $mechanics->contains('id', $mechanic->id));
     });
+
+    it('shows a closed day with the figures it was closed with', function () {
+        [$admin, $branch] = branchUser(admin: true);
+        $product = stockedProduct($branch, 10, cost: 10000, price: 20000);
+        $sale = app(SaleService::class)->create($branch->id, $admin->id, null, 'Efectivo', [['id' => $product->id, 'quantity' => 1]])['sale'];
+        app(CashService::class)->close($branch->id, CarbonImmutable::today(), 20000, 0, null, $admin->id);
+
+        // Después del cierre se anula la venta (sin devolución, es del mismo día): el cierre no se reescribe.
+        app(SaleService::class)->cancel($sale);
+
+        $this->actingAs($admin)->withSession(cashSession($branch))->get(route('cash.index'))
+            ->assertOk()
+            ->assertViewHas('summary', fn ($summary) => $summary['cash']['sales'] === 20000.0 && $summary['cash']['expected'] === 20000.0)
+            ->assertViewHas('liveExpected', 0.0)
+            ->assertSee('Después del cierre cambió');
+    });
 });
