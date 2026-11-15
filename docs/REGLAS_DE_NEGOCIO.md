@@ -1,8 +1,7 @@
 # Reglas de negocio de MotoTaller El Flaco
 
 Cómo se comporta el sistema y por qué, módulo por módulo. Sirve para explicarle el sistema al taller y para
-recordar qué es intencional. Las marcadas **(decidido)** salieron de la revisión de `docs/AUDITORIA_DECISIONES.md`;
-las que todavía están por decidir aparecen al final.
+recordar qué es intencional. Las marcadas **(decidido, N)** salieron de la revisión de `docs/AUDITORIA_DECISIONES.md`.
 
 Actualizado: 2026-11-14 (v1.1.0 en preparación).
 
@@ -147,14 +146,14 @@ Actualizado: 2026-11-14 (v1.1.0 en preparación).
 - Respaldo automático todos los días a las 7:00 p. m.: un .zip con la base de datos y el logo.
 - Se copia a la carpeta de Google Drive y se guarda una copia en el portátil durante 30 días.
 - Si el último respaldo tiene más de 3 días, el inicio se lo avisa al administrador.
-- Los respaldos van sin cifrar (ver pendiente 15).
+- Los respaldos van sin cifrar **(decidido, 15)**: una clave perdida dejaría inservibles todos los respaldos. Lo que
+  los protege es la cuenta de Google donde quedan.
 - Para restaurar se usa `restaurar.bat`, con el sistema sin uso (no lo pone en mantenimiento).
 - Para actualizar se usa `actualizar.bat`: hace un respaldo, baja la versión nueva y aplica los cambios de la base.
 - Importar desde Excel (administrador): primero se revisa y después se confirma. Máximo 5.000 filas por hoja. El
   stock entra como primer lote.
 
-## Pendientes por decidir
+## Decisiones de la revisión
 
-Detalle en `docs/AUDITORIA_DECISIONES.md`.
-
-- **15.** ¿Cifrar los respaldos de Google Drive?
+Las 15 decisiones de la auditoría quedaron tomadas el 2026-11-14. El detalle y el porqué de cada una está en
+`docs/AUDITORIA_DECISIONES.md`.

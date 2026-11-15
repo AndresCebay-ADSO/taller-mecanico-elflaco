@@ -3,7 +3,7 @@
 Durante la revisión módulo por módulo aparecen comportamientos que no son errores sino reglas del negocio
 (o lo parecen). No se cambian solos: se anotan aquí y al final se decide con el taller si se quedan o cambian.
 
-Estado: **pendiente de revisar** salvo que diga otra cosa.
+Estado: **todas decididas el 2026-11-14** (cambios en v1.1.0). Cada punto dice qué se decidió.
 
 ## Caja (módulo 2)
 
@@ -102,6 +102,8 @@ Estado: **pendiente de revisar** salvo que diga otra cosa.
     contraseñas de los usuarios (estas sí cifradas). Quien entre a esa cuenta de Google puede leerlo. Lo mínimo es
     activar la verificación en dos pasos en esa cuenta. ¿Cifrar además el .zip con una clave (por ejemplo con 7-Zip),
     sabiendo que si se pierde esa clave el respaldo no sirve?
+    **Decidido (2026-11-14): se deja así, sin cifrar.** Perder la clave dejaría inservibles todos los respaldos, y
+    para un taller pequeño eso es peor que el riesgo que se evita.
 
 ## Conocido, sin corregir (impacto bajo)
 
