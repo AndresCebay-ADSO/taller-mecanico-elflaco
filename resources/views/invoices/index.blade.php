@@ -16,7 +16,7 @@
                         </td>
                         <td class="px-4 py-3">
                             <p>
-                                <a href="{{ route('service-orders.show', $invoice->service_order_id) }}" class="font-mono hover:underline">#{{ str_pad($invoice->service_order_id, 4, '0', STR_PAD_LEFT) }}</a>
+                                <a href="{{ route('service-orders.show', $invoice->service_order_id) }}" class="font-mono hover:underline">{{ $invoice->serviceOrder?->displayNumber() }}</a>
                                 · {{ $invoice->serviceOrder?->customer_name }}
                             </p>
                             <p class="mt-0.5 text-xs text-muted-foreground">{{ $invoice->serviceOrder?->vehicle_info }}</p>

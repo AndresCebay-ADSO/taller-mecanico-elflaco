@@ -1,7 +1,7 @@
 <x-app-layout>
 <div class="ds mx-auto max-w-3xl">
     @php
-        $orderNumber = '#' . str_pad($serviceOrder->id, 4, '0', STR_PAD_LEFT);
+        $orderNumber = $serviceOrder->displayNumber();
         $selectedStatus = old('status', $serviceOrder->status);
         // «Completada» solo aparece si ya lo está: una orden se completa generando su factura.
         $statusLabels = array_filter(

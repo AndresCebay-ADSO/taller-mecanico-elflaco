@@ -3,7 +3,7 @@
     $lines = $invoice->lineItems();
     $laborTotal = $lines->sum('labor');
     $partsTotal = $lines->sum(fn ($line) => collect($line['parts'])->sum('total_price'));
-    $orderNumber = '#' . str_pad($order->id, 4, '0', STR_PAD_LEFT);
+    $orderNumber = $order->displayNumber();
 @endphp
 
 <x-app-layout>
