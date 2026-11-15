@@ -65,8 +65,6 @@
 
         <x-card title="Opciones">
             <div class="space-y-4">
-                <x-checkbox name="allow_custom_labor" label="Mano de obra variable" :checked="(bool) old('allow_custom_labor', $jobType->allow_custom_labor ?? true)"
-                            help="Permite escribir el valor de la mano de obra en cada trabajo." />
                 <x-checkbox name="allow_products" label="Usa repuestos" :checked="(bool) old('allow_products', $jobType->allow_products ?? true)"
                             help="Permite agregar repuestos del inventario al trabajo." />
                 <x-checkbox name="is_active" label="Activo" :checked="(bool) old('is_active', $jobType->is_active ?? true)"

@@ -58,6 +58,10 @@ Estado: **pendiente de revisar** salvo que diga otra cosa.
 10. **La opción «Mano de obra variable» de los tipos de trabajo no hace nada.** Se guarda, pero el valor de la mano
     de obra siempre se escribe en cada trabajo (salvo en los tipos de monto fijo, donde se usa el monto fijo). El
     campo «total fijo por porcentaje» tampoco se usa. ¿Quitar la opción o hacer que funcione (valor fijo no editable)?
+    **Decidido (2026-11-14): quitarlos.** En los datos la casilla solo repetía el tipo de cálculo (encendida en los de
+    porcentaje, apagada en los de monto fijo) y el total fijo estaba vacío en todos. Se quitaron del formulario, la
+    lista, la plantilla de Excel y la base. Un precio fijo se hace con «Monto fijo». Las plantillas viejas con esa
+    columna se siguen leyendo; la columna se ignora.
 11. **Corregir un comprobante ya emitido es difícil.** Al anularlo, la orden sigue «Completada»: se pueden eliminar
     trabajos, pero no agregar nuevos. Si hay que cambiar un trabajo, toca hacer una orden nueva. ¿Al anular el
     comprobante, la orden debería volver a «En progreso»?

@@ -13,18 +13,15 @@ class JobType extends Model
         'calculation_type',
         'mechanic_percentage',
         'workshop_percentage',
-        'percentage_fixed_total',
         'fixed_mechanic_amount',
         'fixed_workshop_amount',
         'allow_products',
-        'allow_custom_labor',
         'is_active',
         'is_system',
     ];
 
     protected $casts = [
         'allow_products' => 'boolean',
-        'allow_custom_labor' => 'boolean',
         'is_active' => 'boolean',
         'is_system' => 'boolean',
         'mechanic_percentage' => 'decimal:2',

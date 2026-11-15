@@ -103,7 +103,6 @@ function demoJobType(array $overrides = []): JobType
         'mechanic_percentage' => 60,
         'workshop_percentage' => 40,
         'allow_products' => true,
-        'allow_custom_labor' => true,
         'is_active' => true,
     ], $overrides));
 }

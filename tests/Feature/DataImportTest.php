@@ -61,6 +61,19 @@ function validWorkbook(): string
 }
 
 describe('importación desde Excel', function () {
+    it('still reads an old template that has the removed «¿Mano de obra variable?» column', function () {
+        [, $branch] = branchUser();
+        $oldHeader = [...array_map(fn ($title) => $title . ' *', array_values(ImportSchema::SHEETS['Tipos de trabajo'])), '¿Mano de obra variable?'];
+        $workbook = importWorkbook([
+            'Tipos de trabajo' => [['Cambio de aceite', 'Cambio de aceite y revisión', 'Porcentaje', '60', '', '', 'Sí', 'No']],
+        ], ['Tipos de trabajo' => $oldHeader]);
+
+        expect(app(WorkbookImporter::class)->analyze($workbook, $branch->id)->errors)->toBe([]);
+
+        app(WorkbookImporter::class)->import($workbook, $branch->id);
+        expect(JobType::where('name', 'Cambio de aceite')->value('calculation_type'))->toBe('percentage');
+    });
+
     it('imports suppliers, products with their stock as a first batch, mechanics and job types', function () {
         [, $branch] = branchUser();
         $importer = app(WorkbookImporter::class);

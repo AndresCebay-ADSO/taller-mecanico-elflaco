@@ -38,13 +38,11 @@ class JobTypeController extends Controller
                 },
             ],
             'workshop_percentage' => 'nullable|required_if:calculation_type,percentage|numeric|min:0|max:100',
-            'percentage_fixed_total' => 'nullable|numeric|min:0|max:99999999',
             // Fixed fields
             'fixed_mechanic_amount' => 'nullable|required_if:calculation_type,fixed|numeric|min:0|max:99999999',
             'fixed_workshop_amount' => 'nullable|required_if:calculation_type,fixed|numeric|min:0|max:99999999',
             // Toggles
             'allow_products' => 'boolean',
-            'allow_custom_labor' => 'boolean',
             'is_active' => 'boolean',
         ]);
 
@@ -55,7 +53,6 @@ class JobTypeController extends Controller
         }
 
         $validated['allow_products'] = $request->has('allow_products');
-        $validated['allow_custom_labor'] = $request->has('allow_custom_labor');
         // Casilla desmarcada = el formulario no la envía = inactivo (igual que al actualizar).
         $validated['is_active'] = $request->boolean('is_active');
 
@@ -88,16 +85,13 @@ class JobTypeController extends Controller
                 },
             ],
             'workshop_percentage' => 'nullable|required_if:calculation_type,percentage|numeric|min:0|max:100',
-            'percentage_fixed_total' => 'nullable|numeric|min:0|max:99999999',
             'fixed_mechanic_amount' => 'nullable|required_if:calculation_type,fixed|numeric|min:0|max:99999999',
             'fixed_workshop_amount' => 'nullable|required_if:calculation_type,fixed|numeric|min:0|max:99999999',
             'allow_products' => 'boolean',
-            'allow_custom_labor' => 'boolean',
             'is_active' => 'boolean',
         ]);
 
         $validated['allow_products'] = $request->has('allow_products');
-        $validated['allow_custom_labor'] = $request->has('allow_custom_labor');
         $validated['is_active'] = $request->boolean('is_active');
 
         $jobType->update($validated);

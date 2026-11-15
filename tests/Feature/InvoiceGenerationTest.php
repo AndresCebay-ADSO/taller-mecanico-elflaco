@@ -36,7 +36,6 @@ it('does not generate a second invoice for the same service order', function () 
         'mechanic_percentage' => 50,
         'workshop_percentage' => 50,
         'allow_products' => true,
-        'allow_custom_labor' => true,
         'is_active' => true,
         'is_system' => false,
     ]);

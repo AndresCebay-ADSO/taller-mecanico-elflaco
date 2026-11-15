@@ -63,8 +63,10 @@ Actualizado: 2026-11-14 (v1.1.0 en preparación).
 - Una orden solo se puede eliminar si no tiene trabajos, y solo el administrador; si tiene trabajos, se cancela.
 - «Trabajo individual» crea por debajo una orden con ese único trabajo.
 - Comisión del mecánico, según el tipo de trabajo:
-  - **por porcentaje:** la mano de obra se reparte entre mecánico y taller con los porcentajes del tipo;
-  - **monto fijo:** el mecánico y el taller reciben los montos fijos del tipo.
+  - **por porcentaje:** la mano de obra se escribe en cada trabajo y se reparte entre mecánico y taller con los
+    porcentajes del tipo;
+  - **monto fijo:** el trabajo vale siempre lo mismo (no se escribe) y el mecánico y el taller reciben los montos
+    fijos del tipo. Es la forma de tener servicios con precio fijo **(decidido, 10)**.
 - El mecánico gana su comisión cuando su trabajo queda completado.
 
 ## Facturas (comprobantes de servicio)
@@ -154,5 +156,4 @@ Detalle en `docs/AUDITORIA_DECISIONES.md`.
 
 - **6.** Cambiar el precio de compra en el producto no cambia el costo de los lotes.
 - **8.** Cómo se encuentra el producto de destino en una transferencia.
-- **10.** «Mano de obra variable» y «total fijo por porcentaje» de los tipos de trabajo no hacen nada.
 - **15.** ¿Cifrar los respaldos de Google Drive?
