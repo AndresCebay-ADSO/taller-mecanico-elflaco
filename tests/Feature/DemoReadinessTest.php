@@ -98,7 +98,7 @@ describe('pantallas de la demo', function () {
             ->assertSessionHas('current_branch_id', $main->id);
     });
 
-    it('exposes FIFO price tiers for the sale and job forms without purchase costs', function () {
+    it('exposes one price per product for the sale and job forms without purchase costs', function () {
         [, $branch] = branchUser();
         $product = stockedProduct($branch, 2, cost: 10000, price: 20000);
         app(InventoryService::class)->registerPurchaseBatch([
@@ -111,8 +111,9 @@ describe('pantallas de la demo', function () {
         $item = app(InventoryService::class)->sellableProducts($branch->id)->first();
 
         expect($item['stock'])->toBe(5)
-            ->and($item['price'])->toBe(20000.0)
-            ->and($item['tiers'])->toBe([['qty' => 2, 'price' => 20000.0], ['qty' => 3, 'price' => 25000.0]])
+            // La compra nueva lleva todo el inventario a su precio (decisión 4): un solo tramo.
+            ->and($item['price'])->toBe(25000.0)
+            ->and($item['tiers'])->toBe([['qty' => 5, 'price' => 25000.0]])
             ->and($item)->not->toHaveKey('purchase_price');
     });
 });

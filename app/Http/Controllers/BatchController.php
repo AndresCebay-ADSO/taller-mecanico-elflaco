@@ -25,7 +25,6 @@ class BatchController extends Controller
         $validated = $request->validate([
             'supplier_id' => 'required|exists:suppliers,id',
             'cost_price'  => 'required|numeric|min:0|max:99999999',
-            'sale_price'  => 'required|numeric|min:0|max:99999999',
             'quantity'    => 'sometimes|required|integer|min:1|max:100000',
             'notes'       => 'required|string|min:10|max:1000',
         ]);
@@ -55,7 +54,6 @@ class BatchController extends Controller
 
                 $lockedBatch->supplier_id = $validated['supplier_id'];
                 $lockedBatch->cost_price = $validated['cost_price'];
-                $lockedBatch->sale_price = $validated['sale_price'];
                 $lockedBatch->save();
 
                 $movement = InventoryMovement::where('batch_id', $lockedBatch->id)

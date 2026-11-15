@@ -21,6 +21,10 @@ Estado: **pendiente de revisar** salvo que diga otra cosa.
 4. **Precios por lote.** Cada compra guarda su propio precio de venta. Si llega mercancía nueva a otro precio,
    las unidades viejas se siguen vendiendo a su precio anterior hasta que se acaban (en la venta se ven los
    tramos). ¿Es así como cobra el taller, o todo debería pasar al precio nuevo al entrar la compra?
+   **Decidido (2026-11-14): un solo precio por producto.** Al registrar una compra, todas las unidades del producto
+   pasan a su precio de venta. Cada lote conserva su costo, así la ganancia sigue saliendo con lo que costó cada
+   unidad. «Corregir lote» ya no cambia el precio de venta: se cambia en «Editar producto». Una migración dejó el
+   inventario que ya había al precio actual de cada producto.
 5. **Cambiar el precio de venta en «Editar producto» cambia el de todas las unidades en inventario**
    (corregido en la auditoría: antes se seguía cobrando el precio viejo). El costo de cada lote no cambia.
 6. **Cambiar el precio de compra en «Editar producto» no cambia el costo de los lotes que ya hay.** Solo se usa

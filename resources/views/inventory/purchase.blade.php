@@ -51,7 +51,7 @@
                 <x-input label="Cantidad" name="quantity" inputmode="numeric" pattern="[0-9]*" required placeholder="Ej.: 10" />
                 <x-input label="Costo unitario" name="unit_price" is-money required placeholder="0" />
                 <x-input label="Precio de venta" name="sale_price" is-money placeholder="Opcional"
-                         help="Vacío: se usa el precio actual del producto." />
+                         help="Vacío: se usa el precio actual. Si pones otro, todas las unidades del producto pasan a ese precio." />
             </div>
         </x-card>
 

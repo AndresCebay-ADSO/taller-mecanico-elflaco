@@ -140,10 +140,9 @@
                             <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
                         @endforeach
                     </x-select>
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <x-input label="Costo unitario" name="cost_price" inputmode="decimal" required x-model="form.cost_price" />
-                        <x-input label="Precio de venta" name="sale_price" inputmode="decimal" required x-model="form.sale_price" />
-                    </div>
+                    {{-- El precio de venta es uno por producto: se cambia en «Editar producto» (decisión 4). --}}
+                    <x-input label="Costo unitario" name="cost_price" inputmode="decimal" required x-model="form.cost_price"
+                             help="Para cambiar el precio de venta, edita el producto." />
                     <div>
                         <x-input label="Cantidad" name="quantity" inputmode="numeric" pattern="[0-9]*" required x-model="form.quantity"
                                  x-bind:readonly="!canEditQuantity" />
@@ -171,7 +170,7 @@
             showDetailsModal: false,
             batch: null,
             movement: null,
-            form: { supplier_id: '', cost_price: '', sale_price: '', quantity: '', notes: '' },
+            form: { supplier_id: '', cost_price: '', quantity: '', notes: '' },
             get canEditQuantity() {
                 return this.batch && this.batch.remaining_stock == this.batch.quantity;
             },
@@ -179,7 +178,6 @@
                 this.batch = batch;
                 this.form.supplier_id = batch.supplier_id;
                 this.form.cost_price = Number(batch.cost_price);
-                this.form.sale_price = Number(batch.sale_price);
                 this.form.quantity = batch.quantity;
                 this.form.notes = '';
                 this.showModal = true;
