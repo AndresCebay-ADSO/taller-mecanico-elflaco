@@ -37,8 +37,13 @@ class CashController extends Controller
         $date = $request->filled('date') ? CarbonImmutable::parse($request->input('date'))->startOfDay() : CarbonImmutable::today();
 
         $summary = $this->cash->summary($branchId, $date);
-        $mechanics = Mechanic::forBranch($branchId)->where('is_active', true)->orderBy('name')->get(['id', 'name']);
         $balances = $this->cash->mechanicBalances($branchId);
+        // A un mecánico que ya no está también hay que poder pagarle lo que se le debe.
+        $owedIds = $balances->filter(fn (array $row) => $row['balance'] >= 1)->map(fn (array $row) => $row['mechanic']->id);
+        $mechanics = Mechanic::forBranch($branchId)
+            ->where(fn ($query) => $query->where('is_active', true)->orWhereIn('id', $owedIds))
+            ->orderBy('name')
+            ->get(['id', 'name']);
         $startDate = $this->cash->startDate($branchId);
 
         // Un día cerrado guarda sus cifras; si después entró o se anuló algo, se avisa.

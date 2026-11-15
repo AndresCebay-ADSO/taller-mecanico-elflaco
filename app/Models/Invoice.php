@@ -7,6 +7,7 @@ use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
@@ -127,6 +128,20 @@ class Invoice extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->whereNull('cancelled_at');
+    }
+
+    /** Salida «Devolución a cliente» de la caja, si al anularla se devolvió la plata (decisión 2). */
+    public function refundMovement(): HasOne
+    {
+        return $this->hasOne(CashMovement::class, 'invoice_id');
+    }
+
+    /** Las que cuentan en la caja de su día: las vigentes y las anuladas con devolución (ver Sale::scopeInCashRegister). */
+    public function scopeInCashRegister(Builder $query): Builder
+    {
+        return $query->where(fn (Builder $query) => $query
+            ->whereNull('cancelled_at')
+            ->orWhereHas('refundMovement'));
     }
 
     /** Facturas de órdenes de esa sucursal (la factura no guarda la sucursal: la toma de su orden). */
