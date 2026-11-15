@@ -17,6 +17,16 @@
         </div>
     @endforeach
 
+    @if($exampleSettings)
+        <div class="mb-4 flex flex-col gap-2 rounded-lg border px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between {{ \App\Support\Tone::alert('warning') }}" role="alert">
+            <p class="flex items-start gap-2">
+                <i data-lucide="file-pen-line" class="mt-0.5 size-4 shrink-0"></i>
+                <span><span class="font-medium">Los comprobantes salen con datos de ejemplo</span> ({{ implode(', ', $exampleSettings) }}). Pon los datos reales del taller.</span>
+            </p>
+            <a href="{{ route('settings') }}" class="font-medium underline-offset-4 hover:underline">Ir a Configuración</a>
+        </div>
+    @endif
+
     @if($lowStockCount > 0)
         <div class="mb-6 flex flex-col gap-2 rounded-lg border px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between {{ \App\Support\Tone::alert('warning') }}">
             <p class="flex items-center gap-2 font-medium">

@@ -75,3 +75,21 @@ it('warns when Apache listens on the whole network', function () {
         rmdir($dir);
     }
 });
+
+it('warns while the workshop data are still the example ones', function () {
+    $this->seed(\Database\Seeders\SettingSeeder::class);
+    [$admin, $branch] = branchUser(admin: true);
+    $dashboard = fn () => $this->actingAs($admin)->withSession(['current_branch_id' => $branch->id])->get(route('dashboard'))->assertOk();
+
+    expect(\App\Models\Setting::examplesInUse())->toBe(['NIT', 'teléfono', 'correo', 'dirección']);
+    $dashboard()->assertSee('Los comprobantes salen con datos de ejemplo');
+    $this->artisan('taller:verificar')->expectsOutputToContain('Siguen los de ejemplo');
+
+    \App\Models\Setting::where('key', 'workshop_nit')->update(['value' => '901234567-8']);
+    \App\Models\Setting::where('key', 'workshop_phone')->update(['value' => '3101234567']);
+    \App\Models\Setting::where('key', 'workshop_email')->update(['value' => 'taller@ejemplo.co']);
+    \App\Models\Setting::where('key', 'workshop_address')->update(['value' => 'Cra. 4 # 8-25, Pitalito']);
+
+    expect(\App\Models\Setting::examplesInUse())->toBe([]);
+    $dashboard()->assertDontSee('Los comprobantes salen con datos de ejemplo');
+});

@@ -48,9 +48,12 @@ class DashboardController extends Controller
 
         // Solo el administrador puede hacer algo con un respaldo atrasado.
         $backupAlerts = auth()->user()?->is_admin ? BackupStatus::alerts() : [];
+        // Datos de ejemplo del taller que saldrían impresos en los comprobantes.
+        $exampleSettings = auth()->user()?->is_admin ? \App\Models\Setting::examplesInUse() : [];
 
         return view('dashboard', compact(
             'backupAlerts',
+            'exampleSettings',
             'activeOrders',
             'pendingOrders',
             'todayEarnings',

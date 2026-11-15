@@ -161,6 +161,11 @@ class CheckEnvironment extends Command
         $admins = User::where('is_admin', true)->where('is_active', true)->count();
         $this->add($admins ? 'OK' : 'ERROR', 'Administrador activo', $admins ? "{$admins}" : 'No hay: ejecutar php artisan db:seed --force');
 
+        $examples = \App\Models\Setting::examplesInUse();
+        $this->add($examples ? 'AVISO' : 'OK', 'Datos del taller', $examples
+            ? 'Siguen los de ejemplo (' . implode(', ', $examples) . '): llenarlos en Administración → Configuración; salen en los comprobantes'
+            : 'Configurados');
+
         $branches = Branch::active()->count();
         $this->add($branches ? 'OK' : 'ERROR', 'Sucursal activa', $branches ? "{$branches}" : 'No hay ninguna: ejecutar php artisan db:seed --force');
     }
