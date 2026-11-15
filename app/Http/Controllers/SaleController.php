@@ -5,8 +5,9 @@ namespace App\Http\Controllers;
 use App\Exceptions\BusinessRuleException;
 use App\Exceptions\InsufficientStockException;
 use App\Models\Sale;
-use App\Services\InventoryService;
+use App\Services\CancellationService;
 use App\Services\CashService;
+use App\Services\InventoryService;
 use App\Services\SaleService;
 use App\Support\PaymentMethod;
 use Illuminate\Http\Request;
@@ -167,30 +168,13 @@ class SaleController extends Controller
     /**
      * Cancel the specified sale and return its stock to the original batches.
      */
-    public function cancel(Request $request, Sale $sale, SaleService $saleService, CashService $cashService)
+    public function cancel(Request $request, Sale $sale, CancellationService $cancellations, CashService $cashService)
     {
         $this->ensureCurrentBranch($sale->branch_id);
-
-        // Efectivo de un día anterior: se pregunta si se devolvió la plata (decisión 2).
-        $asksForRefund = $sale->asksForRefund();
-        if ($asksForRefund) {
-            $request->validate(['refunded' => 'required|boolean'], [
-                'refunded.required' => 'Indica si le devolviste la plata al cliente.',
-            ]);
-        }
-        $refunded = $asksForRefund && $request->boolean('refunded');
+        $refunded = $this->refundAnswer($request, $sale);
 
         try {
-            $cancelled = DB::transaction(function () use ($sale, $saleService, $cashService, $refunded) {
-                if (!$saleService->cancel($sale)) {
-                    return false;
-                }
-                if ($refunded) {
-                    $cashService->recordRefund($sale->branch_id, $sale, auth()->id());
-                }
-
-                return true;
-            });
+            $cancelled = $cancellations->cancel($sale, $refunded, auth()->id());
         } catch (BusinessRuleException $exception) {
             return back()->with('error', $exception->getMessage());
         }
