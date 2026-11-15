@@ -166,6 +166,12 @@ class CheckEnvironment extends Command
             ? 'Siguen los de ejemplo (' . implode(', ', $examples) . '): llenarlos en Administración → Configuración; salen en los comprobantes'
             : 'Configurados');
 
+        // respaldo.bat corre la misma revisión cada día y deja el resultado en respaldo.log.
+        $discrepancies = app(\App\Services\InventoryService::class)->findBatchDiscrepancies()->count();
+        $this->add($discrepancies ? 'AVISO' : 'OK', 'Inventario (stock y lotes)', $discrepancies
+            ? "{$discrepancies} producto(s) con diferencias: revisar con php artisan inventory:check"
+            : 'Consistente');
+
         $branches = Branch::active()->count();
         $this->add($branches ? 'OK' : 'ERROR', 'Sucursal activa', $branches ? "{$branches}" : 'No hay ninguna: ejecutar php artisan db:seed --force');
     }

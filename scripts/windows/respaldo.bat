@@ -61,6 +61,10 @@ if exist "%RESPALDOS_NUBE%\" (
     call :registrar "AVISO  %FECHA%  respaldo local OK (%TAMANO% bytes); no se encontro %RESPALDOS_NUBE% (Google Drive sin abrir o sin internet)"
 )
 
+rem Revision diaria del inventario (solo reporta, no corrige): queda en este registro y taller:verificar la muestra.
+"%PHP_EXE%" "%TALLER_DIR%\artisan" inventory:check >nul 2>&1
+if errorlevel 1 call :registrar "AVISO  %FECHA%  el inventario tiene diferencias entre stock y lotes: revisar con php artisan inventory:check"
+
 forfiles /p "%RESPALDOS_LOCAL%" /m taller_*.zip /d -%DIAS_LOCAL% /c "cmd /c del @path" 2>nul
 
 echo Listo: %ZIP%
