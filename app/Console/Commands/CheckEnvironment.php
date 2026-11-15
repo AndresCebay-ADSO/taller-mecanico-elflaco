@@ -186,6 +186,15 @@ class CheckEnvironment extends Command
         }
 
         $this->add($backups->needsAttention() ? 'AVISO' : 'OK', 'Respaldos', $backups->describe());
+
+        $cloud = \App\Support\BackupStatus::cloudFromConfig();
+        if (! $cloud->isConfigured()) {
+            $this->add('AVISO', 'Respaldos en la nube', 'RESPALDOS_NUBE sin configurar en .env: la app no puede avisar si la copia a Google Drive se detiene');
+
+            return;
+        }
+
+        $this->add($cloud->needsAttention() ? 'AVISO' : 'OK', 'Respaldos en la nube', $cloud->describe());
     }
 
     /** Base de datos y Apache solo deben escuchar en este equipo: si no, cualquiera en el wifi llega a ellos. */
