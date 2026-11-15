@@ -53,6 +53,8 @@ Estado: **pendiente de revisar** salvo que diga otra cosa.
    ni margen.
 8. **Transferencias entre sucursales:** el producto de destino se busca por código (o por nombre y categoría si
    no tiene código). Si no existe, se crea uno nuevo con los mismos datos.
+   **Decidido (2026-11-14): se deja así.** Hoy hay una sola sucursal y la pantalla no se usa. El código es lo más
+   seguro y nombre + categoría es un respaldo sensato. Se revisa con datos reales si abre otra sucursal.
 
 ## Órdenes y trabajos (módulo 4)
 

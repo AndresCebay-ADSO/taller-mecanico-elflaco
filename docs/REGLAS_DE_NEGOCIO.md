@@ -128,7 +128,8 @@ Actualizado: 2026-11-14 (v1.1.0 en preparación).
 - Un producto solo se desactiva con stock en cero (primero se saca con un ajuste). Se puede restaurar.
 - **Transferencias** (administrador): Pendiente → En tránsito → Completada o Cancelada. El stock se mueve al
   completarla. En la sucursal de destino el producto se busca por código, o por nombre y categoría; si no existe, se
-  crea (ver pendiente 8).
+  crea con los mismos datos. Las unidades llegan con su costo y se venden al precio del producto en el destino
+  **(decidido, 8: se deja así)**.
 
 ## Reportes e inicio
 
@@ -156,5 +157,4 @@ Actualizado: 2026-11-14 (v1.1.0 en preparación).
 
 Detalle en `docs/AUDITORIA_DECISIONES.md`.
 
-- **8.** Cómo se encuentra el producto de destino en una transferencia.
 - **15.** ¿Cifrar los respaldos de Google Drive?
