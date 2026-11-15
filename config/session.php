@@ -51,6 +51,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Session Serialization
+    |--------------------------------------------------------------------------
+    |
+    | Laravel 13: la sesión se guarda como JSON y no como objetos PHP, por el
+    | mismo motivo que la caché. Cambiarlo cierra las sesiones abiertas una vez.
+    |
+    */
+
+    'serialization' => 'json',
+
+    /*
+    |--------------------------------------------------------------------------
     | Session File Location
     |--------------------------------------------------------------------------
     |

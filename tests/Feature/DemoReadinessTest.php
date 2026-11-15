@@ -60,9 +60,12 @@ describe('pantallas de la demo', function () {
             ])
             ->assertRedirect(route('service-orders.show', $order));
 
-        $this->actingAs($user)->withSession(['current_branch_id' => $branch->id])
+        // Sin withSession(): la sucursal ya quedó en la sesión, y arrancarla de nuevo en la misma petición
+        // (withSession + middleware) descarta los errores cuando la sesión se guarda como JSON (Laravel 13).
+        $this->actingAs($user)
             ->get(route('service-orders.show', $order))
-            ->assertSee('x-data="{ showJobModal: true }"', false);
+            ->assertSee('x-data="{ showJobModal: true }"', false)
+            ->assertSee('Stock insuficiente');
     });
 
     it('turns dashboard quick actions into real links', function () {

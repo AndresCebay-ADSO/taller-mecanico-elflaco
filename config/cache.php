@@ -114,4 +114,17 @@ return [
 
     'prefix' => env('CACHE_PREFIX', Str::slug((string) env('APP_NAME', 'laravel')).'-cache-'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Serializable Classes
+    |--------------------------------------------------------------------------
+    |
+    | Laravel 13: la caché no reconstruye objetos PHP. Así, aunque se filtrara
+    | la APP_KEY, nadie puede colar código en ella. El taller no guarda objetos
+    | en caché (solo contadores), así que no cambia nada.
+    |
+    */
+
+    'serializable_classes' => false,
+
 ];
