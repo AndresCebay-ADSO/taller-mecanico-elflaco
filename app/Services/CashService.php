@@ -468,6 +468,15 @@ class CashService
         $day = CashDay::where('branch_id', $branchId)->whereDate('date', $date->toDateString())->lockForUpdate()->first();
 
         if (!$day) {
+            // Un día anterior al primero correría hacia atrás el inicio de las comisiones por pagar.
+            $start = $this->startDate($branchId);
+            if ($start !== null && $date->lt($start)) {
+                throw new BusinessRuleException(
+                    'La caja se empezó a usar el ' . $start->format('d/m/Y') . ': no se pueden registrar días anteriores.',
+                    'date'
+                );
+            }
+
             CashDay::insertOrIgnore([
                 'branch_id' => $branchId,
                 'date' => $date->toDateString(),

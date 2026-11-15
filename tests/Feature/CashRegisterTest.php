@@ -433,4 +433,21 @@ describe('revisión externa: caja', function () {
             ->assertViewHas('liveExpected', 0.0)
             ->assertSee('Después del cierre cambió');
     });
+
+    it('does not create cash days before the first day the register was used', function () {
+        [$admin, $branch] = branchUser(admin: true);
+        $cash = app(CashService::class);
+        $cash->setOpening($branch->id, CarbonImmutable::today()->subDays(3), 0);
+
+        $this->actingAs($admin)->withSession(cashSession($branch))
+            ->put(route('cash.opening'), ['date' => CarbonImmutable::today()->subMonths(2)->toDateString(), 'opening_cash' => 50000])
+            ->assertSessionHas('error', fn ($text) => str_contains($text, 'no se pueden registrar días anteriores'));
+
+        expect(CashDay::count())->toBe(1)
+            ->and($cash->startDate($branch->id)->toDateString())->toBe(CarbonImmutable::today()->subDays(3)->toDateString());
+
+        // Días posteriores al primero, incluidos los pasados, sí se pueden registrar.
+        $cash->setOpening($branch->id, CarbonImmutable::today()->subDay(), 0);
+        expect(CashDay::count())->toBe(2);
+    });
 });
