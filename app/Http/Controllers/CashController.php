@@ -46,7 +46,10 @@ class CashController extends Controller
         $changedAfterClose = $summary['day']?->isClosed()
             && abs((float) $summary['day']->expected_cash - $liveExpected) >= 0.5;
 
-        return view('cash.index', compact('summary', 'mechanics', 'balances', 'startDate', 'date', 'changedAfterClose', 'liveExpected'));
+        // Base que no coincide con lo que quedó al cerrar el día anterior: se avisa con botón para corregirla (decisión 3).
+        $openingMismatches = $this->cash->openingMismatches($branchId, $date);
+
+        return view('cash.index', compact('summary', 'mechanics', 'balances', 'startDate', 'date', 'changedAfterClose', 'liveExpected', 'openingMismatches'));
     }
 
     public function history()

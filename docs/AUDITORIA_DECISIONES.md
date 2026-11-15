@@ -25,6 +25,9 @@ Estado: **pendiente de revisar** salvo que diga otra cosa.
    de administrador, así que nadie puede registrar una devolución suelta en la caja.
 3. **Reabrir y volver a cerrar un día no corrige la base del día siguiente** si ese día ya se había empezado
    a usar. La base se puede editar a mano.
+   **Decidido (2026-11-14): avisar.** Si la base de un día no coincide con lo que quedó al cerrar el día anterior, la
+   caja de ambos días lo avisa hasta que cuadre, con un botón para usar la cifra nueva como base. Si ese día ya se
+   cerró, no hay botón: hay que reabrirlo. Nunca se cambia sola, para no descuadrar un cierre ya hecho.
 
 ## Inventario (módulo 3)
 

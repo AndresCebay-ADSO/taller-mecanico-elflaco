@@ -72,6 +72,35 @@
         </div>
     @endif
 
+    @foreach($openingMismatches as $mismatch)
+        @php
+            $next = $mismatch['next'];
+            $nextIsToday = $next->date->isToday();
+            $nextLabel = $nextIsToday ? 'hoy' : 'el ' . $next->date->translatedFormat('l j \d\e F');
+            $nextOf = $nextIsToday ? 'de hoy' : 'del ' . $next->date->translatedFormat('l j \d\e F');
+            $previousLabel = $mismatch['previous']->date->equalTo($date) ? 'este día' : 'el ' . $mismatch['previous']->date->translatedFormat('l j \d\e F');
+        @endphp
+        <div class="mb-6">
+            <x-alert type="warning">
+                <p>
+                    La base {{ $nextOf }} es {{ money($next->opening_cash) }}, pero al cerrar {{ $previousLabel }} quedaron
+                    {{ money($mismatch['left']) }} en el cajón. Pasa cuando se reabre y se vuelve a cerrar un día, o cuando se cierra tarde.
+                </p>
+                @if($next->isClosed())
+                    <p class="mt-1">{{ ucfirst($nextLabel) }} ya está cerrado: para corregir su base hay que reabrirlo.</p>
+                @else
+                    <form method="POST" action="{{ route('cash.opening') }}" class="mt-2">
+                        @csrf
+                        @method('PUT')
+                        <input type="hidden" name="date" value="{{ $next->date->toDateString() }}">
+                        <input type="hidden" name="opening_cash" value="{{ round($mismatch['left'], 2) }}">
+                        <x-button type="submit" size="sm" variant="secondary">Usar {{ money($mismatch['left']) }} como base {{ $nextOf }}</x-button>
+                    </form>
+                @endif
+            </x-alert>
+        </div>
+    @endforeach
+
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div class="space-y-6 lg:col-span-2">
             {{-- Cuadre del efectivo --}}

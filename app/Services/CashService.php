@@ -125,6 +125,41 @@ class CashService
         return $previous ? (float) $previous->cashLeft() : 0.0;
     }
 
+    /**
+     * Días cuya base no coincide con lo que quedó al cerrar el día anterior (decisión 3), vistos desde `$date`:
+     * como día siguiente (su base) y como día cerrado (la base del día que sigue). Pasa cuando se reabre y se vuelve
+     * a cerrar un día después de empezar el siguiente, o cuando se cierra tarde. No se corrige sola: se avisa.
+     *
+     * @return Collection<int, array{previous: CashDay, next: CashDay, left: float}>
+     */
+    public function openingMismatches(int $branchId, CarbonImmutable $date): Collection
+    {
+        $mismatch = function (?CashDay $previous, ?CashDay $next): ?array {
+            if (!$previous || !$next || abs((float) $next->opening_cash - $previous->cashLeft()) < 0.5) {
+                return null;
+            }
+
+            return ['previous' => $previous, 'next' => $next, 'left' => $previous->cashLeft()];
+        };
+
+        $day = $this->find($branchId, $date);
+        if (!$day) {
+            return collect();
+        }
+
+        $previous = CashDay::where('branch_id', $branchId)
+            ->whereNotNull('closed_at')
+            ->where('date', '<', $date->toDateString())
+            ->orderByDesc('date')
+            ->first();
+
+        $next = $day->isClosed()
+            ? CashDay::where('branch_id', $branchId)->where('date', '>', $date->toDateString())->orderBy('date')->first()
+            : null;
+
+        return collect([$mismatch($previous, $day), $mismatch($day->isClosed() ? $day : null, $next)])->filter()->values();
+    }
+
     public function setOpening(int $branchId, CarbonImmutable $date, float $amount): CashDay
     {
         return DB::transaction(function () use ($branchId, $date, $amount) {

@@ -94,7 +94,10 @@ Actualizado: 2026-11-14 (v1.1.0 en preparación).
   caja, menos lo que se le ha pagado desde la caja.
 - Anular una venta o factura en efectivo de hoy con la caja ya cerrada avisa que hay que reabrirla y cerrarla de
   nuevo.
-- Reabrir y volver a cerrar un día no corrige la base del día siguiente si ya se empezó a usar (ver pendiente 3).
+- **Si la base de un día no coincide con lo que quedó al cerrar el día anterior, se avisa (decidido, 3).** Pasa al
+  reabrir y volver a cerrar un día cuando el siguiente ya se empezó, o al cerrar tarde. El aviso sale en la caja de
+  los dos días hasta que cuadre, con un botón para usar la cifra nueva. La base nunca cambia sola; si el día
+  siguiente ya se cerró, hay que reabrirlo para corregirla.
 
 ## Inventario
 
@@ -142,7 +145,6 @@ Actualizado: 2026-11-14 (v1.1.0 en preparación).
 
 Detalle en `docs/AUDITORIA_DECISIONES.md`.
 
-- **3.** Reabrir un día no corrige la base del siguiente.
 - **6.** Cambiar el precio de compra en el producto no cambia el costo de los lotes.
 - **7 y 14.** Los empleados editan precios, ven costos y ven Reportes completos.
 - **8.** Cómo se encuentra el producto de destino en una transferencia.

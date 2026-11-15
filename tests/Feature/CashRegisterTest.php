@@ -280,6 +280,43 @@ describe('caja diaria', function () {
             ->assertSessionHas('success');
     });
 
+    it('warns when a day starts with a base different from what was left at the previous close', function () {
+        [$admin, $branch] = branchUser(admin: true);
+        $session = cashSession($branch);
+        $cash = app(CashService::class);
+        $monday = CarbonImmutable::today()->subDays(2);
+        $tuesday = CarbonImmutable::today()->subDay();
+        $page = fn (CarbonImmutable $day) => $this->actingAs($admin)->withSession($session)->get(route('cash.index', ['date' => $day->toDateString()]));
+
+        $cash->close($branch->id, $monday, 100000, 0, null, $admin->id);
+        $cash->addMovement($branch->id, $tuesday, ['type' => 'expense', 'concept' => 'Domicilio', 'amount' => 5000, 'payment_method' => 'Efectivo'], $admin->id);
+
+        // Flujo normal: el martes arrancó con lo que quedó el lunes, sin aviso.
+        expect($cash->openingMismatches($branch->id, $tuesday))->toBeEmpty();
+        $page($tuesday)->assertDontSee('como base de');
+
+        // Se reabre el lunes y se vuelve a cerrar con otra cifra: la base del martes no cambia sola.
+        $cash->reopen(CashDay::whereDate('date', $monday->toDateString())->sole());
+        $cash->close($branch->id, $monday, 90000, 0, null, $admin->id);
+        expect((float) CashDay::whereDate('date', $tuesday->toDateString())->value('opening_cash'))->toBe(100000.0);
+
+        // Se avisa en los dos días, con botón para usar la cifra nueva.
+        $page($monday)->assertSee('Usar $90.000 como base del ' . $tuesday->translatedFormat('l'));
+        $page($tuesday)->assertSee('Usar $90.000 como base del ' . $tuesday->translatedFormat('l'))->assertSee('quedaron');
+
+        $this->actingAs($admin)->withSession($session)
+            ->put(route('cash.opening'), ['date' => $tuesday->toDateString(), 'opening_cash' => 90000])
+            ->assertSessionHas('success');
+        expect($cash->openingMismatches($branch->id, $tuesday))->toBeEmpty()
+            ->and($cash->openingMismatches($branch->id, $monday))->toBeEmpty();
+
+        // Si el día siguiente ya está cerrado, no se ofrece el botón: hay que reabrirlo.
+        $cash->close($branch->id, $tuesday, 85000, 0, null, $admin->id);
+        $cash->reopen(CashDay::whereDate('date', $monday->toDateString())->sole());
+        $cash->close($branch->id, $monday, 70000, 0, null, $admin->id);
+        $page($monday)->assertSee('ya está cerrado: para corregir su base hay que reabrirlo')->assertDontSee('como base de');
+    });
+
     it('asks whether the money was refunded when cancelling a cash sale from an earlier day', function () {
         [$admin, $branch] = branchUser(admin: true);
         $product = stockedProduct($branch, 10, cost: 10000, price: 20000);
