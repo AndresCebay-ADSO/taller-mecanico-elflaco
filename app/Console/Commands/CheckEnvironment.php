@@ -126,6 +126,12 @@ class CheckEnvironment extends Command
             $this->add('AVISO', 'Usuario de la base', 'La app entra como root: crear el usuario «taller» con permisos solo sobre su base (guía §3)');
         }
 
+        // Con menos de una jornada, un formulario abierto en la mañana falla al guardar en la tarde.
+        $lifetime = (int) config('session.lifetime');
+        $this->add($lifetime >= 480 ? 'OK' : 'AVISO', 'Duración de la sesión', $lifetime >= 480
+            ? round($lifetime / 60) . ' horas'
+            : "{$lifetime} minutos: poner SESSION_LIFETIME=720 en el .env (12 horas, una jornada)");
+
         $cached = app()->configurationIsCached();
         $this->add('OK', 'Configuración en caché', $cached ? 'Sí: tras editar .env ejecutar php artisan config:cache' : 'No');
     }

@@ -47,6 +47,9 @@
             </div>
 
             <div class="rounded-lg border border-border bg-card p-6 shadow-xs">
+                @if (session('error'))
+                    <x-alert type="error" :message="session('error')" />
+                @endif
                 @if (session('status'))
                     <x-alert type="success" :message="session('status')" />
                 @endif
