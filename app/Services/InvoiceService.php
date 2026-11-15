@@ -36,7 +36,7 @@ class InvoiceService
             }
 
             $jobs = $order->workshopJobs()
-                ->where('status', '!=', WorkshopJob::STATUS_CANCELLED)
+                ->notCancelled()
                 ->with(['jobType', 'mechanic', 'jobProducts.product' => fn ($query) => $query->withTrashed()])
                 ->get();
 

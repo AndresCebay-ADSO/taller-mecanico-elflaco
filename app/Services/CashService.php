@@ -9,7 +9,6 @@ use App\Models\CashMovement;
 use App\Models\Invoice;
 use App\Models\Mechanic;
 use App\Models\Sale;
-use App\Models\WorkshopJob;
 use App\Support\PaymentMethod;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
@@ -405,8 +404,7 @@ class CashService
 
         return Mechanic::forBranch($branchId)
             ->withSum(['workshopJobs as earned' => fn ($query) => $query
-                ->where('status', WorkshopJob::STATUS_COMPLETED)
-                ->where('completed_at', '>=', CarbonImmutable::parse($start)->startOfDay())], 'mechanic_cost')
+                ->completedBetween(CarbonImmutable::parse($start)->startOfDay())], 'mechanic_cost')
             ->orderBy('name')
             ->get()
             ->map(fn (Mechanic $mechanic) => [

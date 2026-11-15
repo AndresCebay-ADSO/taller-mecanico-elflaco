@@ -41,9 +41,7 @@ class ReportService
         $salesCost = $this->costOfMovements('sale', $saleIds->map(fn ($id) => "Venta #{$id}"));
 
         $invoices = $this->invoicesQuery($branchId, $from, $to)
-            ->with(['serviceOrder.workshopJobs' => fn ($query) => $query
-                ->where('status', '!=', WorkshopJob::STATUS_CANCELLED)
-                ->with('jobProducts')])
+            ->with(['serviceOrder.workshopJobs' => fn ($query) => $query->notCancelled()->with('jobProducts')])
             ->get();
 
         $ordersRevenue = (float) $invoices->sum('amount');
@@ -56,7 +54,7 @@ class ReportService
             "Trabajo #{$job->id} - Orden #{$job->service_order_id}",
         ]));
 
-        $mechanics = $this->mechanics($branchId, $from, $to);
+        $mechanics = $this->commissions($branchId, $from, $to);
 
         return [
             'income' => [
@@ -151,15 +149,14 @@ class ReportService
     }
 
     /**
-     * Comisiones por trabajos completados en el periodo (mismo criterio que el dashboard).
+     * Comisiones por trabajos completados en el periodo. Las usan Reportes y el inicio: mecánicos activos más los
+     * inactivos que tuvieron trabajos en el periodo, de mayor a menor comisión.
      *
      * @return Collection<int, array{name: string, is_active: bool, jobs: int, earnings: float}>
      */
-    private function mechanics(?int $branchId, CarbonImmutable $from, CarbonImmutable $to): Collection
+    public function commissions(?int $branchId, CarbonImmutable $from, CarbonImmutable $to): Collection
     {
-        $completedInPeriod = fn ($query) => $query
-            ->where('status', WorkshopJob::STATUS_COMPLETED)
-            ->whereBetween('completed_at', [$from, $to]);
+        $completedInPeriod = fn ($query) => $query->completedBetween($from->startOfDay(), $to->endOfDay());
 
         return Mechanic::forBranch($branchId)
             ->where(fn ($query) => $query->where('is_active', true)->orWhereHas('workshopJobs', $completedInPeriod))

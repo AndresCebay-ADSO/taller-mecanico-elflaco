@@ -182,6 +182,22 @@ describe('reportes', function () {
             ->assertViewHas('monthEarnings', 70000.0);
     });
 
+    it('shows on the dashboard the same monthly commissions as Reportes', function () {
+        [$admin, $branch] = branchUser(admin: true);
+        [, $job] = completedJobOrder($branch, stockedProduct($branch, 2), labor: 50000);
+        // Un mecánico que ya no está pero trabajó este mes sigue contando, igual que en Reportes.
+        $job->mechanic->update(['is_active' => false]);
+
+        $expected = app(ReportService::class)->commissions($branch->id, CarbonImmutable::now()->startOfMonth(), CarbonImmutable::today());
+        expect($expected->sum('earnings'))->toBe(30000.0);
+
+        $this->actingAs($admin)->withSession(['current_branch_id' => $branch->id])
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertViewHas('mechanics', fn ($mechanics) => $mechanics->all() === $expected->all())
+            ->assertSee($job->mechanic->name);
+    });
+
     it('ignores cancelled sales in the report', function () {
         [$admin, $branch] = branchUser(admin: true);
         $product = stockedProduct($branch, 5);
