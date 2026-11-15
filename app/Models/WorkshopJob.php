@@ -31,6 +31,27 @@ class WorkshopJob extends Model
         'completed_at',
     ];
 
+    /** Referencia con la que sus repuestos salen del inventario. */
+    public function inventoryReference(): string
+    {
+        return "Trabajo #{$this->id}";
+    }
+
+    /**
+     * Todas las referencias con que sus repuestos han salido del inventario, incluidos los formatos viejos.
+     * Las usan devolver repuestos (WorkshopJobService) y el costo real en Reportes.
+     *
+     * @return array<int, string>
+     */
+    public function inventoryReferences(): array
+    {
+        return [
+            $this->inventoryReference(),
+            "Trabajo Individual #{$this->id}",
+            "Trabajo #{$this->id} - Orden #{$this->service_order_id}",
+        ];
+    }
+
     /** Trabajos que cuentan: los no cancelados. */
     public function scopeNotCancelled(Builder $query): Builder
     {
@@ -108,11 +129,6 @@ class WorkshopJob extends Model
     public function jobProducts()
     {
         return $this->hasMany(JobProduct::class, 'job_id');
-    }
-
-    public function getStatusLabelAttribute(): string
-    {
-        return $this->statusLabel();
     }
 
     public function statusLabel(): string

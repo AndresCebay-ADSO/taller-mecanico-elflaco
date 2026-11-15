@@ -74,39 +74,6 @@ class Product extends Model
         return $this->belongsToMany(Supplier::class);
     }
 
-    /**
-     * @deprecated Use InventoryService::registerPurchaseBatch() instead.
-     * Legacy method kept as guard — throws exception if called accidentally.
-     */
-    public function incrementStock($quantity, $unitPrice = null, $supplierId = null, $reference = null)
-    {
-        throw new \BadMethodCallException(
-            'incrementStock() esta deprecado. Usar InventoryService::registerPurchaseBatch() para operaciones con trazabilidad FIFO.'
-        );
-    }
-
-    /**
-     * @deprecated Use InventoryService::reverseStockFromSale() instead.
-     * Legacy method kept as guard — throws exception if called accidentally.
-     */
-    public function reverseStock($quantity, $reference = null)
-    {
-        throw new \BadMethodCallException(
-            'reverseStock() esta deprecado. Usar InventoryService::reverseStockFromSale() para reversas con trazabilidad FIFO.'
-        );
-    }
-
-    /**
-     * @deprecated Use InventoryService::deductStock() instead.
-     * Legacy method kept as guard — throws exception if called accidentally.
-     */
-    public function decrementStock($quantity, $reason = 'sale', $reference = null)
-    {
-        throw new \BadMethodCallException(
-            'decrementStock() esta deprecado. Usar InventoryService::deductStock() para operaciones con trazabilidad FIFO.'
-        );
-    }
-
     public function jobProducts()
     {
         return $this->hasMany(JobProduct::class);

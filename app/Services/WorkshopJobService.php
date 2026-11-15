@@ -57,7 +57,7 @@ class WorkshopJobService
 
             foreach ($products as $item) {
                 $productId = (int) $item['id'];
-                $tramos = $this->inventory->deductStock($productId, (int) $item['quantity'], $this->reference($job), 'job_usage');
+                $tramos = $this->inventory->deductStock($productId, (int) $item['quantity'], $job->inventoryReference(), 'job_usage');
 
                 foreach ($tramos as $tramo) {
                     $job->jobProducts()->create([
@@ -176,7 +176,7 @@ class WorkshopJobService
      */
     private function returnParts(WorkshopJob $job, string $reference): void
     {
-        $reversed = $this->inventory->reverseMovements($this->legacyReferences($job), ['job_usage'], $reference);
+        $reversed = $this->inventory->reverseMovements($job->inventoryReferences(), ['job_usage'], $reference);
 
         // Trabajos anteriores al inventario por lotes no tienen movimientos: se devuelve lo registrado en el trabajo.
         if ($reversed === 0) {
@@ -190,25 +190,6 @@ class WorkshopJobService
                 );
             }
         }
-    }
-
-    private function reference(WorkshopJob $job): string
-    {
-        return "Trabajo #{$job->id}";
-    }
-
-    /**
-     * Formatos de referencia usados historicamente para los consumos de un trabajo.
-     *
-     * @return array<int, string>
-     */
-    private function legacyReferences(WorkshopJob $job): array
-    {
-        return [
-            $this->reference($job),
-            "Trabajo Individual #{$job->id}",
-            "Trabajo #{$job->id} - Orden #{$job->service_order_id}",
-        ];
     }
 
     /**

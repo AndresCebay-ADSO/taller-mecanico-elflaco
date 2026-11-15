@@ -46,11 +46,6 @@ class Sale extends Model
         return $this->belongsTo(Branch::class);
     }
 
-    public function getTotalItemsAttribute()
-    {
-        return $this->saleProducts->sum('quantity');
-    }
-
     /** Ventas que cuentan: las no anuladas. */
     public function scopeNotCancelled(Builder $query): Builder
     {

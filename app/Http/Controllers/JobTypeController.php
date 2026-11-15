@@ -20,31 +20,7 @@ class JobTypeController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'required|string|max:255',
-            'default_description' => 'nullable|string|max:2000',
-            'calculation_type' => 'required|in:percentage,fixed',
-            // Percentage fields
-            'mechanic_percentage' => [
-                'nullable', 'required_if:calculation_type,percentage', 'numeric', 'min:0', 'max:100',
-                function ($attribute, $value, $fail) use ($request) {
-                    if ($request->input('calculation_type') !== 'percentage' || !$request->filled('workshop_percentage')) {
-                        return;
-                    }
-                    if (abs(((float) $value + (float) $request->input('workshop_percentage')) - 100) > 0.01) {
-                        $fail('El porcentaje del mecánico y el del taller deben sumar exactamente 100%.');
-                    }
-                },
-            ],
-            'workshop_percentage' => 'nullable|required_if:calculation_type,percentage|numeric|min:0|max:100',
-            // Fixed fields
-            'fixed_mechanic_amount' => 'nullable|required_if:calculation_type,fixed|numeric|min:0|max:99999999',
-            'fixed_workshop_amount' => 'nullable|required_if:calculation_type,fixed|numeric|min:0|max:99999999',
-            // Toggles
-            'allow_products' => 'boolean',
-            'is_active' => 'boolean',
-        ]);
+        $validated = $request->validate($this->rules($request));
 
         // Default values for percentages if not provided (summing 100)
         if ($validated['calculation_type'] === 'percentage' && !isset($validated['mechanic_percentage'])) {
@@ -68,28 +44,7 @@ class JobTypeController extends Controller
 
     public function update(Request $request, JobType $jobType)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'required|string|max:255',
-            'default_description' => 'nullable|string|max:2000',
-            'calculation_type' => 'required|in:percentage,fixed',
-            'mechanic_percentage' => [
-                'nullable', 'required_if:calculation_type,percentage', 'numeric', 'min:0', 'max:100',
-                function ($attribute, $value, $fail) use ($request) {
-                    if ($request->input('calculation_type') !== 'percentage' || !$request->filled('workshop_percentage')) {
-                        return;
-                    }
-                    if (abs(((float) $value + (float) $request->input('workshop_percentage')) - 100) > 0.01) {
-                        $fail('El porcentaje del mecánico y el del taller deben sumar exactamente 100%.');
-                    }
-                },
-            ],
-            'workshop_percentage' => 'nullable|required_if:calculation_type,percentage|numeric|min:0|max:100',
-            'fixed_mechanic_amount' => 'nullable|required_if:calculation_type,fixed|numeric|min:0|max:99999999',
-            'fixed_workshop_amount' => 'nullable|required_if:calculation_type,fixed|numeric|min:0|max:99999999',
-            'allow_products' => 'boolean',
-            'is_active' => 'boolean',
-        ]);
+        $validated = $request->validate($this->rules($request));
 
         $validated['allow_products'] = $request->has('allow_products');
         $validated['is_active'] = $request->boolean('is_active');
@@ -115,5 +70,35 @@ class JobTypeController extends Controller
 
         $jobType->delete();
         return redirect()->route('job-types.index')->with('success', 'Tipo de trabajo eliminado.');
+    }
+
+    /** Mismas reglas al crear y al editar un tipo de trabajo. */
+    private function rules(Request $request): array
+    {
+        return [
+            'name' => 'required|string|max:255',
+            'description' => 'required|string|max:255',
+            'default_description' => 'nullable|string|max:2000',
+            'calculation_type' => 'required|in:percentage,fixed',
+            // Percentage fields
+            'mechanic_percentage' => [
+                'nullable', 'required_if:calculation_type,percentage', 'numeric', 'min:0', 'max:100',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($request->input('calculation_type') !== 'percentage' || !$request->filled('workshop_percentage')) {
+                        return;
+                    }
+                    if (abs(((float) $value + (float) $request->input('workshop_percentage')) - 100) > 0.01) {
+                        $fail('El porcentaje del mecánico y el del taller deben sumar exactamente 100%.');
+                    }
+                },
+            ],
+            'workshop_percentage' => 'nullable|required_if:calculation_type,percentage|numeric|min:0|max:100',
+            // Fixed fields
+            'fixed_mechanic_amount' => 'nullable|required_if:calculation_type,fixed|numeric|min:0|max:99999999',
+            'fixed_workshop_amount' => 'nullable|required_if:calculation_type,fixed|numeric|min:0|max:99999999',
+            // Toggles
+            'allow_products' => 'boolean',
+            'is_active' => 'boolean',
+        ];
     }
 }

@@ -22,7 +22,7 @@ Complementa a [`PRODUCCION_Y_DEMO.md`](PRODUCCION_Y_DEMO.md) (qué cambió para 
 
 | Programa | Versión verificada | Para qué | Notas |
 | :-- | :-- | :-- | :-- |
-| XAMPP | **8.5.12** (PHP 8.5.12, MariaDB 10.11.16, Apache 2.4.65) | Servidor web + base de datos | Laravel 13 pide PHP 8.3 o superior. Las 165 pruebas pasan sobre esta versión. |
+| XAMPP | **8.5.12** (PHP 8.5.12, MariaDB 10.11.16, Apache 2.4.65) | Servidor web + base de datos | Laravel 13 pide PHP 8.3 o superior. Las 174 pruebas pasan sobre esta versión. |
 | Git | cualquiera reciente | Traer y actualizar el código | |
 | Composer | 2.11 | Dependencias de PHP | Instalar con `Composer-Setup.exe` (getcomposer.org) **después** de XAMPP (§1.1). |
 | Node.js | 20 o superior (verificado 22.15) | Compilar la interfaz | Solo se usa al instalar o actualizar. |

@@ -55,12 +55,4 @@ class Batch extends Model
     {
         return $query->orderBy('purchased_at', 'asc');
     }
-
-    /**
-     * Accessor to check if batch is active (has stock)
-     */
-    public function getIsActiveAttribute(): bool
-    {
-        return $this->remaining_stock > 0;
-    }
 }
