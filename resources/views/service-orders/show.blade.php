@@ -71,7 +71,7 @@
                                 @if($canDeleteJobs)
                                     <form action="{{ route('jobs.destroy', $job) }}" method="POST"
                                           data-confirm="¿Eliminar este trabajo?"
-                                          data-confirm-description="Los repuestos que usó vuelven al inventario."
+                                          data-confirm-description="Los repuestos que usó vuelven al inventario.{{ isset($paidCommissionWarnings[$job->id]) ? ' ' . $paidCommissionWarnings[$job->id] : '' }}"
                                           data-confirm-label="Eliminar trabajo"
                                           data-confirm-destructive>
                                         @csrf

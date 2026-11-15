@@ -92,3 +92,22 @@ it('keeps the customer and vehicle on the invoice as they were when issued', fun
     app(\App\Services\InvoiceService::class)->cancel($invoice->fresh(), $admin->id);
     expect($invoice->fresh()->customer_snapshot['customer_name'])->toBe('Nombre corregido después');
 });
+
+it('warns before deleting a job whose commission was already paid', function () {
+    [$admin, $branch] = branchUser(admin: true);
+    app(\App\Services\CashService::class)->setOpening($branch->id, \Carbon\CarbonImmutable::today(), 100000);
+    $mechanic = branchMechanic($branch);
+    $order = cashOrder($branch, 50000, $mechanic); // comisión del 60 %: 30.000
+    $job = $order->workshopJobs->first();
+    $page = fn () => $this->actingAs($admin)->withSession(['current_branch_id' => $branch->id])->get(route('service-orders.show', $order));
+
+    $page()->assertOk()->assertDontSee('ya cobró esta comisión');
+
+    app(\App\Services\CashService::class)->addMovement($branch->id, \Carbon\CarbonImmutable::today(), [
+        'type' => 'mechanic', 'concept' => 'Pago de comisiones', 'amount' => 30000, 'payment_method' => 'Efectivo', 'mechanic_id' => $mechanic->id,
+    ], $admin->id);
+
+    $page()->assertOk()
+        ->assertViewHas('paidCommissionWarnings', fn ($warnings) => isset($warnings[$job->id]))
+        ->assertSee('ya cobró esta comisión: su saldo de comisiones quedará en −$30.000', false);
+});

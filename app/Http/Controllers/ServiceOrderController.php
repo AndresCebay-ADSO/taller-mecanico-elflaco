@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use App\Models\Mechanic;
 use App\Models\ServiceOrder;
+use App\Models\WorkshopJob;
 use App\Models\JobType;
 use App\Services\CashService;
 use App\Services\InventoryService;
@@ -113,11 +114,44 @@ class ServiceOrderController extends Controller
         $jobTypes = JobType::where('is_active', true)->orderBy('name')->get();
         $products = $inventoryService->sellableProducts($branchId);
         $cashClosed = $cashService->closedToday($branchId);
+        $paidCommissionWarnings = $this->paidCommissionWarnings($serviceOrder, $cashService);
 
         return view(
             'service-orders.show',
-            compact('serviceOrder', 'mechanics', 'jobTypes', 'products', 'cashClosed')
+            compact('serviceOrder', 'mechanics', 'jobTypes', 'products', 'cashClosed', 'paidCommissionWarnings')
         );
+    }
+
+    /**
+     * Por trabajo completado: aviso si eliminarlo deja al mecánico con saldo de comisiones negativo, porque ya se le
+     * pagó desde la caja. El saldo negativo se descuenta de lo próximo que gane.
+     *
+     * @return array<int, string> id del trabajo => aviso
+     */
+    private function paidCommissionWarnings(ServiceOrder $serviceOrder, CashService $cashService): array
+    {
+        $start = $cashService->startDate($serviceOrder->branch_id);
+        if ($start === null) {
+            return [];
+        }
+
+        $balances = $cashService->mechanicBalances($serviceOrder->branch_id)->keyBy(fn (array $row) => $row['mechanic']->id);
+        $warnings = [];
+
+        foreach ($serviceOrder->workshopJobs as $job) {
+            // Solo cuentan para el saldo los trabajos completados desde que se usa la caja.
+            if ($job->status !== WorkshopJob::STATUS_COMPLETED || $job->completed_at === null || $job->completed_at->lt($start)) {
+                continue;
+            }
+
+            $after = (float) ($balances[$job->mechanic_id]['balance'] ?? 0) - (float) $job->mechanic_cost;
+            if ($after < -0.5) {
+                $warnings[$job->id] = ($job->mechanic?->name ?? 'El mecánico') . ' ya cobró esta comisión: su saldo de comisiones quedará en '
+                    . money($after) . ' y se descontará de lo próximo que gane.';
+            }
+        }
+
+        return $warnings;
     }
 
     /**
