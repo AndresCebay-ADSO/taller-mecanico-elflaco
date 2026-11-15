@@ -95,11 +95,13 @@ class SaleController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create(InventoryService $inventoryService)
+    public function create(InventoryService $inventoryService, CashService $cashService)
     {
-        $products = $inventoryService->sellableProducts($this->currentBranchId());
+        $branchId = $this->currentBranchId();
+        $products = $inventoryService->sellableProducts($branchId);
+        $cashClosed = $branchId && $cashService->closedToday($branchId);
 
-        return view('sales.create', compact('products'));
+        return view('sales.create', compact('products', 'cashClosed'));
     }
 
     /**
@@ -130,6 +132,12 @@ class SaleController extends Controller
         ]);
 
         try {
+            $cashService->ensureCashAccepted($branchId, $validated['payment_method']);
+        } catch (BusinessRuleException $exception) {
+            return back()->withErrors(['payment_method' => $exception->getMessage()])->withInput();
+        }
+
+        try {
             $result = $saleService->create(
                 $branchId,
                 auth()->id(),
@@ -146,8 +154,7 @@ class SaleController extends Controller
         }
 
         return redirect()->route('sales.index')
-            ->with('success', 'Venta registrada y stock descontado.')
-            ->with('warning', $cashService->closedDayNotice($branchId, $result['sale']->sale_date, $result['sale']->payment_method, 'La venta', false));
+            ->with('success', 'Venta registrada y stock descontado.');
     }
 
     /**
@@ -177,6 +184,6 @@ class SaleController extends Controller
 
         return redirect()->route('sales.index')
             ->with('success', 'Venta anulada y stock devuelto.')
-            ->with('warning', $cashService->closedDayNotice($sale->branch_id, $sale->sale_date, $sale->payment_method, "La venta #{$sale->id}", true));
+            ->with('warning', $cashService->closedDayNotice($sale->branch_id, $sale->sale_date, $sale->payment_method, "La venta #{$sale->id}"));
     }
 }

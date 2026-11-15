@@ -4,6 +4,7 @@ use App\Models\Batch;
 use App\Models\CashDay;
 use App\Models\CashMovement;
 use App\Models\Mechanic;
+use App\Models\Sale;
 use App\Models\ServiceOrder;
 use App\Models\Supplier;
 use App\Services\CashService;
@@ -247,25 +248,36 @@ describe('caja diaria', function () {
         $correct(['cost_price' => 12000])->assertSessionHas('success');
     });
 
-    it('warns when a cash sale or receipt changes a day whose cash is already closed', function () {
+    it('refuses cash sales and receipts once today’s cash is closed, but accepts other methods', function () {
         [$admin, $branch] = branchUser(admin: true);
         $product = stockedProduct($branch, 10, cost: 10000, price: 20000);
         $session = cashSession($branch);
         $sell = fn (string $method) => $this->actingAs($admin)->withSession($session)
             ->post(route('sales.store'), ['payment_method' => $method, 'products' => [['id' => $product->id, 'quantity' => 1]]]);
 
-        // Caja abierta: sin aviso.
-        $sell('Efectivo')->assertSessionMissing('warning');
+        // Caja abierta: se vende en efectivo sin problema.
+        $sell('Efectivo')->assertSessionHas('success');
+        $this->actingAs($admin)->withSession($session)->get(route('sales.create'))->assertDontSee('La caja de hoy ya se cerró');
 
         app(CashService::class)->close($branch->id, CarbonImmutable::today(), 20000, 0, null, $admin->id);
 
-        $sell('Nequi')->assertSessionMissing('warning');
-        $sell('Efectivo')->assertSessionHas('warning', fn ($text) => str_contains($text, 'reabrir la caja'));
+        // Con la caja cerrada, el aviso sale apenas se abre la pantalla.
+        $this->actingAs($admin)->withSession($session)->get(route('sales.create'))->assertSee('La caja de hoy ya se cerró');
+
+        $sell('Nequi')->assertSessionHas('success');
+        $sell('Efectivo')->assertSessionHasErrors(['payment_method' => CashService::CLOSED_TODAY_MESSAGE]);
+        expect(Sale::count())->toBe(2)->and($product->fresh()->stock)->toBe(8);
 
         $order = cashOrder($branch, 30000);
+        $this->actingAs($admin)->withSession($session)->get(route('service-orders.show', $order))->assertSee('La caja de hoy ya se cerró');
         $this->actingAs($admin)->withSession($session)
             ->post(route('invoices.generate', $order), ['payment_method' => 'Efectivo'])
-            ->assertSessionHas('warning');
+            ->assertSessionHas('error', CashService::CLOSED_TODAY_MESSAGE);
+        expect($order->invoices()->count())->toBe(0);
+
+        $this->actingAs($admin)->withSession($session)
+            ->post(route('invoices.generate', $order), ['payment_method' => 'Nequi'])
+            ->assertSessionHas('success');
     });
 
     it('reminds to record the refund when cancelling a cash sale from an earlier closed day', function () {

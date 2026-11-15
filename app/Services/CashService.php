@@ -216,11 +216,33 @@ class CashService
         });
     }
 
+    public function closedToday(int $branchId): bool
+    {
+        return (bool) $this->find($branchId, CarbonImmutable::today())?->isClosed();
+    }
+
     /**
-     * Aviso para cuando una venta o comprobante en efectivo cambia la caja de un día ya cerrado.
-     * `$label`: «La venta», «El comprobante FAC-000012»… Devuelve null si no hace falta avisar.
+     * Con la caja de hoy cerrada no se reciben pagos en efectivo (decisión 1): se anotan en el cuaderno y se
+     * registran mañana, con la plata guardada en el cajón. Los demás métodos no tocan el cajón y sí se aceptan.
+     *
+     * @throws BusinessRuleException
      */
-    public function closedDayNotice(int $branchId, CarbonInterface $date, ?string $paymentMethod, string $label, bool $cancelled): ?string
+    public function ensureCashAccepted(int $branchId, string $paymentMethod): void
+    {
+        if ($paymentMethod === PaymentMethod::CASH && $this->closedToday($branchId)) {
+            throw new BusinessRuleException(self::CLOSED_TODAY_MESSAGE, 'payment_method');
+        }
+    }
+
+    public const CLOSED_TODAY_MESSAGE = 'La caja de hoy ya se cerró, así que no se reciben pagos en efectivo. '
+        . 'Anótalo en el cuaderno, deja la plata en el cajón y regístralo mañana. '
+        . 'Si necesitas registrarlo hoy, reabre la caja.';
+
+    /**
+     * Aviso al anular una venta o comprobante en efectivo cuya caja ya se cerró.
+     * `$label`: «La venta #12», «El comprobante FAC-000012»… Devuelve null si no hace falta avisar.
+     */
+    public function closedDayNotice(int $branchId, CarbonInterface $date, ?string $paymentMethod, string $label): ?string
     {
         if ($paymentMethod !== PaymentMethod::CASH) {
             return null;
@@ -231,7 +253,7 @@ class CashService
             return null;
         }
 
-        if ($cancelled && !$day->date->isToday()) {
+        if (!$day->date->isToday()) {
             return $label . ' era del ' . $day->date->format('d/m/Y') . ' y esa caja ya se cerró. '
                 . 'Si hoy le devolviste la plata al cliente, regístralo en Caja como un gasto para que la caja de hoy cuadre.';
         }

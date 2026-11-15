@@ -8,6 +8,7 @@ use Illuminate\Support\Arr;
 use App\Models\Mechanic;
 use App\Models\ServiceOrder;
 use App\Models\JobType;
+use App\Services\CashService;
 use App\Services\InventoryService;
 use App\Services\WorkshopJobService;
 
@@ -105,7 +106,7 @@ class ServiceOrderController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(ServiceOrder $serviceOrder, InventoryService $inventoryService)
+    public function show(ServiceOrder $serviceOrder, InventoryService $inventoryService, CashService $cashService)
     {
         $this->ensureCurrentBranch($serviceOrder->branch_id);
         $branchId = $serviceOrder->branch_id;
@@ -117,10 +118,11 @@ class ServiceOrderController extends Controller
         $mechanics = Mechanic::forBranch($branchId)->where('is_active', true)->orderBy('name')->get();
         $jobTypes = JobType::where('is_active', true)->orderBy('name')->get();
         $products = $inventoryService->sellableProducts($branchId);
+        $cashClosed = $cashService->closedToday($branchId);
 
         return view(
             'service-orders.show',
-            compact('serviceOrder', 'mechanics', 'jobTypes', 'products')
+            compact('serviceOrder', 'mechanics', 'jobTypes', 'products', 'cashClosed')
         );
     }
 

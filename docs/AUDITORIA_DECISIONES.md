@@ -10,6 +10,11 @@ Estado: **pendiente de revisar** salvo que diga otra cosa.
 1. **Vender después de cerrar la caja está permitido.** La venta o el comprobante en efectivo se registra y sale
    un aviso para reabrir y volver a cerrar la caja. En cambio, una compra pagada con la caja de un día cerrado
    se rechaza. ¿Bloquear también las ventas en efectivo con la caja cerrada, o dejar el aviso?
+   **Decidido (2026-11-14): bloquear el efectivo.** Con la caja de hoy cerrada no se registran ventas ni facturas en
+   efectivo: se anotan en el cuaderno, la plata se queda en el cajón y se registran al otro día (la caja de mañana
+   arranca con lo contado al cierre, así que cuadra sola). Nequi, transferencia y demás métodos sí se aceptan. El aviso
+   sale apenas se abre «Nueva venta» o el detalle de la orden. Si hace falta registrarla el mismo día, se reabre la caja.
+   Anular una venta de hoy con la caja cerrada sigue mostrando el aviso de reabrir (ver 2).
 2. **Anular una venta de un día anterior no registra la devolución en la caja.** Solo avisa que, si se le
    devolvió la plata al cliente, se anote como gasto. El sistema no puede saber si fue una devolución real
    o la corrección de un error de digitación. ¿Agregar un tipo de salida «Devolución a cliente»?

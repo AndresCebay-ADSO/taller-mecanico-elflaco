@@ -67,14 +67,14 @@ class InvoiceController extends Controller
         );
 
         try {
+            $cashService->ensureCashAccepted($serviceOrder->branch_id, $validated['payment_method']);
             $invoice = $invoiceService->generateFor($serviceOrder, $validated['payment_method']);
         } catch (BusinessRuleException $exception) {
-            return back()->with('error', $exception->getMessage());
+            return back()->with('error', $exception->getMessage())->withInput();
         }
 
         return redirect()->route('invoices.show', $invoice)
-            ->with('success', 'Factura consolidada generada con éxito.')
-            ->with('warning', $cashService->closedDayNotice($serviceOrder->branch_id, $invoice->invoice_date, $invoice->payment_method, 'El comprobante', false));
+            ->with('success', 'Factura consolidada generada con éxito.');
     }
 
     /**
@@ -90,6 +90,6 @@ class InvoiceController extends Controller
 
         return redirect()->route('invoices.show', $invoice)
             ->with('success', "Factura {$invoice->invoice_number} anulada. La orden puede facturarse de nuevo.")
-            ->with('warning', $cashService->closedDayNotice($invoice->serviceOrder->branch_id, $invoice->invoice_date, $invoice->payment_method, "El comprobante {$invoice->invoice_number}", true));
+            ->with('warning', $cashService->closedDayNotice($invoice->serviceOrder->branch_id, $invoice->invoice_date, $invoice->payment_method, "El comprobante {$invoice->invoice_number}"));
     }
 }
