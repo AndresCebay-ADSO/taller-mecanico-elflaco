@@ -67,10 +67,18 @@ class InventoryService
             ->orderBy('name')
             ->get()
             ->map(function (Product $product) {
-                $tiers = $product->batches->map(fn (Batch $batch) => [
-                    'qty' => (int) $batch->remaining_stock,
-                    'price' => (float) ($batch->sale_price ?? $product->sale_price),
-                ])->values()->all();
+                // Lotes seguidos con el mismo precio forman un solo tramo.
+                $tiers = [];
+                foreach ($product->batches as $batch) {
+                    $price = (float) ($batch->sale_price ?? $product->sale_price);
+                    $last = array_key_last($tiers);
+
+                    if ($last !== null && $tiers[$last]['price'] === $price) {
+                        $tiers[$last]['qty'] += (int) $batch->remaining_stock;
+                    } else {
+                        $tiers[] = ['qty' => (int) $batch->remaining_stock, 'price' => $price];
+                    }
+                }
 
                 return [
                     'id' => $product->id,
@@ -256,6 +264,10 @@ class InventoryService
                 'purchase_price' => $data['cost_price'],
                 'sale_price' => $batch->sale_price,
             ]);
+
+            // Un solo precio por producto (decisión 4): las unidades que ya había pasan al precio de esta compra.
+            // Cada lote conserva su costo, así la ganancia sigue saliendo con lo que costó cada unidad.
+            $product->batches()->withStock()->update(['sale_price' => $batch->sale_price]);
 
             return $batch;
         });

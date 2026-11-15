@@ -12,6 +12,7 @@
         CashMovement::MECHANIC_PAYMENT => 'Pagos a mecánicos',
         CashMovement::PURCHASE => 'Compras de repuestos',
         CashMovement::WITHDRAWAL => 'Retiros',
+        CashMovement::REFUND => 'Devoluciones a clientes',
     ];
     $isAdmin = auth()->user()->can('admin');
 @endphp
@@ -70,6 +71,35 @@
             </x-alert>
         </div>
     @endif
+
+    @foreach($openingMismatches as $mismatch)
+        @php
+            $next = $mismatch['next'];
+            $nextIsToday = $next->date->isToday();
+            $nextLabel = $nextIsToday ? 'hoy' : 'el ' . $next->date->translatedFormat('l j \d\e F');
+            $nextOf = $nextIsToday ? 'de hoy' : 'del ' . $next->date->translatedFormat('l j \d\e F');
+            $previousLabel = $mismatch['previous']->date->equalTo($date) ? 'este día' : 'el ' . $mismatch['previous']->date->translatedFormat('l j \d\e F');
+        @endphp
+        <div class="mb-6">
+            <x-alert type="warning">
+                <p>
+                    La base {{ $nextOf }} es {{ money($next->opening_cash) }}, pero al cerrar {{ $previousLabel }} quedaron
+                    {{ money($mismatch['left']) }} en el cajón. Pasa cuando se reabre y se vuelve a cerrar un día, o cuando se cierra tarde.
+                </p>
+                @if($next->isClosed())
+                    <p class="mt-1">{{ ucfirst($nextLabel) }} ya está cerrado: para corregir su base hay que reabrirlo.</p>
+                @else
+                    <form method="POST" action="{{ route('cash.opening') }}" class="mt-2">
+                        @csrf
+                        @method('PUT')
+                        <input type="hidden" name="date" value="{{ $next->date->toDateString() }}">
+                        <input type="hidden" name="opening_cash" value="{{ round($mismatch['left'], 2) }}">
+                        <x-button type="submit" size="sm" variant="secondary">Usar {{ money($mismatch['left']) }} como base {{ $nextOf }}</x-button>
+                    </form>
+                @endif
+            </x-alert>
+        </div>
+    @endforeach
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div class="space-y-6 lg:col-span-2">
@@ -192,7 +222,11 @@
                                     @if(! $isClosed && $isAdmin)
                                         <form method="POST" action="{{ route('cash.movements.destroy', $movement) }}"
                                               data-confirm="¿Eliminar «{{ $movement->concept }}»?"
-                                              data-confirm-description="{{ $movement->batch_id ? 'Solo se quita de la caja: la compra sigue registrada en el inventario.' : 'Deja de contar en la caja de este día.' }}"
+                                              data-confirm-description="{{ match (true) {
+                                                  $movement->batch_id !== null => 'Solo se quita de la caja: la compra sigue registrada en el inventario.',
+                                                  $movement->isLinked() => 'Solo se quita de la caja: el documento sigue anulado.',
+                                                  default => 'Deja de contar en la caja de este día.',
+                                              } }}"
                                               data-confirm-label="Eliminar"
                                               data-confirm-destructive>
                                             @csrf

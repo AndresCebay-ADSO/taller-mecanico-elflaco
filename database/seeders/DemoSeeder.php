@@ -320,7 +320,6 @@ class DemoSeeder extends Seeder
                 'fixed_mechanic_amount' => $isPercentage ? null : $mechanicShare,
                 'fixed_workshop_amount' => $isPercentage ? null : $workshopShare,
                 'allow_products' => $allowProducts,
-                'allow_custom_labor' => $isPercentage,
                 'is_active' => true,
             ]);
         }

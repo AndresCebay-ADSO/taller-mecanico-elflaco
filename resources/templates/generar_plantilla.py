@@ -64,7 +64,6 @@ SHEETS = {
         ("Monto mecánico", 16, MONEY, "Solo si el cálculo es Monto fijo."),
         ("Monto taller", 16, MONEY, "Solo si el cálculo es Monto fijo."),
         ("¿Usa repuestos?", 15, TEXT, "Sí o No. Vacío = Sí."),
-        ("¿Mano de obra variable?", 22, TEXT, "Sí: se escribe el valor en cada trabajo. No: siempre el mismo. Vacío = Sí."),
     ],
 }
 
@@ -72,7 +71,7 @@ EXAMPLES = {
     "Proveedores": ["Distrimotos Neiva", "3101234567", "ventas@distrimotos.co", "Cra. 5 # 12-34, Neiva"],
     "Productos": ["Filtro de aceite Pulsar 180", "Filtros", "7702001000141", "Distrimotos Neiva", "9400", "17000", "12", "4"],
     "Mecánicos": ["Juan Pérez", "3209876543", "15/01/2024", ""],
-    "Tipos de trabajo": ["Cambio de aceite", "Cambio de aceite y revisión de niveles", "Porcentaje", "60", "", "", "Sí", "Sí"],
+    "Tipos de trabajo": ["Cambio de aceite", "Cambio de aceite y revisión de niveles", "Porcentaje", "60", "", "", "Sí"],
 }
 
 
@@ -130,7 +129,6 @@ def build():
     job_types = wb["Tipos de trabajo"]
     add_list(job_types, "C", "Listas!$B$1:$B$2", strict=True, title="Cálculo", prompt="Elija Porcentaje o Monto fijo.")
     add_list(job_types, "G", "Listas!$A$1:$A$2", strict=True, title="Sí o No", prompt="Elija Sí o No.")
-    add_list(job_types, "H", "Listas!$A$1:$A$2", strict=True, title="Sí o No", prompt="Elija Sí o No.")
 
     write_instructions(intro)
     wb.save(OUT)

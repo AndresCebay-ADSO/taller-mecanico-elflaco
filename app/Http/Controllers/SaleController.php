@@ -95,11 +95,13 @@ class SaleController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create(InventoryService $inventoryService)
+    public function create(InventoryService $inventoryService, CashService $cashService)
     {
-        $products = $inventoryService->sellableProducts($this->currentBranchId());
+        $branchId = $this->currentBranchId();
+        $products = $inventoryService->sellableProducts($branchId);
+        $cashClosed = $branchId && $cashService->closedToday($branchId);
 
-        return view('sales.create', compact('products'));
+        return view('sales.create', compact('products', 'cashClosed'));
     }
 
     /**
@@ -130,6 +132,12 @@ class SaleController extends Controller
         ]);
 
         try {
+            $cashService->ensureCashAccepted($branchId, $validated['payment_method']);
+        } catch (BusinessRuleException $exception) {
+            return back()->withErrors(['payment_method' => $exception->getMessage()])->withInput();
+        }
+
+        try {
             $result = $saleService->create(
                 $branchId,
                 auth()->id(),
@@ -146,8 +154,7 @@ class SaleController extends Controller
         }
 
         return redirect()->route('sales.index')
-            ->with('success', 'Venta registrada y stock descontado.')
-            ->with('warning', $cashService->closedDayNotice($branchId, $result['sale']->sale_date, $result['sale']->payment_method, 'La venta', false));
+            ->with('success', 'Venta registrada y stock descontado.');
     }
 
     /**
@@ -167,16 +174,42 @@ class SaleController extends Controller
     /**
      * Cancel the specified sale and return its stock to the original batches.
      */
-    public function cancel(Sale $sale, SaleService $saleService, CashService $cashService)
+    public function cancel(Request $request, Sale $sale, SaleService $saleService, CashService $cashService)
     {
         $this->ensureCurrentBranch($sale->branch_id);
 
-        if (!$saleService->cancel($sale)) {
+        // Efectivo de un día anterior: se pregunta si se devolvió la plata (decisión 2).
+        $asksForRefund = $sale->asksForRefund();
+        if ($asksForRefund) {
+            $request->validate(['refunded' => 'required|boolean'], [
+                'refunded.required' => 'Indica si le devolviste la plata al cliente.',
+            ]);
+        }
+        $refunded = $asksForRefund && $request->boolean('refunded');
+
+        try {
+            $cancelled = DB::transaction(function () use ($sale, $saleService, $cashService, $refunded) {
+                if (!$saleService->cancel($sale)) {
+                    return false;
+                }
+                if ($refunded) {
+                    $cashService->recordRefund($sale->branch_id, $sale, auth()->id());
+                }
+
+                return true;
+            });
+        } catch (BusinessRuleException $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+
+        if (!$cancelled) {
             return back()->with('error', 'Esta venta ya ha sido anulada.');
         }
 
         return redirect()->route('sales.index')
-            ->with('success', 'Venta anulada y stock devuelto.')
-            ->with('warning', $cashService->closedDayNotice($sale->branch_id, $sale->sale_date, $sale->payment_method, "La venta #{$sale->id}", true));
+            ->with('success', $refunded
+                ? 'Venta anulada y stock devuelto. La devolución de ' . money($sale->total_amount) . ' salió de la caja de hoy.'
+                : 'Venta anulada y stock devuelto.')
+            ->with('warning', $cashService->closedDayNotice($sale->branch_id, $sale->sale_date, $sale->payment_method));
     }
 }

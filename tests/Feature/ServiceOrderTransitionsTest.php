@@ -63,7 +63,6 @@ it('rejects new jobs on completed service orders', function () {
         'mechanic_percentage' => 50,
         'workshop_percentage' => 50,
         'allow_products' => true,
-        'allow_custom_labor' => true,
         'is_active' => true,
         'is_system' => false,
     ]);

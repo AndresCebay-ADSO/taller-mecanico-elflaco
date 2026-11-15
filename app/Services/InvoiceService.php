@@ -37,7 +37,7 @@ class InvoiceService
 
             $jobs = $order->workshopJobs()
                 ->where('status', '!=', WorkshopJob::STATUS_CANCELLED)
-                ->with('jobProducts')
+                ->with(['jobType', 'mechanic', 'jobProducts.product' => fn ($query) => $query->withTrashed()])
                 ->get();
 
             if ($jobs->isEmpty()) {
@@ -54,6 +54,8 @@ class InvoiceService
                 'invoice_number' => 'TMP-' . Str::uuid(),
                 'service_order_id' => $order->id,
                 'amount' => $amount,
+                // Copia de lo facturado: la factura no cambia aunque después se corrija la orden (decisión 11).
+                'line_items' => Invoice::linesFromJobs($jobs)->all(),
                 'payment_method' => $paymentMethod,
                 'invoice_date' => now(),
             ]);
@@ -73,8 +75,8 @@ class InvoiceService
     }
 
     /**
-     * Anula una factura conservando el registro (numeración sin huecos). La orden puede facturarse de nuevo.
-     * Devuelve false si ya estaba anulada.
+     * Anula una factura conservando el registro (numeración sin huecos). La orden vuelve a «En progreso» para
+     * corregirla y facturarla de nuevo (decisión 11). Devuelve false si ya estaba anulada.
      */
     public function cancel(Invoice $invoice, ?int $cancelledBy): bool
     {
@@ -85,10 +87,20 @@ class InvoiceService
                 return false;
             }
 
+            // Facturas emitidas antes de guardar la copia: se guarda ahora, antes de que la orden se pueda cambiar.
+            // Con la factura vigente no se podían tocar los trabajos, así que estas líneas son las facturadas.
+            if ($locked->line_items === null) {
+                $locked->line_items = $locked->lineItems()->all();
+            }
+
             $locked->forceFill([
                 'cancelled_at' => now(),
                 'cancelled_by' => $cancelledBy,
             ])->save();
+
+            ServiceOrder::whereKey($locked->service_order_id)
+                ->where('status', ServiceOrder::STATUS_COMPLETED)
+                ->update(['status' => ServiceOrder::STATUS_IN_PROGRESS, 'completed_at' => null]);
 
             return true;
         }, 3);

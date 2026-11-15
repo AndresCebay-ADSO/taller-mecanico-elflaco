@@ -470,12 +470,11 @@ it('renders the main screens for employees and administrators', function () {
     $session = ['current_branch_id' => $branch->id];
 
     $employeePages = [
-        route('dashboard'), route('reports'), route('profile.edit'),
-        route('products.index'), route('products.create'), route('products.edit', $product),
+        route('dashboard'), route('profile.edit'),
+        route('products.index'), route('products.show', $product),
         route('service-orders.index'), route('service-orders.create'), route('service-orders.show', $order),
         route('jobs.index'), route('sales.index'), route('sales.create'), route('sales.show', $sale),
-        route('invoices.index'), route('invoices.show', $invoice),
-        route('inventory.index'), route('inventory.purchase'),
+        route('invoices.index'), route('invoices.show', $invoice), route('cash.index'),
         route('mechanics.index'), route('mechanics.create'), route('suppliers.index'),
     ];
 
@@ -484,6 +483,8 @@ it('renders the main screens for employees and administrators', function () {
     }
 
     $adminPages = [
+        route('dashboard'), route('reports'), route('products.index'), route('products.show', $product),
+        route('products.create'), route('products.edit', $product), route('inventory.index'), route('inventory.purchase'),
         route('users.index'), route('users.create'), route('users.edit', $employee),
         route('branches.index'), route('branch-transfers.index'), route('branch-transfers.create'),
         route('job-types.index'), route('settings'), route('inventory.adjustment'),

@@ -6,8 +6,10 @@
             <x-status-badge :tone="$product->stockTone()">{{ $product->stockLabel() }}</x-status-badge>
         </x-slot>
         <x-slot name="actions">
-            <x-button variant="secondary" href="{{ route('products.edit', $product) }}">Editar</x-button>
-            <x-button href="{{ route('inventory.purchase') }}">Registrar compra</x-button>
+            @can('admin')
+                <x-button variant="secondary" href="{{ route('products.edit', $product) }}">Editar</x-button>
+                <x-button href="{{ route('inventory.purchase') }}">Registrar compra</x-button>
+            @endcan
         </x-slot>
     </x-page-header>
 
@@ -40,14 +42,16 @@
                         <dt class="text-xs font-medium text-muted-foreground">Código / UPC</dt>
                         <dd class="mt-0.5 break-all font-mono">{{ $product->upc ?: '—' }}</dd>
                     </div>
-                    <div>
-                        <dt class="text-xs font-medium text-muted-foreground">Costo de referencia</dt>
-                        <dd class="mt-0.5 tabular-nums">{{ money($product->purchase_price) }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-xs font-medium text-muted-foreground">Trazabilidad</dt>
-                        <dd class="mt-0.5"><a href="{{ route('inventory.index', ['search' => $product->name]) }}" class="text-primary hover:underline">Ver lotes y movimientos</a></dd>
-                    </div>
+                    @can('admin')
+                        <div>
+                            <dt class="text-xs font-medium text-muted-foreground">Costo de referencia</dt>
+                            <dd class="mt-0.5 tabular-nums">{{ money($product->purchase_price) }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-xs font-medium text-muted-foreground">Trazabilidad</dt>
+                            <dd class="mt-0.5"><a href="{{ route('inventory.index', ['search' => $product->name]) }}" class="text-primary hover:underline">Ver lotes y movimientos</a></dd>
+                        </div>
+                    @endcan
                 </dl>
             </x-card>
         </div>

@@ -2,7 +2,9 @@
 <div class="ds">
     <x-page-header title="Dashboard" subtitle="Vista general del taller">
         <x-slot name="actions">
-            <x-button variant="secondary" href="{{ route('inventory.purchase') }}">Registrar compra</x-button>
+            @can('admin')
+                <x-button variant="secondary" href="{{ route('inventory.purchase') }}">Registrar compra</x-button>
+            @endcan
             <x-button variant="secondary" href="{{ route('service-orders.create') }}">Nueva orden</x-button>
             <x-button href="{{ route('sales.create') }}">Nueva venta</x-button>
         </x-slot>
@@ -30,8 +32,8 @@
     <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         @php
             $kpis = [
-                ['label' => 'Ingresos de hoy', 'value' => money($todayEarnings), 'hint' => 'Ventas + órdenes entregadas hoy', 'icon' => 'wallet'],
-                ['label' => 'Ingresos del mes', 'value' => money($monthEarnings), 'hint' => ucfirst(now()->translatedFormat('F Y')), 'icon' => 'trending-up', 'link' => route('reports')],
+                ['label' => 'Ingresos de hoy', 'value' => money($todayEarnings), 'hint' => 'Ventas + órdenes facturadas hoy', 'icon' => 'wallet'],
+                ['label' => 'Ingresos del mes', 'value' => money($monthEarnings), 'hint' => ucfirst(now()->translatedFormat('F Y')), 'icon' => 'trending-up', 'link' => auth()->user()->can('admin') ? route('reports') : null],
                 ['label' => 'Órdenes activas', 'value' => $activeOrders, 'hint' => $pendingOrders . ' pendientes de entrega', 'icon' => 'clipboard-list', 'link' => route('service-orders.index')],
                 ['label' => 'Productos', 'value' => $totalProducts, 'hint' => $lowStockCount . ' con stock bajo', 'icon' => 'package', 'link' => route('products.index')],
             ];
@@ -125,7 +127,8 @@
     </div>
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {{-- Comisiones --}}
+        {{-- Comisiones: solo administrador (decisión 14) --}}
+        @can('admin')
         <x-card title="Comisiones del mes" :description="ucfirst(now()->translatedFormat('F Y'))" class="lg:col-span-2" flush>
             @if($mechanics->isNotEmpty())
                 <x-table :headers="['Mecánico', ['label' => 'Trabajos', 'align' => 'right'], ['label' => 'Comisión', 'align' => 'right']]">
@@ -143,9 +146,10 @@
                 </div>
             @endif
         </x-card>
+        @endcan
 
         {{-- Lo cobrado hoy (mostrador + servicios) por método de pago --}}
-        <x-card title="Cobrado hoy por método" description="Ventas de mostrador y comprobantes de servicio">
+        <x-card title="Cobrado hoy por método" description="Ventas de mostrador y comprobantes de servicio" :class="auth()->user()->can('admin') ? '' : 'lg:col-span-3'">
             @if($todayByMethod->isNotEmpty())
                 <dl class="space-y-3">
                     @foreach($todayByMethod as $method)

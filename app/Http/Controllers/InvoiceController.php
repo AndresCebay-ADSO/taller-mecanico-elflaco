@@ -10,6 +10,7 @@ use App\Services\CashService;
 use App\Services\InvoiceService;
 use App\Support\PaymentMethod;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class InvoiceController extends Controller
 {
@@ -67,29 +68,55 @@ class InvoiceController extends Controller
         );
 
         try {
+            $cashService->ensureCashAccepted($serviceOrder->branch_id, $validated['payment_method']);
             $invoice = $invoiceService->generateFor($serviceOrder, $validated['payment_method']);
         } catch (BusinessRuleException $exception) {
-            return back()->with('error', $exception->getMessage());
+            return back()->with('error', $exception->getMessage())->withInput();
         }
 
         return redirect()->route('invoices.show', $invoice)
-            ->with('success', 'Factura consolidada generada con éxito.')
-            ->with('warning', $cashService->closedDayNotice($serviceOrder->branch_id, $invoice->invoice_date, $invoice->payment_method, 'El comprobante', false));
+            ->with('success', 'Factura consolidada generada con éxito.');
     }
 
     /**
      * Anula la factura sin borrarla (solo administradores).
      */
-    public function cancel(Invoice $invoice, InvoiceService $invoiceService, CashService $cashService)
+    public function cancel(Request $request, Invoice $invoice, InvoiceService $invoiceService, CashService $cashService)
     {
-        $this->ensureCurrentBranch($invoice->serviceOrder?->branch_id);
+        $branchId = $invoice->serviceOrder?->branch_id;
+        $this->ensureCurrentBranch($branchId);
 
-        if (!$invoiceService->cancel($invoice, auth()->id())) {
+        // Efectivo de un día anterior: se pregunta si se devolvió la plata (decisión 2).
+        $asksForRefund = $invoice->asksForRefund();
+        if ($asksForRefund) {
+            $request->validate(['refunded' => 'required|boolean'], [
+                'refunded.required' => 'Indica si le devolviste la plata al cliente.',
+            ]);
+        }
+        $refunded = $asksForRefund && $request->boolean('refunded');
+
+        try {
+            $cancelled = DB::transaction(function () use ($invoice, $invoiceService, $cashService, $refunded, $branchId) {
+                if (!$invoiceService->cancel($invoice, auth()->id())) {
+                    return false;
+                }
+                if ($refunded) {
+                    $cashService->recordRefund($branchId, $invoice, auth()->id());
+                }
+
+                return true;
+            });
+        } catch (BusinessRuleException $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
+
+        if (!$cancelled) {
             return back()->with('error', "La factura {$invoice->invoice_number} ya estaba anulada.");
         }
 
         return redirect()->route('invoices.show', $invoice)
-            ->with('success', "Factura {$invoice->invoice_number} anulada. La orden puede facturarse de nuevo.")
-            ->with('warning', $cashService->closedDayNotice($invoice->serviceOrder->branch_id, $invoice->invoice_date, $invoice->payment_method, "El comprobante {$invoice->invoice_number}", true));
+            ->with('success', "Factura {$invoice->invoice_number} anulada. La orden volvió a «En progreso»: puedes corregir sus trabajos y facturarla de nuevo."
+                . ($refunded ? ' La devolución de ' . money($invoice->amount) . ' salió de la caja de hoy.' : ''))
+            ->with('warning', $cashService->closedDayNotice($branchId, $invoice->invoice_date, $invoice->payment_method));
     }
 }

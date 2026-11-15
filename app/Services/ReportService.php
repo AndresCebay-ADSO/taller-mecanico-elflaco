@@ -21,8 +21,9 @@ use Illuminate\Support\Facades\DB;
  * Cifras de gestión de una sucursal en un periodo.
  *
  * Mismo criterio que el dashboard: ingreso = ventas de mostrador no anuladas (por fecha de venta)
- * + órdenes entregadas (por fecha de completado: mano de obra + repuestos).
- * La ganancia usa el costo real del lote FIFO del que salió cada repuesto.
+ * + facturas de servicio vigentes (por fecha de la factura). Así «Ingresos», «Cobrado» y la caja
+ * siempre cuadran (decisión 13). La ganancia usa el costo real del lote FIFO del que salió cada repuesto.
+ * Las comisiones van por trabajo completado: es lo que se le debe al mecánico, igual que en la caja.
  */
 class ReportService
 {
@@ -39,16 +40,14 @@ class ReportService
         $saleIds = (clone $sales)->pluck('id');
         $salesCost = $this->costOfMovements('sale', $saleIds->map(fn ($id) => "Venta #{$id}"));
 
-        $orders = ServiceOrder::forBranch($branchId)
-            ->where('status', ServiceOrder::STATUS_COMPLETED)
-            ->whereBetween('completed_at', [$from, $to])
-            ->with(['workshopJobs' => fn ($query) => $query
+        $invoices = $this->invoicesQuery($branchId, $from, $to)
+            ->with(['serviceOrder.workshopJobs' => fn ($query) => $query
                 ->where('status', '!=', WorkshopJob::STATUS_CANCELLED)
                 ->with('jobProducts')])
             ->get();
 
-        $jobs = $orders->flatMap->workshopJobs;
-        $laborRevenue = (float) $jobs->sum('total_amount');
+        $ordersRevenue = (float) $invoices->sum('amount');
+        $jobs = $invoices->flatMap(fn (Invoice $invoice) => $invoice->serviceOrder->workshopJobs);
         $workshopLabor = (float) $jobs->sum('workshop_cost');
         $partsRevenue = (float) $jobs->sum(fn (WorkshopJob $job) => $job->jobProducts->sum('total_price'));
         $partsCost = $this->costOfMovements('job_usage', $jobs->flatMap(fn (WorkshopJob $job) => [
@@ -61,9 +60,9 @@ class ReportService
 
         return [
             'income' => [
-                'total' => $salesRevenue + $laborRevenue + $partsRevenue,
+                'total' => $salesRevenue + $ordersRevenue,
                 'sales' => $salesRevenue,
-                'orders' => $laborRevenue + $partsRevenue,
+                'orders' => $ordersRevenue,
             ],
             'profit' => [
                 'total' => $workshopLabor + ($salesRevenue - $salesCost) + ($partsRevenue - $partsCost),
@@ -73,11 +72,11 @@ class ReportService
             'sales_count' => $saleIds->count(),
             'orders' => [
                 'received' => ServiceOrder::forBranch($branchId)->whereBetween('created_at', [$from, $to])->count(),
-                'delivered' => $orders->count(),
+                'invoiced' => $invoices->count(),
             ],
             'commissions' => (float) $mechanics->sum('earnings'),
             'mechanics' => $mechanics,
-            'daily' => $this->dailyIncome($branchId, $from, $to, $orders),
+            'daily' => $this->dailyIncome($branchId, $from, $to, $invoices),
             'top_products' => $this->topProducts($saleIds, $jobs->pluck('id')),
             'payment_methods' => $this->paymentMethods($branchId, $from, $to),
             'inventory' => $this->inventory($branchId),
@@ -97,10 +96,7 @@ class ReportService
             ->groupBy('payment_method')
             ->get();
 
-        $invoices = Invoice::active()
-            ->whereHas('serviceOrder', fn ($query) => $query->forBranch($branchId))
-            ->whereDate('invoice_date', '>=', $from->toDateString())
-            ->whereDate('invoice_date', '<=', $to->toDateString())
+        $invoices = $this->invoicesQuery($branchId, $from, $to)
             ->select('payment_method', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as items'))
             ->groupBy('payment_method')
             ->get();
@@ -118,12 +114,30 @@ class ReportService
         return collect(array_values($methods))->sortByDesc('total')->values();
     }
 
+    /**
+     * Ingreso del periodo (ventas + facturas vigentes): la cifra «Ingresos» del dashboard.
+     */
+    public function income(?int $branchId, CarbonImmutable $from, CarbonImmutable $to): float
+    {
+        return (float) $this->salesQuery($branchId, $from, $to)->sum('total_amount')
+            + (float) $this->invoicesQuery($branchId, $from, $to)->sum('amount');
+    }
+
     private function salesQuery(?int $branchId, CarbonImmutable $from, CarbonImmutable $to)
     {
         return Sale::forBranch($branchId)
             ->where('status', '!=', 'anulada')
             ->whereDate('sale_date', '>=', $from->toDateString())
             ->whereDate('sale_date', '<=', $to->toDateString());
+    }
+
+    /** Facturas de servicio vigentes de la sucursal, por fecha de la factura. */
+    private function invoicesQuery(?int $branchId, CarbonImmutable $from, CarbonImmutable $to)
+    {
+        return Invoice::active()
+            ->whereHas('serviceOrder', fn ($query) => $query->forBranch($branchId))
+            ->whereDate('invoice_date', '>=', $from->toDateString())
+            ->whereDate('invoice_date', '<=', $to->toDateString());
     }
 
     /**
@@ -169,23 +183,21 @@ class ReportService
     }
 
     /**
-     * Ingreso por día (ventas + órdenes entregadas) hasta hoy como máximo.
+     * Ingreso por día (ventas + facturas vigentes) hasta hoy como máximo.
      *
-     * @param  Collection<int, ServiceOrder>  $orders
+     * @param  Collection<int, Invoice>  $invoices
      * @return Collection<int, array{date: CarbonImmutable, sales: float, orders: float, total: float}>
      */
-    private function dailyIncome(?int $branchId, CarbonImmutable $from, CarbonImmutable $to, Collection $orders): Collection
+    private function dailyIncome(?int $branchId, CarbonImmutable $from, CarbonImmutable $to, Collection $invoices): Collection
     {
         $salesByDay = $this->salesQuery($branchId, $from, $to)
             ->selectRaw('DATE(sale_date) as day, SUM(total_amount) as total')
             ->groupBy('day')
             ->pluck('total', 'day');
 
-        $ordersByDay = $orders
-            ->groupBy(fn (ServiceOrder $order) => $order->completed_at->toDateString())
-            ->map(fn (Collection $dayOrders) => $dayOrders->flatMap->workshopJobs->sum(
-                fn (WorkshopJob $job) => $job->total_amount + $job->jobProducts->sum('total_price')
-            ));
+        $ordersByDay = $invoices
+            ->groupBy(fn (Invoice $invoice) => $invoice->invoice_date->toDateString())
+            ->map(fn (Collection $dayInvoices) => $dayInvoices->sum('amount'));
 
         $lastDay = $to->min(CarbonImmutable::now()->endOfDay());
         $days = collect();
@@ -202,7 +214,7 @@ class ReportService
     }
 
     /**
-     * Repuestos con más unidades vendidas (mostrador + usados en órdenes entregadas).
+     * Repuestos con más unidades vendidas (mostrador + usados en órdenes facturadas).
      *
      * @param  Collection<int, int>  $saleIds
      * @param  Collection<int, int>  $jobIds

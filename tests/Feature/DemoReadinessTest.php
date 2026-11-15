@@ -98,7 +98,7 @@ describe('pantallas de la demo', function () {
             ->assertSessionHas('current_branch_id', $main->id);
     });
 
-    it('exposes FIFO price tiers for the sale and job forms without purchase costs', function () {
+    it('exposes one price per product for the sale and job forms without purchase costs', function () {
         [, $branch] = branchUser();
         $product = stockedProduct($branch, 2, cost: 10000, price: 20000);
         app(InventoryService::class)->registerPurchaseBatch([
@@ -111,8 +111,9 @@ describe('pantallas de la demo', function () {
         $item = app(InventoryService::class)->sellableProducts($branch->id)->first();
 
         expect($item['stock'])->toBe(5)
-            ->and($item['price'])->toBe(20000.0)
-            ->and($item['tiers'])->toBe([['qty' => 2, 'price' => 20000.0], ['qty' => 3, 'price' => 25000.0]])
+            // La compra nueva lleva todo el inventario a su precio (decisión 4): un solo tramo.
+            ->and($item['price'])->toBe(25000.0)
+            ->and($item['tiers'])->toBe([['qty' => 5, 'price' => 25000.0]])
             ->and($item)->not->toHaveKey('purchase_price');
     });
 });
@@ -138,7 +139,7 @@ describe('reportes', function () {
             // Taller 40% de 50.000 + margen (40.000 - 20.000) + (20.000 - 10.000)
             ->and($report['profit']['total'])->toBe(50000.0)
             ->and($report['commissions'])->toBe(30000.0)
-            ->and($report['orders'])->toBe(['received' => 1, 'delivered' => 1])
+            ->and($report['orders'])->toBe(['received' => 1, 'invoiced' => 1])
             ->and($report['top_products']->first())->toMatchArray(['quantity' => 3, 'revenue' => 60000.0])
             ->and((array) $report['payment_methods']->sole())->toBe(['payment_method' => 'Nequi', 'total' => 110000.0, 'sales' => 1, 'invoices' => 1])
             ->and($report['inventory']['cost_value'])->toBe(70000.0)
@@ -149,6 +150,36 @@ describe('reportes', function () {
             ->assertOk()
             ->assertSee('$110.000')
             ->assertDontSee('$0.00');
+    });
+
+    it('counts service income from active invoices, so it always matches what was collected', function () {
+        [$admin, $branch] = branchUser(admin: true);
+        $product = stockedProduct($branch, 10, cost: 10000, price: 20000);
+
+        [$invoiced] = completedJobOrder($branch, $product, quantity: 1, labor: 50000);
+        app(InvoiceService::class)->generateFor($invoiced, 'Efectivo');
+
+        // Factura anulada y no vuelta a generar: ya no es ingreso.
+        [$cancelled] = completedJobOrder($branch, $product, quantity: 1, labor: 30000);
+        app(InvoiceService::class)->cancel(app(InvoiceService::class)->generateFor($cancelled), $admin->id);
+
+        // Orden vieja marcada completada sin factura: no se cobró, no suma.
+        [$withoutInvoice] = completedJobOrder($branch, $product, quantity: 1, labor: 40000);
+        $withoutInvoice->update(['status' => 'completed', 'completed_at' => now()]);
+
+        $report = app(ReportService::class)->summary($branch->id, CarbonImmutable::now()->startOfMonth(), CarbonImmutable::now()->endOfMonth());
+
+        expect($report['income'])->toBe(['total' => 70000.0, 'sales' => 0.0, 'orders' => 70000.0])
+            ->and($report['income']['total'])->toBe($report['payment_methods']->sum('total'))
+            ->and($report['orders']['invoiced'])->toBe(1)
+            ->and($report['daily']->sum('total'))->toBe(70000.0)
+            ->and(app(ReportService::class)->income($branch->id, CarbonImmutable::today(), CarbonImmutable::today()))->toBe(70000.0);
+
+        $this->actingAs($admin)->withSession(['current_branch_id' => $branch->id])
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertViewHas('todayEarnings', 70000.0)
+            ->assertViewHas('monthEarnings', 70000.0);
     });
 
     it('ignores cancelled sales in the report', function () {
@@ -164,6 +195,55 @@ describe('reportes', function () {
 });
 
 describe('facturas y órdenes', function () {
+    it('reopens the order when its invoice is cancelled, while the invoice keeps the lines it was issued with', function () {
+        [$admin, $branch] = branchUser(admin: true);
+        $product = stockedProduct($branch, 5, price: 20000);
+        [$order, $job] = completedJobOrder($branch, $product, quantity: 1, labor: 50000);
+        $first = app(InvoiceService::class)->generateFor($order);
+        $session = ['current_branch_id' => $branch->id];
+
+        expect($first->lineItems())->toHaveCount(1)
+            ->and($first->lineItems()[0])->toMatchArray(['labor' => 50000.0, 'description' => 'Mantenimiento'])
+            ->and($first->lineItems()[0]['parts'][0])->toMatchArray(['name' => $product->name, 'quantity' => 1, 'total_price' => 20000.0]);
+
+        $this->actingAs($admin)->withSession($session)->post(route('invoices.cancel', $first))->assertSessionHas('success');
+        expect($order->fresh())->status->toBe(ServiceOrder::STATUS_IN_PROGRESS)->completed_at->toBeNull();
+
+        // Se corrige la orden: sale el trabajo facturado y entra otro.
+        app(WorkshopJobService::class)->delete($job);
+        $fixed = app(WorkshopJobService::class)->addToOrder($order->fresh(), [
+            'job_type_id' => demoJobType()->id,
+            'mechanic_id' => branchMechanic($branch)->id,
+            'labor_cost' => 65000,
+            'description' => 'Ajuste de frenos',
+        ]);
+        $fixed->update(['status' => WorkshopJob::STATUS_COMPLETED, 'completed_at' => now()]);
+        $second = app(InvoiceService::class)->generateFor($order->fresh());
+
+        // La factura anulada se reimprime tal como se emitió; la nueva trae la corrección.
+        $this->actingAs($admin)->withSession($session)->get(route('documents.invoice', $first))
+            ->assertOk()->assertSee('Mantenimiento')->assertSee($product->name)->assertDontSee('Ajuste de frenos');
+        $this->actingAs($admin)->withSession($session)->get(route('invoices.show', $second))
+            ->assertOk()->assertSee('Ajuste de frenos')->assertDontSee($product->name);
+        expect((float) $second->amount)->toBe(65000.0)
+            ->and($order->fresh()->status)->toBe(ServiceOrder::STATUS_COMPLETED);
+    });
+
+    it('saves the lines of an invoice issued before the copy existed when it is cancelled', function () {
+        [$admin, $branch] = branchUser(admin: true);
+        [$order] = completedJobOrder($branch, stockedProduct($branch, 3), labor: 40000);
+        $invoice = app(InvoiceService::class)->generateFor($order);
+        Invoice::whereKey($invoice->id)->update(['line_items' => null]);
+
+        // Sin copia lee la orden, que con la factura vigente no ha cambiado.
+        expect($invoice->fresh()->lineItems()->first()['labor'])->toBe(40000.0);
+
+        app(InvoiceService::class)->cancel($invoice->fresh(), $admin->id);
+
+        expect($invoice->fresh()->line_items)->not->toBeNull()
+            ->and($invoice->fresh()->lineItems()->first()['labor'])->toBe(40000.0);
+    });
+
     it('keeps cancelled invoices on record and lets the order be invoiced again', function () {
         [$admin, $branch] = branchUser(admin: true);
         [$order] = completedJobOrder($branch, stockedProduct($branch, 3));

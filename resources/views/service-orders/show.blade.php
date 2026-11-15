@@ -150,6 +150,9 @@
                     @elseif($canInvoice)
                         <form action="{{ route('invoices.generate', $serviceOrder) }}" method="POST" class="space-y-3">
                             @csrf
+                            @if($cashClosed)
+                                <x-alert type="warning" message="La caja de hoy ya se cerró: no se reciben pagos en efectivo. Si te pagan en efectivo, anótalo en el cuaderno, deja la plata en el cajón y regístralo mañana. Nequi, transferencia y los demás métodos sí se pueden registrar." />
+                            @endif
                             <x-select label="¿Cómo pagó?" name="payment_method" required>
                                 @foreach(\App\Support\PaymentMethod::ALL as $method)
                                     <option value="{{ $method }}" @selected(old('payment_method', \App\Support\PaymentMethod::CASH) === $method)>{{ $method }}</option>

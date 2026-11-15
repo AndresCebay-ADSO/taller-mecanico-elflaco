@@ -37,7 +37,6 @@ it('enforces workshop job transitions at model level', function () {
         'mechanic_percentage' => 50,
         'workshop_percentage' => 50,
         'allow_products' => true,
-        'allow_custom_labor' => true,
         'is_active' => true,
         'is_system' => false,
     ]);

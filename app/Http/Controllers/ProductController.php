@@ -145,7 +145,7 @@ class ProductController extends Controller
             'category' => 'required|string|max:255',
             'supplier_ids' => 'required|array|min:1',
             'supplier_ids.*' => 'exists:suppliers,id',
-            'purchase_price' => 'required|numeric|min:0|max:99999999',
+            // Sin costo: el costo de referencia cambia solo con las compras (decisión 6).
             'sale_price' => 'required|numeric|min:0|max:99999999',
             'min_stock' => 'required|integer|min:0|max:100000',
             'upc' => 'nullable|string|max:50',

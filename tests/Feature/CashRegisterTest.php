@@ -4,6 +4,7 @@ use App\Models\Batch;
 use App\Models\CashDay;
 use App\Models\CashMovement;
 use App\Models\Mechanic;
+use App\Models\Sale;
 use App\Models\ServiceOrder;
 use App\Models\Supplier;
 use App\Services\CashService;
@@ -247,40 +248,139 @@ describe('caja diaria', function () {
         $correct(['cost_price' => 12000])->assertSessionHas('success');
     });
 
-    it('warns when a cash sale or receipt changes a day whose cash is already closed', function () {
+    it('refuses cash sales and receipts once today’s cash is closed, but accepts other methods', function () {
         [$admin, $branch] = branchUser(admin: true);
         $product = stockedProduct($branch, 10, cost: 10000, price: 20000);
         $session = cashSession($branch);
         $sell = fn (string $method) => $this->actingAs($admin)->withSession($session)
             ->post(route('sales.store'), ['payment_method' => $method, 'products' => [['id' => $product->id, 'quantity' => 1]]]);
 
-        // Caja abierta: sin aviso.
-        $sell('Efectivo')->assertSessionMissing('warning');
+        // Caja abierta: se vende en efectivo sin problema.
+        $sell('Efectivo')->assertSessionHas('success');
+        $this->actingAs($admin)->withSession($session)->get(route('sales.create'))->assertDontSee('La caja de hoy ya se cerró');
 
         app(CashService::class)->close($branch->id, CarbonImmutable::today(), 20000, 0, null, $admin->id);
 
-        $sell('Nequi')->assertSessionMissing('warning');
-        $sell('Efectivo')->assertSessionHas('warning', fn ($text) => str_contains($text, 'reabrir la caja'));
+        // Con la caja cerrada, el aviso sale apenas se abre la pantalla.
+        $this->actingAs($admin)->withSession($session)->get(route('sales.create'))->assertSee('La caja de hoy ya se cerró');
+
+        $sell('Nequi')->assertSessionHas('success');
+        $sell('Efectivo')->assertSessionHasErrors(['payment_method' => CashService::CLOSED_TODAY_MESSAGE]);
+        expect(Sale::count())->toBe(2)->and($product->fresh()->stock)->toBe(8);
 
         $order = cashOrder($branch, 30000);
+        $this->actingAs($admin)->withSession($session)->get(route('service-orders.show', $order))->assertSee('La caja de hoy ya se cerró');
         $this->actingAs($admin)->withSession($session)
             ->post(route('invoices.generate', $order), ['payment_method' => 'Efectivo'])
-            ->assertSessionHas('warning');
+            ->assertSessionHas('error', CashService::CLOSED_TODAY_MESSAGE);
+        expect($order->invoices()->count())->toBe(0);
+
+        $this->actingAs($admin)->withSession($session)
+            ->post(route('invoices.generate', $order), ['payment_method' => 'Nequi'])
+            ->assertSessionHas('success');
     });
 
-    it('reminds to record the refund when cancelling a cash sale from an earlier closed day', function () {
+    it('warns when a day starts with a base different from what was left at the previous close', function () {
+        [$admin, $branch] = branchUser(admin: true);
+        $session = cashSession($branch);
+        $cash = app(CashService::class);
+        $monday = CarbonImmutable::today()->subDays(2);
+        $tuesday = CarbonImmutable::today()->subDay();
+        $page = fn (CarbonImmutable $day) => $this->actingAs($admin)->withSession($session)->get(route('cash.index', ['date' => $day->toDateString()]));
+
+        $cash->close($branch->id, $monday, 100000, 0, null, $admin->id);
+        $cash->addMovement($branch->id, $tuesday, ['type' => 'expense', 'concept' => 'Domicilio', 'amount' => 5000, 'payment_method' => 'Efectivo'], $admin->id);
+
+        // Flujo normal: el martes arrancó con lo que quedó el lunes, sin aviso.
+        expect($cash->openingMismatches($branch->id, $tuesday))->toBeEmpty();
+        $page($tuesday)->assertDontSee('como base de');
+
+        // Se reabre el lunes y se vuelve a cerrar con otra cifra: la base del martes no cambia sola.
+        $cash->reopen(CashDay::whereDate('date', $monday->toDateString())->sole());
+        $cash->close($branch->id, $monday, 90000, 0, null, $admin->id);
+        expect((float) CashDay::whereDate('date', $tuesday->toDateString())->value('opening_cash'))->toBe(100000.0);
+
+        // Se avisa en los dos días, con botón para usar la cifra nueva.
+        $page($monday)->assertSee('Usar $90.000 como base del ' . $tuesday->translatedFormat('l'));
+        $page($tuesday)->assertSee('Usar $90.000 como base del ' . $tuesday->translatedFormat('l'))->assertSee('quedaron');
+
+        $this->actingAs($admin)->withSession($session)
+            ->put(route('cash.opening'), ['date' => $tuesday->toDateString(), 'opening_cash' => 90000])
+            ->assertSessionHas('success');
+        expect($cash->openingMismatches($branch->id, $tuesday))->toBeEmpty()
+            ->and($cash->openingMismatches($branch->id, $monday))->toBeEmpty();
+
+        // Si el día siguiente ya está cerrado, no se ofrece el botón: hay que reabrirlo.
+        $cash->close($branch->id, $tuesday, 85000, 0, null, $admin->id);
+        $cash->reopen(CashDay::whereDate('date', $monday->toDateString())->sole());
+        $cash->close($branch->id, $monday, 70000, 0, null, $admin->id);
+        $page($monday)->assertSee('ya está cerrado: para corregir su base hay que reabrirlo')->assertDontSee('como base de');
+    });
+
+    it('asks whether the money was refunded when cancelling a cash sale from an earlier day', function () {
         [$admin, $branch] = branchUser(admin: true);
         $product = stockedProduct($branch, 10, cost: 10000, price: 20000);
         $session = cashSession($branch);
 
         $this->travelTo(now()->subDays(2));
-        $sale = app(SaleService::class)->create($branch->id, $admin->id, null, 'Efectivo', [['id' => $product->id, 'quantity' => 1]])['sale'];
-        app(CashService::class)->close($branch->id, CarbonImmutable::today(), 20000, 0, null, $admin->id);
+        $refunded = app(SaleService::class)->create($branch->id, $admin->id, null, 'Efectivo', [['id' => $product->id, 'quantity' => 1]])['sale'];
+        $typo = app(SaleService::class)->create($branch->id, $admin->id, null, 'Efectivo', [['id' => $product->id, 'quantity' => 2]])['sale'];
+        app(CashService::class)->close($branch->id, CarbonImmutable::today(), 60000, 0, null, $admin->id);
+        $this->travelBack();
+        $todaySale = app(SaleService::class)->create($branch->id, $admin->id, null, 'Efectivo', [['id' => $product->id, 'quantity' => 1]])['sale'];
+
+        // El botón de anular pregunta solo en efectivo de un día anterior.
+        $this->actingAs($admin)->withSession($session)->get(route('sales.show', $refunded))->assertSee('data-confirm-choice="refunded"', false);
+        $this->actingAs($admin)->withSession($session)->get(route('sales.show', $todaySale))->assertDontSee('data-confirm-choice', false);
+
+        $cancel = fn (Sale $sale, array $data = []) => $this->actingAs($admin)->withSession($session)->post(route('sales.cancel', $sale), $data);
+
+        // Sin respuesta no se anula.
+        $cancel($refunded)->assertSessionHasErrors('refunded');
+        expect($refunded->fresh()->isCancelled())->toBeFalse();
+
+        $cancel($refunded, ['refunded' => '1'])->assertSessionHas('success', fn ($text) => str_contains($text, 'La devolución de $20.000 salió de la caja de hoy'));
+        $movement = CashMovement::sole();
+        expect($movement->type)->toBe(CashMovement::REFUND)
+            ->and($movement->sale_id)->toBe($refunded->id)
+            ->and((float) $movement->amount)->toBe(20000.0)
+            ->and($movement->cashDay->date->isToday())->toBeTrue();
+
+        // Error de digitación: anula sin tocar la caja.
+        $cancel($typo, ['refunded' => '0'])->assertSessionHas('success');
+        // Venta de hoy: deja de contar sola, no pregunta ni crea salida.
+        $cancel($todaySale)->assertSessionHas('success');
+        expect(CashMovement::count())->toBe(1);
+
+        // Base 60.000 (lo que quedó al cerrar) − devolución 20.000; la venta de hoy ya no suma.
+        expect(app(CashService::class)->summary($branch->id, CarbonImmutable::today())['cash']['expected'])->toBe(40000.0);
+
+        $this->actingAs($admin)->withSession($session)->get(route('cash.index'))
+            ->assertOk()->assertSee('Devoluciones a clientes')->assertSee('Venta ' . $refunded->displayNumber() . ' anulada');
+    });
+
+    it('records the refund of a cancelled receipt and refuses it once today’s cash is closed', function () {
+        [$admin, $branch] = branchUser(admin: true);
+        $session = cashSession($branch);
+
+        $this->travelTo(now()->subDay());
+        $first = app(InvoiceService::class)->generateFor(cashOrder($branch, 30000), 'Efectivo');
+        $second = app(InvoiceService::class)->generateFor(cashOrder($branch, 45000), 'Efectivo');
         $this->travelBack();
 
-        $this->actingAs($admin)->withSession($session)
-            ->post(route('sales.cancel', $sale))
-            ->assertSessionHas('success')
-            ->assertSessionHas('warning', fn ($text) => str_contains($text, "La venta #{$sale->id} era del") && str_contains($text, 'como un gasto'));
+        $this->actingAs($admin)->withSession($session)->get(route('invoices.show', $first))->assertSee('data-confirm-choice="refunded"', false);
+
+        $this->actingAs($admin)->withSession($session)->post(route('invoices.cancel', $first), ['refunded' => '1'])->assertSessionHas('success');
+        expect(CashMovement::sole())->invoice_id->toBe($first->id)->type->toBe(CashMovement::REFUND);
+
+        app(CashService::class)->close($branch->id, CarbonImmutable::today(), 0, 0, null, $admin->id);
+
+        // Con la caja de hoy cerrada la devolución no puede salir de ahí: no se anula nada.
+        $this->actingAs($admin)->withSession($session)->post(route('invoices.cancel', $second), ['refunded' => '1'])
+            ->assertSessionHas('error', fn ($text) => str_contains($text, 'Reábrela, o anula sin devolver plata'));
+        expect($second->fresh()->isCancelled())->toBeFalse()->and(CashMovement::count())->toBe(1);
+
+        $this->actingAs($admin)->withSession($session)->post(route('invoices.cancel', $second), ['refunded' => '0'])->assertSessionHas('success');
+        expect($second->fresh()->isCancelled())->toBeTrue();
     });
 });

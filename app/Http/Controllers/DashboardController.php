@@ -2,25 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\JobProduct;
 use App\Models\Mechanic;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\ServiceOrder;
-use App\Models\WorkshopJob;
 use App\Services\ReportService;
 use App\Support\BackupStatus;
-use Carbon\Carbon;
 use Carbon\CarbonImmutable;
-use Closure;
 
 class DashboardController extends Controller
 {
     public function index()
     {
         $branchId = $this->currentBranchId();
-        $todayStart = Carbon::today();
-        $monthStart = Carbon::now()->startOfMonth();
+        $monthStart = CarbonImmutable::now()->startOfMonth();
 
         $activeOrders = ServiceOrder::forBranch($branchId)
             ->whereNotIn('status', ['completed', 'cancelled'])
@@ -30,33 +25,11 @@ class DashboardController extends Controller
             ->where('status', 'in_progress')
             ->count();
 
-        $todaySales = Sale::forBranch($branchId)
-            ->where('status', '!=', 'anulada')
-            ->whereDate('sale_date', $todayStart)
-            ->sum('total_amount');
-
-        $todayServiceOrdersEarnings = $this->serviceOrdersIncome(function ($query) use ($todayStart, $branchId) {
-            $query
-                ->forBranch($branchId)
-                ->where('status', 'completed')
-                ->whereDate('completed_at', $todayStart);
-        });
-
-        $todayEarnings = $todaySales + $todayServiceOrdersEarnings;
-
-        $monthSales = Sale::forBranch($branchId)
-            ->where('status', '!=', 'anulada')
-            ->whereDate('sale_date', '>=', $monthStart)
-            ->sum('total_amount');
-
-        $monthServiceOrdersEarnings = $this->serviceOrdersIncome(function ($query) use ($monthStart, $branchId) {
-            $query
-                ->forBranch($branchId)
-                ->where('status', 'completed')
-                ->where('completed_at', '>=', $monthStart);
-        });
-
-        $monthEarnings = $monthSales + $monthServiceOrdersEarnings;
+        // Ventas + facturas vigentes: cuadra con «Cobrado hoy» y con la caja (decisión 13).
+        $reports = app(ReportService::class);
+        $today = CarbonImmutable::today();
+        $todayEarnings = $reports->income($branchId, $today, $today);
+        $monthEarnings = $reports->income($branchId, $today->startOfMonth(), $today);
 
         $recentSales = Sale::with(['saleProducts.product' => fn ($query) => $query->withTrashed(), 'user'])
             ->forBranch($branchId)
@@ -70,7 +43,7 @@ class DashboardController extends Controller
         $lowStockProducts = Product::forBranch($branchId)->whereRaw('stock <= min_stock')->get();
         $lowStockCount = $lowStockProducts->count();
 
-        $todayByMethod = app(ReportService::class)->paymentMethods($branchId, CarbonImmutable::today(), CarbonImmutable::today());
+        $todayByMethod = $reports->paymentMethods($branchId, $today, $today);
 
         $mechanics = Mechanic::forBranch($branchId)
             ->where('is_active', true)
@@ -106,18 +79,5 @@ class DashboardController extends Controller
             'todayByMethod',
             'mechanics'
         ));
-    }
-
-    /**
-     * Ingreso de ordenes (mano de obra + repuestos), igual al monto que se factura.
-     */
-    private function serviceOrdersIncome(Closure $orderScope): float
-    {
-        $jobIds = WorkshopJob::where('status', '!=', WorkshopJob::STATUS_CANCELLED)
-            ->whereHas('serviceOrder', $orderScope)
-            ->select('id');
-
-        return (float) WorkshopJob::whereIn('id', $jobIds)->sum('total_amount')
-            + (float) JobProduct::whereIn('job_id', $jobIds)->sum('total_price');
     }
 }

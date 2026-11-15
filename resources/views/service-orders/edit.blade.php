@@ -3,7 +3,12 @@
     @php
         $orderNumber = '#' . str_pad($serviceOrder->id, 4, '0', STR_PAD_LEFT);
         $selectedStatus = old('status', $serviceOrder->status);
-        $statusLabels = ['pending' => 'Pendiente', 'in_progress' => 'En progreso', 'completed' => 'Completada', 'cancelled' => 'Cancelada'];
+        // «Completada» solo aparece si ya lo está: una orden se completa generando su factura.
+        $statusLabels = array_filter(
+            ['pending' => 'Pendiente', 'in_progress' => 'En progreso', 'completed' => 'Completada', 'cancelled' => 'Cancelada'],
+            fn ($status) => $status !== 'completed' || $serviceOrder->status === 'completed',
+            ARRAY_FILTER_USE_KEY,
+        );
     @endphp
 
     <x-page-header :title="'Editar orden ' . $orderNumber"

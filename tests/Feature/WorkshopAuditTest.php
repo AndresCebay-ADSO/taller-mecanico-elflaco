@@ -24,3 +24,34 @@ it('validates the phone of a standalone job like the one of an order, so the ord
         ])
         ->assertSessionHasNoErrors();
 });
+
+it('completes an order only by generating its receipt', function () {
+    [$employee, $branch] = branchUser();
+    $order = cashOrder($branch, 40000); // trabajo completado, orden en progreso
+    $session = ['current_branch_id' => $branch->id];
+
+    $this->actingAs($employee)->withSession($session)->get(route('service-orders.edit', $order))
+        ->assertOk()->assertDontSee('<option value="completed"', false);
+
+    $this->actingAs($employee)->withSession($session)
+        ->from(route('service-orders.edit', $order))
+        ->put(route('service-orders.update', $order), [
+            'customer_name' => $order->customer_name, 'vehicle_info' => $order->vehicle_info,
+            'service_description' => $order->service_description, 'status' => 'completed',
+        ])
+        ->assertSessionHasErrors(['status' => 'La orden se completa al generar su factura, desde el detalle de la orden.']);
+    expect($order->fresh()->status)->toBe('in_progress');
+
+    $this->actingAs($employee)->withSession($session)
+        ->post(route('invoices.generate', $order), ['payment_method' => 'Efectivo']);
+    expect($order->fresh()->status)->toBe('completed');
+
+    // Ya completada, se puede seguir editando el cliente sin cambiar el estado.
+    $this->actingAs($employee)->withSession($session)
+        ->put(route('service-orders.update', $order), [
+            'customer_name' => 'Nombre corregido', 'vehicle_info' => $order->vehicle_info,
+            'service_description' => $order->service_description, 'status' => 'completed',
+        ])
+        ->assertSessionHasNoErrors();
+    expect($order->fresh()->customer_name)->toBe('Nombre corregido');
+});

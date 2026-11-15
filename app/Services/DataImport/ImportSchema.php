@@ -46,7 +46,6 @@ final class ImportSchema
             'fixed_mechanic' => 'Monto mecánico',
             'fixed_workshop' => 'Monto taller',
             'allow_products' => '¿Usa repuestos?',
-            'allow_custom_labor' => '¿Mano de obra variable?',
         ],
     ];
 

@@ -330,7 +330,6 @@ class WorkbookImporter
                 'fixed_mechanic_amount' => $calculation === 'fixed' ? $this->money($data['fixed_mechanic']) : null,
                 'fixed_workshop_amount' => $calculation === 'fixed' ? $this->money($data['fixed_workshop']) : null,
                 'allow_products' => $this->yesNo($data['allow_products']),
-                'allow_custom_labor' => $this->yesNo($data['allow_custom_labor']),
             ];
 
             if (! $this->validate($sheet, $row, $clean, [
@@ -341,8 +340,7 @@ class WorkbookImporter
                 'fixed_mechanic_amount' => 'nullable|required_if:calculation_type,fixed|numeric|min:0|max:99999999',
                 'fixed_workshop_amount' => 'nullable|required_if:calculation_type,fixed|numeric|min:0|max:99999999',
                 'allow_products' => 'required|boolean',
-                'allow_custom_labor' => 'required|boolean',
-            ], $report, ['calculation_type' => 'Cálculo', 'mechanic_percentage' => '% mecánico', 'fixed_mechanic_amount' => 'Monto mecánico', 'fixed_workshop_amount' => 'Monto taller', 'allow_products' => '¿Usa repuestos?', 'allow_custom_labor' => '¿Mano de obra variable?'])) {
+            ], $report, ['calculation_type' => 'Cálculo', 'mechanic_percentage' => '% mecánico', 'fixed_mechanic_amount' => 'Monto mecánico', 'fixed_workshop_amount' => 'Monto taller', 'allow_products' => '¿Usa repuestos?'])) {
                 continue;
             }
 

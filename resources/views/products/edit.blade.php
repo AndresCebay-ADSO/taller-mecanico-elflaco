@@ -29,7 +29,13 @@
 
         <x-card title="Precios y stock">
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <x-input label="Precio de compra" name="purchase_price" is-money required :value="(int) $product->purchase_price" />
+                {{-- Solo lectura: el costo nace de las compras (decisión 6). --}}
+                <div class="ds space-y-1.5">
+                    <label for="reference-cost" class="block text-sm font-medium">Costo de referencia</label>
+                    <input id="reference-cost" type="text" value="{{ money($product->purchase_price) }}" readonly
+                           class="block h-10 w-full cursor-not-allowed rounded-md border border-border bg-muted px-3 text-sm tabular-nums text-muted-foreground">
+                    <p class="text-xs text-muted-foreground">Es el costo de la última compra y cambia solo con las compras. Para corregir una compra, usa «Corregir lote» en Trazabilidad.</p>
+                </div>
                 <x-input label="Precio de venta" name="sale_price" is-money required :value="(int) $product->sale_price"
                          help="Si lo cambias, las unidades que ya hay en inventario se venden al precio nuevo." />
                 <div class="ds space-y-1.5">

@@ -125,6 +125,41 @@ class CashService
         return $previous ? (float) $previous->cashLeft() : 0.0;
     }
 
+    /**
+     * Días cuya base no coincide con lo que quedó al cerrar el día anterior (decisión 3), vistos desde `$date`:
+     * como día siguiente (su base) y como día cerrado (la base del día que sigue). Pasa cuando se reabre y se vuelve
+     * a cerrar un día después de empezar el siguiente, o cuando se cierra tarde. No se corrige sola: se avisa.
+     *
+     * @return Collection<int, array{previous: CashDay, next: CashDay, left: float}>
+     */
+    public function openingMismatches(int $branchId, CarbonImmutable $date): Collection
+    {
+        $mismatch = function (?CashDay $previous, ?CashDay $next): ?array {
+            if (!$previous || !$next || abs((float) $next->opening_cash - $previous->cashLeft()) < 0.5) {
+                return null;
+            }
+
+            return ['previous' => $previous, 'next' => $next, 'left' => $previous->cashLeft()];
+        };
+
+        $day = $this->find($branchId, $date);
+        if (!$day) {
+            return collect();
+        }
+
+        $previous = CashDay::where('branch_id', $branchId)
+            ->whereNotNull('closed_at')
+            ->where('date', '<', $date->toDateString())
+            ->orderByDesc('date')
+            ->first();
+
+        $next = $day->isClosed()
+            ? CashDay::where('branch_id', $branchId)->where('date', '>', $date->toDateString())->orderBy('date')->first()
+            : null;
+
+        return collect([$mismatch($previous, $day), $mismatch($day->isClosed() ? $day : null, $next)])->filter()->values();
+    }
+
     public function setOpening(int $branchId, CarbonImmutable $date, float $amount): CashDay
     {
         return DB::transaction(function () use ($branchId, $date, $amount) {
@@ -216,24 +251,71 @@ class CashService
         });
     }
 
-    /**
-     * Aviso para cuando una venta o comprobante en efectivo cambia la caja de un día ya cerrado.
-     * `$label`: «La venta», «El comprobante FAC-000012»… Devuelve null si no hace falta avisar.
-     */
-    public function closedDayNotice(int $branchId, CarbonInterface $date, ?string $paymentMethod, string $label, bool $cancelled): ?string
+    public function closedToday(int $branchId): bool
     {
-        if ($paymentMethod !== PaymentMethod::CASH) {
-            return null;
+        return (bool) $this->find($branchId, CarbonImmutable::today())?->isClosed();
+    }
+
+    /**
+     * Con la caja de hoy cerrada no se reciben pagos en efectivo (decisión 1): se anotan en el cuaderno y se
+     * registran mañana, con la plata guardada en el cajón. Los demás métodos no tocan el cajón y sí se aceptan.
+     *
+     * @throws BusinessRuleException
+     */
+    public function ensureCashAccepted(int $branchId, string $paymentMethod): void
+    {
+        if ($paymentMethod === PaymentMethod::CASH && $this->closedToday($branchId)) {
+            throw new BusinessRuleException(self::CLOSED_TODAY_MESSAGE, 'payment_method');
+        }
+    }
+
+    public const CLOSED_TODAY_MESSAGE = 'La caja de hoy ya se cerró, así que no se reciben pagos en efectivo. '
+        . 'Anótalo en el cuaderno, deja la plata en el cajón y regístralo mañana. '
+        . 'Si necesitas registrarlo hoy, reabre la caja.';
+
+    /**
+     * Devolución a cliente al anular una venta o factura en efectivo de un día anterior (decisión 2):
+     * sale de la caja de hoy, ligada al documento anulado. Se llama en la misma transacción que la anulación.
+     *
+     * @throws BusinessRuleException si la caja de hoy ya está cerrada
+     */
+    public function recordRefund(int $branchId, Sale|Invoice $document, ?int $userId): CashMovement
+    {
+        if ($this->closedToday($branchId)) {
+            throw new BusinessRuleException(
+                'La caja de hoy ya está cerrada, así que no puede salir de ahí la devolución. '
+                . 'Reábrela, o anula sin devolver plata.',
+                'refunded'
+            );
         }
 
-        $day = $this->find($branchId, CarbonImmutable::parse($date)->startOfDay());
-        if (!$day?->isClosed()) {
-            return null;
-        }
+        $isSale = $document instanceof Sale;
 
-        if ($cancelled && !$day->date->isToday()) {
-            return $label . ' era del ' . $day->date->format('d/m/Y') . ' y esa caja ya se cerró. '
-                . 'Si hoy le devolviste la plata al cliente, regístralo en Caja como un gasto para que la caja de hoy cuadre.';
+        return DB::transaction(function () use ($branchId, $document, $isSale, $userId) {
+            $day = $this->openDayForUpdate($branchId, CarbonImmutable::today());
+
+            return $day->movements()->create([
+                'type' => CashMovement::REFUND,
+                'concept' => $isSale
+                    ? 'Venta ' . $document->displayNumber() . ' anulada'
+                    : 'Factura ' . $document->invoice_number . ' anulada',
+                'amount' => $isSale ? $document->total_amount : $document->amount,
+                'payment_method' => PaymentMethod::CASH,
+                'sale_id' => $isSale ? $document->id : null,
+                'invoice_id' => $isSale ? null : $document->id,
+                'user_id' => $userId,
+            ]);
+        });
+    }
+
+    /**
+     * Aviso al anular una venta o comprobante en efectivo de hoy con la caja de hoy ya cerrada.
+     * Los de días anteriores no avisan: preguntan si se devolvió la plata (decisión 2).
+     */
+    public function closedDayNotice(int $branchId, CarbonInterface $date, ?string $paymentMethod): ?string
+    {
+        if ($paymentMethod !== PaymentMethod::CASH || !$date->isToday() || !$this->closedToday($branchId)) {
+            return null;
         }
 
         return 'La caja de hoy ya estaba cerrada y esto cambia el efectivo que debe haber. Hay que reabrir la caja y cerrarla de nuevo.';

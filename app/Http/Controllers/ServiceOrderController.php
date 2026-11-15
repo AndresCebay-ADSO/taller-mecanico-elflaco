@@ -8,7 +8,7 @@ use Illuminate\Support\Arr;
 use App\Models\Mechanic;
 use App\Models\ServiceOrder;
 use App\Models\JobType;
-use App\Models\WorkshopJob;
+use App\Services\CashService;
 use App\Services\InventoryService;
 use App\Services\WorkshopJobService;
 
@@ -106,7 +106,7 @@ class ServiceOrderController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(ServiceOrder $serviceOrder, InventoryService $inventoryService)
+    public function show(ServiceOrder $serviceOrder, InventoryService $inventoryService, CashService $cashService)
     {
         $this->ensureCurrentBranch($serviceOrder->branch_id);
         $branchId = $serviceOrder->branch_id;
@@ -118,10 +118,11 @@ class ServiceOrderController extends Controller
         $mechanics = Mechanic::forBranch($branchId)->where('is_active', true)->orderBy('name')->get();
         $jobTypes = JobType::where('is_active', true)->orderBy('name')->get();
         $products = $inventoryService->sellableProducts($branchId);
+        $cashClosed = $cashService->closedToday($branchId);
 
         return view(
             'service-orders.show',
-            compact('serviceOrder', 'mechanics', 'jobTypes', 'products')
+            compact('serviceOrder', 'mechanics', 'jobTypes', 'products', 'cashClosed')
         );
     }
 
@@ -160,14 +161,11 @@ class ServiceOrderController extends Controller
             ])->withInput();
         }
 
+        // Una orden solo se completa generando su factura: así ningún cobro queda fuera de la caja (decisión 12).
         if ($statusChanges && $newStatus === ServiceOrder::STATUS_COMPLETED) {
-            $jobs = $serviceOrder->workshopJobs()->where('status', '!=', WorkshopJob::STATUS_CANCELLED)->get();
-
-            if ($jobs->isEmpty() || $jobs->contains(fn (WorkshopJob $job) => $job->status !== WorkshopJob::STATUS_COMPLETED)) {
-                return back()->withErrors([
-                    'status' => 'Completa todos los trabajos de la orden antes de cerrarla (al generar la factura se cierra automáticamente).',
-                ])->withInput();
-            }
+            return back()->withErrors([
+                'status' => 'La orden se completa al generar su factura, desde el detalle de la orden.',
+            ])->withInput();
         }
 
         $details = Arr::except($validated, ['status']);

@@ -2,6 +2,10 @@
 <div class="ds mx-auto max-w-4xl">
     <x-page-header title="Nueva venta" subtitle="Venta de mostrador de repuestos o productos" />
 
+    @if($cashClosed)
+        <div class="mb-6"><x-alert type="warning" message="La caja de hoy ya se cerró: no se reciben pagos en efectivo. Si te pagan en efectivo, anótalo en el cuaderno, deja la plata en el cajón y regístralo mañana. Nequi, transferencia y los demás métodos sí se pueden registrar." /></div>
+    @endif
+
     @php
         $oldItems = collect(old('products', []))
             ->filter(fn ($item) => is_array($item))

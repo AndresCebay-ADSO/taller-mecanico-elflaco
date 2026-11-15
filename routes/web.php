@@ -32,7 +32,6 @@ Route::get('/', function () {
 Route::middleware(['auth', 'auth.session'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/reports', [ReportController::class, 'index'])->name('reports');
 
     // Perfil propio
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -41,19 +40,14 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
     // Cambiar sucursal activa
     Route::post('switch-branch', [BranchController::class, 'switch'])->name('switch-branch');
 
-    // Gestión de Inventario (Traceability)
-    Route::prefix('inventory')->name('inventory.')->group(function () {
-        Route::get('/', [InventoryController::class, 'index'])->name('index');
-        Route::get('/purchase', [InventoryController::class, 'createPurchase'])->name('purchase');
-        Route::post('/purchase', [InventoryController::class, 'storePurchase'])->name('store-purchase');
-    });
-
-    Route::resource('products', ProductController::class)->except(['destroy']);
+    // El empleado ve productos con su precio y stock; no ve costos ni los cambia (decisiones 7, 9 y 14).
+    // Numérico: «products/create» (de administrador, más abajo) no se confunde con un producto.
+    Route::resource('products', ProductController::class)->only(['index', 'show'])->where(['product' => '[0-9]+']);
     Route::resource('suppliers', SupplierController::class)->only(['index', 'store', 'update']);
     Route::resource('mechanics', MechanicController::class)->except(['show', 'destroy']);
 
     // Órdenes y trabajos
-    Route::resource('service-orders', ServiceOrderController::class);
+    Route::resource('service-orders', ServiceOrderController::class)->except(['destroy']);
     Route::post('/service-orders/{serviceOrder}/jobs', [WorkshopJobController::class, 'store'])->name('service-orders.jobs.store');
     Route::get('jobs', [WorkshopJobController::class, 'index'])->name('jobs.index');
     Route::post('jobs/store-standalone', [WorkshopJobController::class, 'storeStandalone'])->name('jobs.store_individual');
@@ -82,6 +76,17 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
 
     // ─── Solo Administradores: acciones que alteran dinero, stock o permisos ──
     Route::middleware('admin')->group(function () {
+        // Costos, precios y ganancias: compras, trazabilidad por lotes, productos y reportes (decisiones 7 y 14).
+        Route::get('/reports', [ReportController::class, 'index'])->name('reports');
+        Route::prefix('inventory')->name('inventory.')->group(function () {
+            Route::get('/', [InventoryController::class, 'index'])->name('index');
+            Route::get('/purchase', [InventoryController::class, 'createPurchase'])->name('purchase');
+            Route::post('/purchase', [InventoryController::class, 'storePurchase'])->name('store-purchase');
+        });
+        Route::resource('products', ProductController::class)->only(['create', 'store', 'edit', 'update']);
+        // Eliminar una orden borra su registro: solo administrador (decisión 9).
+        Route::delete('service-orders/{serviceOrder}', [ServiceOrderController::class, 'destroy'])->name('service-orders.destroy');
+
         Route::get('inventory/adjustment', [InventoryController::class, 'createAdjustment'])->name('inventory.adjustment');
         Route::post('inventory/adjustment', [InventoryController::class, 'storeAdjustment'])->name('inventory.store-adjustment');
         Route::patch('batches/{batch}', [BatchController::class, 'update'])->name('batches.update');

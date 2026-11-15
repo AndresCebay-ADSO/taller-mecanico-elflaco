@@ -12,6 +12,7 @@
                       data-confirm="¿Anular la venta {{ $sale->displayNumber() }}?"
                       data-confirm-description="Los productos vuelven al inventario. La venta queda registrada como anulada."
                       data-confirm-label="Anular venta"
+                      @include('cash.partials.refund-question', ['document' => $sale, 'amount' => $sale->total_amount])
                       data-confirm-destructive>
                     @csrf
                     <x-button type="submit" variant="secondary" class="!text-destructive-text">Anular</x-button>
@@ -68,7 +69,9 @@
             </dl>
             <p class="no-print mt-5 border-t border-border pt-4 text-xs text-muted-foreground">
                 El stock se descontó de los lotes más antiguos.
-                <a href="{{ route('inventory.index') }}" class="font-medium text-primary hover:underline">Ver trazabilidad</a>
+                @can('admin')
+                    <a href="{{ route('inventory.index') }}" class="font-medium text-primary hover:underline">Ver trazabilidad</a>
+                @endcan
             </p>
         </x-card>
     </div>

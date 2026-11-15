@@ -1,8 +1,8 @@
 @php
     $order = $invoice->serviceOrder;
-    $jobs = $order->workshopJobs->where('status', '!=', 'cancelled');
-    $laborTotal = $jobs->sum('total_amount');
-    $partsTotal = $jobs->sum(fn ($job) => $job->jobProducts->sum('total_price'));
+    $lines = $invoice->lineItems();
+    $laborTotal = $lines->sum('labor');
+    $partsTotal = $lines->sum(fn ($line) => collect($line['parts'])->sum('total_price'));
     $orderNumber = '#' . str_pad($order->id, 4, '0', STR_PAD_LEFT);
 @endphp
 
@@ -20,8 +20,9 @@
                 @if(! $invoice->isCancelled() && auth()->user()->can('admin'))
                     <form action="{{ route('invoices.cancel', $invoice) }}" method="POST"
                           data-confirm="¿Anular la factura {{ $invoice->invoice_number }}?"
-                          data-confirm-description="Queda registrada como anulada y la orden se puede facturar de nuevo con el siguiente número."
+                          data-confirm-description="Queda registrada como anulada. La orden vuelve a «En progreso» para corregirla y facturarla de nuevo con el siguiente número."
                           data-confirm-label="Anular factura"
+                          @include('cash.partials.refund-question', ['document' => $invoice, 'amount' => $invoice->amount])
                           data-confirm-destructive>
                         @csrf
                         <x-button type="submit" variant="secondary" class="!text-destructive-text">Anular</x-button>
@@ -92,7 +93,7 @@
         </section>
 
         <div class="overflow-x-auto py-6">
-            <x-document.job-lines :jobs="$jobs" />
+            <x-document.job-lines :lines="$lines" />
         </div>
 
         <div class="flex justify-end border-t border-border pt-6">

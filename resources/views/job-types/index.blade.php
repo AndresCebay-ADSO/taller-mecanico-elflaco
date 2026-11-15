@@ -30,7 +30,7 @@
                             @endif
                         </td>
                         <td class="px-4 py-3 text-xs text-muted-foreground">
-                            {{ collect([$type->allow_custom_labor ? 'Mano de obra variable' : null, $type->allow_products ? 'Usa repuestos' : null])->filter()->join(' · ') ?: '—' }}
+                            {{ $type->allow_products ? 'Usa repuestos' : '—' }}
                         </td>
                         <td class="px-4 py-3"><x-active-badge :active="$type->is_active" /></td>
                         <td class="whitespace-nowrap px-4 py-2 text-right">
