@@ -69,7 +69,9 @@
             </dl>
             <p class="no-print mt-5 border-t border-border pt-4 text-xs text-muted-foreground">
                 El stock se descontó de los lotes más antiguos.
-                <a href="{{ route('inventory.index') }}" class="font-medium text-primary hover:underline">Ver trazabilidad</a>
+                @can('admin')
+                    <a href="{{ route('inventory.index') }}" class="font-medium text-primary hover:underline">Ver trazabilidad</a>
+                @endcan
             </p>
         </x-card>
     </div>

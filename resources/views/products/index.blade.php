@@ -2,8 +2,10 @@
 <div class="ds">
     <x-page-header title="Inventario" subtitle="Productos, precios y stock de la sucursal">
         <x-slot name="actions">
-            <x-button variant="secondary" href="{{ route('inventory.purchase') }}">Registrar compra</x-button>
-            <x-button href="{{ route('products.create') }}">Nuevo producto</x-button>
+            @can('admin')
+                <x-button variant="secondary" href="{{ route('inventory.purchase') }}">Registrar compra</x-button>
+                <x-button href="{{ route('products.create') }}">Nuevo producto</x-button>
+            @endcan
         </x-slot>
     </x-page-header>
 
@@ -25,7 +27,14 @@
 
     <x-card flush>
         @if($products->isNotEmpty())
-            <x-table :headers="['Producto', 'Proveedor', ['label' => 'Costo', 'align' => 'right'], ['label' => 'Venta', 'align' => 'right'], ['label' => 'Margen', 'align' => 'right'], ['label' => 'Stock', 'align' => 'right'], ['label' => '', 'align' => 'right']]">
+            @php
+                // El empleado no ve costos ni márgenes (decisión 7).
+                $isAdmin = auth()->user()->can('admin');
+                $headers = $isAdmin
+                    ? ['Producto', 'Proveedor', ['label' => 'Costo', 'align' => 'right'], ['label' => 'Venta', 'align' => 'right'], ['label' => 'Margen', 'align' => 'right'], ['label' => 'Stock', 'align' => 'right'], ['label' => '', 'align' => 'right']]
+                    : ['Producto', 'Proveedor', ['label' => 'Venta', 'align' => 'right'], ['label' => 'Stock', 'align' => 'right']];
+            @endphp
+            <x-table :headers="$headers">
                 @foreach($products as $product)
                     @php
                         $profit = $product->sale_price - $product->purchase_price;
@@ -46,14 +55,18 @@
                         <td class="max-w-48 truncate px-4 py-3 text-muted-foreground" title="{{ $product->suppliers->pluck('name')->join(', ') }}">
                             {{ $product->suppliers->pluck('name')->join(', ') ?: '—' }}
                         </td>
-                        <td class="whitespace-nowrap px-4 py-3 text-right tabular-nums text-muted-foreground">{{ money($product->purchase_price) }}</td>
+                        @if($isAdmin)
+                            <td class="whitespace-nowrap px-4 py-3 text-right tabular-nums text-muted-foreground">{{ money($product->purchase_price) }}</td>
+                        @endif
                         <td class="whitespace-nowrap px-4 py-3 text-right font-medium tabular-nums">{{ money($product->sale_price) }}</td>
-                        <td class="whitespace-nowrap px-4 py-3 text-right tabular-nums">
-                            {{ money($profit) }}
-                            @if($profitPercent !== null)
-                                <span class="text-xs text-muted-foreground">({{ $profitPercent }} %)</span>
-                            @endif
-                        </td>
+                        @if($isAdmin)
+                            <td class="whitespace-nowrap px-4 py-3 text-right tabular-nums">
+                                {{ money($profit) }}
+                                @if($profitPercent !== null)
+                                    <span class="text-xs text-muted-foreground">({{ $profitPercent }} %)</span>
+                                @endif
+                            </td>
+                        @endif
                         <td class="whitespace-nowrap px-4 py-3 text-right">
                             @if($product->trashed() || ! $product->isLowStock())
                                 <span class="tabular-nums">{{ $product->stock }}</span>
@@ -63,6 +76,7 @@
                                 </x-status-badge>
                             @endif
                         </td>
+                        @if($isAdmin)
                         <td class="whitespace-nowrap px-4 py-2 text-right">
                             <div class="flex items-center justify-end gap-1">
                                 @if($product->trashed())
@@ -95,6 +109,7 @@
                                 @endif
                             </div>
                         </td>
+                        @endif
                     </tr>
                 @endforeach
             </x-table>
@@ -102,9 +117,9 @@
             <div class="p-5">
                 <x-empty-state icon="package">
                     {{ request()->except('page') ? 'Ningún producto coincide con la búsqueda.' : 'Aún no hay productos en el inventario.' }}
-                    @unless(request()->except('page'))
+                    @if(! request()->except('page') && auth()->user()->can('admin'))
                         <x-slot name="action"><x-button href="{{ route('products.create') }}">Nuevo producto</x-button></x-slot>
-                    @endunless
+                    @endif
                 </x-empty-state>
             </div>
         @endif

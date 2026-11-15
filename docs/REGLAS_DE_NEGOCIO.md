@@ -11,13 +11,18 @@ Actualizado: 2026-11-14 (v1.1.0 en preparación).
 - Hay dos tipos de usuario: **administrador** y **empleado**. Hoy solo la dueña usa el sistema, como administradora.
 - Solo el administrador puede hacer lo que cambia plata, inventario o permisos:
   - anular ventas y facturas;
+  - **crear y editar productos (precios incluidos), registrar compras, ver costos, márgenes y la trazabilidad por
+    lotes (decidido, 7);**
+  - **eliminar órdenes (decidido, 9);**
+  - **ver Reportes y las comisiones del mes en el inicio (decidido, 14);**
   - hacer ajustes de inventario y corregir lotes;
   - desactivar o restaurar productos, desactivar proveedores, borrar mecánicos;
   - borrar movimientos de caja y reabrir una caja cerrada;
   - manejar usuarios, tipos de trabajo, configuración, sucursales y transferencias;
   - importar datos desde Excel.
-- El empleado puede vender, crear órdenes y trabajos, facturar, registrar compras, usar la caja, editar productos
-  (con precios) y ver Reportes completos (ver pendientes 7, 9 y 14).
+- El empleado puede vender, recibir motos (órdenes), crear y terminar trabajos, facturar, usar la caja (incluido
+  pagar comisiones) y ver los productos con su precio de venta y stock. No ve costos ni ganancias: cobra al precio que
+  pone la dueña.
 - Un usuario desactivado no puede entrar; si estaba adentro, lo saca en su siguiente clic.
 - Cambiar la contraseña cierra las otras sesiones abiertas de ese usuario.
 - Contraseña olvidada: `php artisan taller:restablecer-clave correo@ejemplo.com` genera una nueva.
@@ -55,7 +60,7 @@ Actualizado: 2026-11-14 (v1.1.0 en preparación).
 - Cancelar una orden devuelve al inventario los repuestos de sus trabajos. No se puede si ya tiene trabajos
   completados: hay que facturarla o eliminar esos trabajos primero.
 - Eliminar un trabajo devuelve sus repuestos. No se puede si la orden tiene una factura vigente.
-- Una orden solo se puede eliminar si no tiene trabajos; si los tiene, se cancela.
+- Una orden solo se puede eliminar si no tiene trabajos, y solo el administrador; si tiene trabajos, se cancela.
 - «Trabajo individual» crea por debajo una orden con ese único trabajo.
 - Comisión del mecánico, según el tipo de trabajo:
   - **por porcentaje:** la mano de obra se reparte entre mecánico y taller con los porcentajes del tipo;
@@ -148,8 +153,6 @@ Actualizado: 2026-11-14 (v1.1.0 en preparación).
 Detalle en `docs/AUDITORIA_DECISIONES.md`.
 
 - **6.** Cambiar el precio de compra en el producto no cambia el costo de los lotes.
-- **7 y 14.** Los empleados editan precios, ven costos y ven Reportes completos.
 - **8.** Cómo se encuentra el producto de destino en una transferencia.
-- **9.** Los empleados pueden eliminar órdenes sin trabajos.
 - **10.** «Mano de obra variable» y «total fijo por porcentaje» de los tipos de trabajo no hacen nada.
 - **15.** ¿Cifrar los respaldos de Google Drive?

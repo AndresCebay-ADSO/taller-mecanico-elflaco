@@ -45,12 +45,16 @@ Estado: **pendiente de revisar** salvo que diga otra cosa.
 7. **Los empleados pueden editar productos, incluidos los precios,** y ver los costos en Inventario. Solo
    borrar productos, ajustes y correcciones de lote son de administrador. Hoy da igual (solo ella usa el
    sistema), pero importa si algún día hay empleados con usuario.
+   **Decidido (2026-11-14, junto con 9 y 14): cerrarlo ahora.** Productos (crear y editar), compras, trazabilidad
+   por lotes y Reportes son de administrador. El empleado ve los productos con su precio de venta y stock, sin costo
+   ni margen.
 8. **Transferencias entre sucursales:** el producto de destino se busca por código (o por nombre y categoría si
    no tiene código). Si no existe, se crea uno nuevo con los mismos datos.
 
 ## Órdenes y trabajos (módulo 4)
 
 9. **Los empleados pueden eliminar órdenes sin trabajos** (las que tienen trabajos solo se cancelan).
+   **Decidido (2026-11-14): solo el administrador elimina órdenes.** El empleado las cancela.
 10. **La opción «Mano de obra variable» de los tipos de trabajo no hace nada.** Se guarda, pero el valor de la mano
     de obra siempre se escribe en cada trabajo (salvo en los tipos de monto fijo, donde se usa el monto fijo). El
     campo «total fijo por porcentaje» tampoco se usa. ¿Quitar la opción o hacer que funcione (valor fijo no editable)?
@@ -80,6 +84,8 @@ Estado: **pendiente de revisar** salvo que diga otra cosa.
     la caja). En Reportes, «Órdenes entregadas» pasó a «Órdenes facturadas».
 14. **Los empleados ven Reportes completos:** utilidad, comisiones de cada mecánico y valor del inventario al costo.
     Igual que el punto 7: hoy da igual, importa si algún día hay empleados con usuario.
+    **Decidido (2026-11-14): Reportes solo de administrador.** En el inicio, el empleado tampoco ve «Comisiones del
+    mes». En Caja sí ve las comisiones por pagar, porque las paga desde ahí.
 
 ## Respaldos y servidor (módulo 8)
 

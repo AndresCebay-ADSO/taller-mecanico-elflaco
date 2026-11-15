@@ -78,9 +78,11 @@
             Inventario
         </x-sidebar-link>
 
-        <x-sidebar-link href="{{ route('inventory.index') }}" icon="history" :active="request()->routeIs('inventory*')">
-            Trazabilidad
-        </x-sidebar-link>
+        @can('admin')
+            <x-sidebar-link href="{{ route('inventory.index') }}" icon="history" :active="request()->routeIs('inventory*')">
+                Trazabilidad
+            </x-sidebar-link>
+        @endcan
 
         <x-sidebar-link href="{{ route('mechanics.index') }}" icon="users" :active="request()->routeIs('mechanics*')">
             Mecánicos
@@ -90,9 +92,11 @@
             Proveedores
         </x-sidebar-link>
 
-        <x-sidebar-link href="{{ route('reports') }}" icon="bar-chart-3" :active="request()->routeIs('reports')">
-            Reportes
-        </x-sidebar-link>
+        @can('admin')
+            <x-sidebar-link href="{{ route('reports') }}" icon="bar-chart-3" :active="request()->routeIs('reports')">
+                Reportes
+            </x-sidebar-link>
+        @endcan
 
         @can('admin')
             <p class="px-3 pb-1 pt-5 text-xs font-medium text-sidebar-foreground/70">Administración</p>

@@ -4,7 +4,7 @@ use App\Models\Product;
 use App\Models\Supplier;
 
 it('does not allow direct stock changes from the product edit endpoint', function () {
-    [$user, $branch] = branchUser();
+    [$user, $branch] = branchUser(admin: true);
 
     $supplier = Supplier::create([
         'name' => 'Proveedor Central',
