@@ -3,7 +3,7 @@
 Cómo se comporta el sistema y por qué, módulo por módulo. Sirve para explicarle el sistema al taller y para
 recordar qué es intencional. Las marcadas **(decidido, N)** salieron de la revisión de `docs/AUDITORIA_DECISIONES.md`.
 
-Actualizado: 2026-11-14 (v1.1.0 en preparación).
+Actualizado: 2026-11-15 (v1.2.0 y la revisión externa previa a la instalación).
 
 ## Usuarios y permisos
 
@@ -145,10 +145,18 @@ Actualizado: 2026-11-14 (v1.1.0 en preparación).
 
 - Respaldo automático todos los días a las 7:00 p. m.: un .zip con la base de datos y el logo.
 - Se copia a la carpeta de Google Drive y se guarda una copia en el portátil durante 30 días.
-- Si el último respaldo tiene más de 3 días, el inicio se lo avisa al administrador.
+- Si el último respaldo tiene más de 3 días, el inicio se lo avisa al administrador. Lo revisa en el portátil **y en
+  Google Drive**: si Drive deja de recibirlos (cerrado, sin internet), también avisa, porque si el portátil se pierde
+  solo quedan los de la nube.
 - Los respaldos van sin cifrar **(decidido, 15)**: una clave perdida dejaría inservibles todos los respaldos. Lo que
   los protege es la cuenta de Google donde quedan.
-- Para restaurar se usa `restaurar.bat`, con el sistema sin uso (no lo pone en mantenimiento).
+- Para restaurar se usa `restaurar.bat`: guarda primero un respaldo del estado actual, pone el sistema en
+  mantenimiento, reemplaza toda la base por la del respaldo y lo vuelve a abrir. Para practicar sin tocar los datos
+  reales hay un modo práctica (guía de instalación, §6).
+- **Sesión:** dura 12 horas sin uso. Si vence con un formulario abierto, al guardar vuelve al formulario con lo escrito
+  y un aviso para guardar de nuevo.
+- Mientras el NIT, teléfono, correo o dirección del taller sigan siendo los de ejemplo, el inicio lo avisa: salen en
+  todos los comprobantes.
 - Para actualizar se usa `actualizar.bat`: hace un respaldo, baja la versión nueva y aplica los cambios de la base.
 - Importar desde Excel (administrador): primero se revisa y después se confirma. Máximo 5.000 filas por hoja. El
   stock entra como primer lote.
