@@ -22,6 +22,7 @@
                           data-confirm="¿Anular la factura {{ $invoice->invoice_number }}?"
                           data-confirm-description="Queda registrada como anulada y la orden se puede facturar de nuevo con el siguiente número."
                           data-confirm-label="Anular factura"
+                          @include('cash.partials.refund-question', ['document' => $invoice, 'amount' => $invoice->amount])
                           data-confirm-destructive>
                         @csrf
                         <x-button type="submit" variant="secondary" class="!text-destructive-text">Anular</x-button>

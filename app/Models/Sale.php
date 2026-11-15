@@ -68,6 +68,14 @@ class Sale extends Model
     }
 
     /** Número visible de la venta: #S0042. */
+    /** Al anularla se pregunta si se devolvió la plata: efectivo de un día anterior (decisión 2). */
+    public function asksForRefund(): bool
+    {
+        return !$this->isCancelled()
+            && $this->payment_method === \App\Support\PaymentMethod::CASH
+            && $this->sale_date->lt(today());
+    }
+
     public function displayNumber(): string
     {
         return '#S' . str_pad((string) $this->id, 4, '0', STR_PAD_LEFT);

@@ -12,6 +12,7 @@
         CashMovement::MECHANIC_PAYMENT => 'Pagos a mecánicos',
         CashMovement::PURCHASE => 'Compras de repuestos',
         CashMovement::WITHDRAWAL => 'Retiros',
+        CashMovement::REFUND => 'Devoluciones a clientes',
     ];
     $isAdmin = auth()->user()->can('admin');
 @endphp
@@ -192,7 +193,11 @@
                                     @if(! $isClosed && $isAdmin)
                                         <form method="POST" action="{{ route('cash.movements.destroy', $movement) }}"
                                               data-confirm="¿Eliminar «{{ $movement->concept }}»?"
-                                              data-confirm-description="{{ $movement->batch_id ? 'Solo se quita de la caja: la compra sigue registrada en el inventario.' : 'Deja de contar en la caja de este día.' }}"
+                                              data-confirm-description="{{ match (true) {
+                                                  $movement->batch_id !== null => 'Solo se quita de la caja: la compra sigue registrada en el inventario.',
+                                                  $movement->isLinked() => 'Solo se quita de la caja: el documento sigue anulado.',
+                                                  default => 'Deja de contar en la caja de este día.',
+                                              } }}"
                                               data-confirm-label="Eliminar"
                                               data-confirm-destructive>
                                             @csrf

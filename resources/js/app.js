@@ -184,6 +184,7 @@ Alpine.data('jobForm', ({ products, jobTypes, old = {} }) => ({
 /**
  * Diálogo de confirmación de la app (<x-confirm-dialog>), en lugar de window.confirm().
  * Un <form data-confirm="…"> se detiene al enviarse, pregunta y, si se acepta, se reenvía.
+ * Con data-confirm-choice="campo" además pide responder sí o no; la respuesta viaja en ese campo (1 o 0).
  */
 Alpine.data('confirmDialog', () => ({
     open: false,
@@ -193,6 +194,8 @@ Alpine.data('confirmDialog', () => ({
     destructive: false,
     form: null,
     submitter: null,
+    choice: null,
+    choiceValue: null,
 
     ask({ form, submitter }) {
         this.form = form;
@@ -201,6 +204,14 @@ Alpine.data('confirmDialog', () => ({
         this.description = form.dataset.confirmDescription ?? '';
         this.confirmLabel = form.dataset.confirmLabel ?? 'Confirmar';
         this.destructive = form.hasAttribute('data-confirm-destructive');
+        this.choice = form.dataset.confirmChoice ? {
+            name: form.dataset.confirmChoice,
+            question: form.dataset.confirmChoiceQuestion ?? '',
+            yes: form.dataset.confirmChoiceYes ?? 'Sí',
+            no: form.dataset.confirmChoiceNo ?? 'No',
+        } : null;
+        // Sin respuesta marcada: hay que elegir a conciencia.
+        this.choiceValue = null;
         this.open = true;
         // Foco en «Cancelar»: Enter por accidente no anula nada.
         this.$nextTick(() => this.$refs.cancelButton?.focus());
@@ -209,12 +220,26 @@ Alpine.data('confirmDialog', () => ({
         this.open = false;
         this.form = null;
     },
+    get needsChoice() {
+        return this.choice !== null && this.choiceValue === null;
+    },
     accept() {
+        if (this.needsChoice) return;
         const form = this.form;
         const submitter = this.submitter;
         this.open = false;
         this.form = null;
         if (!form) return;
+        if (this.choice) {
+            let input = form.querySelector(`input[type="hidden"][name="${this.choice.name}"]`);
+            if (!input) {
+                input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = this.choice.name;
+                form.appendChild(input);
+            }
+            input.value = this.choiceValue;
+        }
         form.dataset.confirmed = '1';
         form.requestSubmit(submitter && form.contains(submitter) ? submitter : undefined);
     },

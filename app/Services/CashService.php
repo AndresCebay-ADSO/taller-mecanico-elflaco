@@ -239,23 +239,48 @@ class CashService
         . 'Si necesitas registrarlo hoy, reabre la caja.';
 
     /**
-     * Aviso al anular una venta o comprobante en efectivo cuya caja ya se cerró.
-     * `$label`: «La venta #12», «El comprobante FAC-000012»… Devuelve null si no hace falta avisar.
+     * Devolución a cliente al anular una venta o factura en efectivo de un día anterior (decisión 2):
+     * sale de la caja de hoy, ligada al documento anulado. Se llama en la misma transacción que la anulación.
+     *
+     * @throws BusinessRuleException si la caja de hoy ya está cerrada
      */
-    public function closedDayNotice(int $branchId, CarbonInterface $date, ?string $paymentMethod, string $label): ?string
+    public function recordRefund(int $branchId, Sale|Invoice $document, ?int $userId): CashMovement
     {
-        if ($paymentMethod !== PaymentMethod::CASH) {
-            return null;
+        if ($this->closedToday($branchId)) {
+            throw new BusinessRuleException(
+                'La caja de hoy ya está cerrada, así que no puede salir de ahí la devolución. '
+                . 'Reábrela, o anula sin devolver plata.',
+                'refunded'
+            );
         }
 
-        $day = $this->find($branchId, CarbonImmutable::parse($date)->startOfDay());
-        if (!$day?->isClosed()) {
-            return null;
-        }
+        $isSale = $document instanceof Sale;
 
-        if (!$day->date->isToday()) {
-            return $label . ' era del ' . $day->date->format('d/m/Y') . ' y esa caja ya se cerró. '
-                . 'Si hoy le devolviste la plata al cliente, regístralo en Caja como un gasto para que la caja de hoy cuadre.';
+        return DB::transaction(function () use ($branchId, $document, $isSale, $userId) {
+            $day = $this->openDayForUpdate($branchId, CarbonImmutable::today());
+
+            return $day->movements()->create([
+                'type' => CashMovement::REFUND,
+                'concept' => $isSale
+                    ? 'Venta ' . $document->displayNumber() . ' anulada'
+                    : 'Factura ' . $document->invoice_number . ' anulada',
+                'amount' => $isSale ? $document->total_amount : $document->amount,
+                'payment_method' => PaymentMethod::CASH,
+                'sale_id' => $isSale ? $document->id : null,
+                'invoice_id' => $isSale ? null : $document->id,
+                'user_id' => $userId,
+            ]);
+        });
+    }
+
+    /**
+     * Aviso al anular una venta o comprobante en efectivo de hoy con la caja de hoy ya cerrada.
+     * Los de días anteriores no avisan: preguntan si se devolvió la plata (decisión 2).
+     */
+    public function closedDayNotice(int $branchId, CarbonInterface $date, ?string $paymentMethod): ?string
+    {
+        if ($paymentMethod !== PaymentMethod::CASH || !$date->isToday() || !$this->closedToday($branchId)) {
+            return null;
         }
 
         return 'La caja de hoy ya estaba cerrada y esto cambia el efectivo que debe haber. Hay que reabrir la caja y cerrarla de nuevo.';

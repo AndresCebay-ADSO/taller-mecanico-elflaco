@@ -12,6 +12,7 @@
                       data-confirm="¿Anular la venta {{ $sale->displayNumber() }}?"
                       data-confirm-description="Los productos vuelven al inventario. La venta queda registrada como anulada."
                       data-confirm-label="Anular venta"
+                      @include('cash.partials.refund-question', ['document' => $sale, 'amount' => $sale->total_amount])
                       data-confirm-destructive>
                     @csrf
                     <x-button type="submit" variant="secondary" class="!text-destructive-text">Anular</x-button>

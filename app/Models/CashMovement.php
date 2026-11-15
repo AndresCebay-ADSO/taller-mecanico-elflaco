@@ -15,6 +15,8 @@ class CashMovement extends Model
     public const PURCHASE = 'purchase';
     public const WITHDRAWAL = 'withdrawal';
     public const INCOME = 'income';
+    /** Plata devuelta al anular una venta o factura de un día anterior (decisión 2). Solo nace al anular. */
+    public const REFUND = 'refund';
 
     /** Tipos que se registran a mano en la pantalla de caja (la compra se registra desde Inventario). */
     public const TYPE_LABELS = [
@@ -23,6 +25,7 @@ class CashMovement extends Model
         self::PURCHASE => 'Compra de repuestos',
         self::WITHDRAWAL => 'Retiro',
         self::INCOME => 'Ingreso extra',
+        self::REFUND => 'Devolución a cliente',
     ];
 
     public const MANUAL_TYPES = [self::EXPENSE, self::MECHANIC_PAYMENT, self::WITHDRAWAL, self::INCOME];
@@ -35,6 +38,8 @@ class CashMovement extends Model
         'payment_method',
         'mechanic_id',
         'batch_id',
+        'sale_id',
+        'invoice_id',
         'user_id',
     ];
 
@@ -55,6 +60,22 @@ class CashMovement extends Model
     public function batch(): BelongsTo
     {
         return $this->belongsTo(Batch::class);
+    }
+
+    public function sale(): BelongsTo
+    {
+        return $this->belongsTo(Sale::class);
+    }
+
+    public function invoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class);
+    }
+
+    /** Nació de otro registro (compra o anulación): borrarlo de la caja no cambia ese registro. */
+    public function isLinked(): bool
+    {
+        return $this->batch_id !== null || $this->sale_id !== null || $this->invoice_id !== null;
     }
 
     public function user(): BelongsTo

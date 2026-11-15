@@ -35,6 +35,11 @@ Actualizado: 2026-11-14 (v1.1.0 en preparación).
   registrarla el mismo día, se reabre la caja.
 - Anular una venta (administrador) devuelve las unidades a los mismos lotes. La venta queda guardada como
   «Anulada» y deja de sumar en caja y reportes.
+- **Anular en efectivo una venta o factura de un día anterior pregunta si se le devolvió la plata al cliente
+  (decidido, 2).** «Sí» saca la plata de la caja de hoy como «Devolución a cliente», ligada a ese documento.
+  «No» es para corregir un error de digitación y no toca la caja. Si la caja de hoy ya está cerrada, no deja
+  devolver: hay que reabrirla o anular sin devolver plata. Una venta del mismo día no pregunta: al anularla deja de
+  contar en la caja sola.
 - Después de una venta, si un producto queda en su stock mínimo o menos, sale un aviso de stock bajo.
 
 ## Órdenes de servicio y trabajos
@@ -63,7 +68,8 @@ Actualizado: 2026-11-14 (v1.1.0 en preparación).
 - Valor = mano de obra + repuestos de los trabajos. Guarda cómo pagó el cliente.
 - **Con la caja de hoy cerrada no se generan facturas en efectivo (decidido, 1).** Mismo manejo que las ventas.
 - Anular una factura (administrador) la deja guardada como «Anulada». La orden se puede volver a facturar y sigue
-  «Completada» (ver pendiente 11).
+  «Completada» (ver pendiente 11). Si era en efectivo de un día anterior, pregunta por la devolución igual que una
+  venta **(decidido, 2)**.
 - El IVA está guardado en Configuración (19 %), pero **no se aplica** a ningún valor.
 
 ## Caja diaria
@@ -74,8 +80,9 @@ Actualizado: 2026-11-14 (v1.1.0 en preparación).
 - **Efectivo que debe haber** = base + ventas y facturas en efectivo + ingresos extra en efectivo − gastos, pagos a
   mecánicos, compras y retiros en efectivo.
 - Lo pagado por Nequi, transferencia, etc. se muestra aparte: no pasa por el cajón.
-- Tipos de movimiento: Gasto, Pago a mecánico, Retiro, Ingreso extra y Compra de repuestos. La compra se registra
-  desde Inventario → Registrar compra, si se pagó con plata de la caja.
+- Tipos de movimiento: Gasto, Pago a mecánico, Retiro, Ingreso extra, Compra de repuestos y Devolución a cliente.
+  La compra se registra desde Inventario → Registrar compra, si se pagó con plata de la caja. La devolución solo
+  nace al anular una venta o factura; no se puede registrar a mano.
 - **Cerrar:** se cuenta el efectivo, se indica cuánto se retira (no más de lo contado) y el sistema dice si sobra o
   falta.
 - Una caja cerrada no acepta cambios: ni movimientos, ni compras pagadas con ella, ni ventas o facturas en efectivo.
@@ -85,8 +92,8 @@ Actualizado: 2026-11-14 (v1.1.0 en preparación).
   ya se cerró, pide reabrirlo.
 - **Comisiones por pagar:** lo ganado por cada mecánico en trabajos completados desde el primer día que se usó la
   caja, menos lo que se le ha pagado desde la caja.
-- Anular una venta o factura en efectivo de un día ya cerrado no devuelve la plata sola. El sistema avisa que, si se
-  le devolvió al cliente, se anote como gasto (ver pendiente 2).
+- Anular una venta o factura en efectivo de hoy con la caja ya cerrada avisa que hay que reabrirla y cerrarla de
+  nuevo.
 - Reabrir y volver a cerrar un día no corrige la base del día siguiente si ya se empezó a usar (ver pendiente 3).
 
 ## Inventario
@@ -135,7 +142,6 @@ Actualizado: 2026-11-14 (v1.1.0 en preparación).
 
 Detalle en `docs/AUDITORIA_DECISIONES.md`.
 
-- **2.** ¿Agregar a la caja un tipo de salida «Devolución a cliente» para las anulaciones de días cerrados?
 - **3.** Reabrir un día no corrige la base del siguiente.
 - **6.** Cambiar el precio de compra en el producto no cambia el costo de los lotes.
 - **7 y 14.** Los empleados editan precios, ven costos y ven Reportes completos.

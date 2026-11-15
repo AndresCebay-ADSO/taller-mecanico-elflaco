@@ -18,6 +18,11 @@ Estado: **pendiente de revisar** salvo que diga otra cosa.
 2. **Anular una venta de un día anterior no registra la devolución en la caja.** Solo avisa que, si se le
    devolvió la plata al cliente, se anote como gasto. El sistema no puede saber si fue una devolución real
    o la corrección de un error de digitación. ¿Agregar un tipo de salida «Devolución a cliente»?
+   **Decidido (2026-11-14): preguntar al anular.** Al anular una venta o factura en efectivo de un día anterior, el
+   diálogo pregunta si se devolvió la plata. «Sí» crea en la caja de hoy una salida «Devolución a cliente» ligada al
+   documento (una sola por documento); si la caja de hoy está cerrada, no anula y pide reabrirla. «No» anula sin
+   tocar la caja (error de digitación). Se eligió por trazabilidad: la devolución solo nace de una anulación, que es
+   de administrador, así que nadie puede registrar una devolución suelta en la caja.
 3. **Reabrir y volver a cerrar un día no corrige la base del día siguiente** si ese día ya se había empezado
    a usar. La base se puede editar a mano.
 

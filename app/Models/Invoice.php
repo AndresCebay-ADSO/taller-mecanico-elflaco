@@ -37,6 +37,14 @@ class Invoice extends Model
         return PaymentMethod::label($this->payment_method);
     }
 
+    /** Al anularla se pregunta si se devolvió la plata: efectivo de un día anterior (decisión 2). */
+    public function asksForRefund(): bool
+    {
+        return !$this->isCancelled()
+            && $this->payment_method === PaymentMethod::CASH
+            && $this->invoice_date->lt(today());
+    }
+
     public function isCancelled(): bool
     {
         return $this->cancelled_at !== null;
