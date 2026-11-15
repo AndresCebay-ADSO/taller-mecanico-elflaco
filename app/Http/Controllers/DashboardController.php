@@ -33,14 +33,14 @@ class DashboardController extends Controller
 
         $recentSales = Sale::with(['saleProducts.product' => fn ($query) => $query->withTrashed(), 'user'])
             ->forBranch($branchId)
-            ->where('status', '!=', 'anulada')
+            ->notCancelled()
             ->orderByDesc('sale_date')
             ->orderByDesc('created_at')
             ->limit(5)
             ->get();
 
         $totalProducts = Product::forBranch($branchId)->count();
-        $lowStockProducts = Product::forBranch($branchId)->whereRaw('stock <= min_stock')->get();
+        $lowStockProducts = Product::forBranch($branchId)->lowStock()->get();
         $lowStockCount = $lowStockProducts->count();
 
         $todayByMethod = $reports->paymentMethods($branchId, $today, $today);

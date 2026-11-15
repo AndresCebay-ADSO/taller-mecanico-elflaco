@@ -125,19 +125,13 @@ class ReportService
 
     private function salesQuery(?int $branchId, CarbonImmutable $from, CarbonImmutable $to)
     {
-        return Sale::forBranch($branchId)
-            ->where('status', '!=', 'anulada')
-            ->whereDate('sale_date', '>=', $from->toDateString())
-            ->whereDate('sale_date', '<=', $to->toDateString());
+        return Sale::forBranch($branchId)->notCancelled()->onDates($from, $to);
     }
 
     /** Facturas de servicio vigentes de la sucursal, por fecha de la factura. */
     private function invoicesQuery(?int $branchId, CarbonImmutable $from, CarbonImmutable $to)
     {
-        return Invoice::active()
-            ->whereHas('serviceOrder', fn ($query) => $query->forBranch($branchId))
-            ->whereDate('invoice_date', '>=', $from->toDateString())
-            ->whereDate('invoice_date', '<=', $to->toDateString());
+        return Invoice::active()->forBranch($branchId)->onDates($from, $to);
     }
 
     /**
@@ -267,7 +261,7 @@ class ReportService
 
         return [
             'products' => (clone $products)->count(),
-            'low_stock' => (clone $products)->whereColumn('stock', '<=', 'min_stock')->count(),
+            'low_stock' => (clone $products)->lowStock()->count(),
             'cost_value' => (float) (clone $batches)->sum(DB::raw('batches.remaining_stock * batches.cost_price')),
             'sale_value' => (float) (clone $batches)->sum(DB::raw('batches.remaining_stock * COALESCE(batches.sale_price, products.sale_price)')),
         ];

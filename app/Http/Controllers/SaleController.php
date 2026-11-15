@@ -71,23 +71,16 @@ class SaleController extends Controller
             ->paginate(10)
             ->appends($request->all());
 
-        $todayTotal = Sale::forBranch($branchId)
-            ->whereDate('sale_date', today())
-            ->where('status', '!=', 'anulada')
-            ->sum('total_amount');
-
-        $todayCount = Sale::forBranch($branchId)
-            ->whereDate('sale_date', today())
-            ->where('status', '!=', 'anulada')
-            ->count();
-
+        // Resumen de hoy en una sola consulta: total, cantidad y reparto por método.
         $todayByMethod = Sale::forBranch($branchId)
-            ->select('payment_method', DB::raw('SUM(total_amount) as total'))
-            ->whereDate('sale_date', today())
-            ->where('status', '!=', 'anulada')
+            ->notCancelled()
+            ->onDates(today(), today())
+            ->select('payment_method', DB::raw('SUM(total_amount) as total'), DB::raw('COUNT(*) as items'))
             ->groupBy('payment_method')
-            ->having('total', '>', 0)
             ->get();
+        $todayTotal = (float) $todayByMethod->sum('total');
+        $todayCount = (int) $todayByMethod->sum('items');
+        $todayByMethod = $todayByMethod->filter(fn ($method) => (float) $method->total > 0)->values();
 
         return view('sales.index', compact('sales', 'todayTotal', 'todayCount', 'todayByMethod'));
     }

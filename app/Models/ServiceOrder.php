@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToBranch;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -9,6 +10,8 @@ use InvalidArgumentException;
 
 class ServiceOrder extends Model
 {
+    use BelongsToBranch;
+
     public const STATUS_PENDING = 'pending';
     public const STATUS_IN_PROGRESS = 'in_progress';
     public const STATUS_COMPLETED = 'completed';
@@ -92,6 +95,12 @@ class ServiceOrder extends Model
         return in_array($newStatus, $validTransitions[$this->status] ?? [], true);
     }
 
+    /** Número visible de la orden: #0042. */
+    public function displayNumber(): string
+    {
+        return '#' . str_pad((string) $this->id, 4, '0', STR_PAD_LEFT);
+    }
+
     public function statusLabel(): string
     {
         return match ($this->status) {
@@ -124,13 +133,5 @@ class ServiceOrder extends Model
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
-    }
-
-    public function scopeForBranch($query, ?int $branchId = null)
-    {
-        if ($branchId) {
-            return $query->where('branch_id', $branchId);
-        }
-        return $query->whereRaw('1 = 0');
     }
 }

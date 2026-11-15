@@ -39,15 +39,15 @@ class CashService
             : collect();
 
         $sales = Sale::forBranch($branchId)
-            ->where('status', '!=', 'anulada')
-            ->whereDate('sale_date', $date->toDateString())
+            ->notCancelled()
+            ->onDates($date, $date)
             ->select('payment_method', DB::raw('SUM(total_amount) as total'), DB::raw('COUNT(*) as items'))
             ->groupBy('payment_method')
             ->get();
 
         $invoices = Invoice::active()
-            ->whereHas('serviceOrder', fn ($query) => $query->forBranch($branchId))
-            ->whereDate('invoice_date', $date->toDateString())
+            ->forBranch($branchId)
+            ->onDates($date, $date)
             ->select('payment_method', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as items'))
             ->groupBy('payment_method')
             ->get();
