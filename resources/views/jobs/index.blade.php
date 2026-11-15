@@ -33,7 +33,7 @@
                             <p class="mt-0.5 font-mono text-xs text-muted-foreground">#T{{ str_pad($job->id, 4, '0', STR_PAD_LEFT) }}</p>
                         </td>
                         <td class="whitespace-nowrap px-4 py-3">
-                            <a href="{{ route('service-orders.show', $job->serviceOrder) }}" class="font-mono font-medium text-primary hover:underline">#{{ str_pad($job->serviceOrder->id, 4, '0', STR_PAD_LEFT) }}</a>
+                            <a href="{{ route('service-orders.show', $job->serviceOrder) }}" class="font-mono font-medium text-primary hover:underline">{{ $job->serviceOrder->displayNumber() }}</a>
                         </td>
                         <td class="px-4 py-3 text-muted-foreground">{{ $job->mechanic?->name ?? 'Sin asignar' }}</td>
                         <td class="px-4 py-3">

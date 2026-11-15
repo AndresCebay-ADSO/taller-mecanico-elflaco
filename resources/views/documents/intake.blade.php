@@ -2,7 +2,7 @@
     Orden de ingreso: se imprime al recibir la moto. Deja por escrito qué se recibió, qué falla reporta el
     cliente y las condiciones del taller; la firman las dos partes.
 --}}
-<x-document title="Orden de ingreso" :number="'#' . str_pad($order->id, 4, '0', STR_PAD_LEFT)" :settings="$settings"
+<x-document title="Orden de ingreso" :number="$order->displayNumber()" :settings="$settings"
             :back="route('service-orders.show', $order)" :legal="false">
     <x-slot name="parties">
         <x-document.party title="Cliente">

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Mechanic;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\ServiceOrder;
@@ -15,7 +14,6 @@ class DashboardController extends Controller
     public function index()
     {
         $branchId = $this->currentBranchId();
-        $monthStart = CarbonImmutable::now()->startOfMonth();
 
         $activeOrders = ServiceOrder::forBranch($branchId)
             ->whereNotIn('status', ['completed', 'cancelled'])
@@ -33,35 +31,20 @@ class DashboardController extends Controller
 
         $recentSales = Sale::with(['saleProducts.product' => fn ($query) => $query->withTrashed(), 'user'])
             ->forBranch($branchId)
-            ->where('status', '!=', 'anulada')
+            ->notCancelled()
             ->orderByDesc('sale_date')
             ->orderByDesc('created_at')
             ->limit(5)
             ->get();
 
         $totalProducts = Product::forBranch($branchId)->count();
-        $lowStockProducts = Product::forBranch($branchId)->whereRaw('stock <= min_stock')->get();
+        $lowStockProducts = Product::forBranch($branchId)->lowStock()->get();
         $lowStockCount = $lowStockProducts->count();
 
         $todayByMethod = $reports->paymentMethods($branchId, $today, $today);
 
-        $mechanics = Mechanic::forBranch($branchId)
-            ->where('is_active', true)
-            ->withCount([
-                'workshopJobs as total_jobs' => function ($query) use ($monthStart) {
-                    $query
-                        ->where('status', 'completed')
-                        ->where('completed_at', '>=', $monthStart);
-                },
-            ])
-            ->withSum([
-                'workshopJobs as monthly_earnings' => function ($query) use ($monthStart) {
-                    $query
-                        ->where('status', 'completed')
-                        ->where('completed_at', '>=', $monthStart);
-                },
-            ], 'mechanic_cost')
-            ->get();
+        // Las mismas comisiones del mes que muestra Reportes; solo las ve el administrador (decisión 14).
+        $mechanics = auth()->user()?->can('admin') ? $reports->commissions($branchId, $today->startOfMonth(), $today) : collect();
 
         // Solo el administrador puede hacer algo con un respaldo atrasado.
         $backupStatus = auth()->user()?->is_admin ? BackupStatus::fromConfig() : null;

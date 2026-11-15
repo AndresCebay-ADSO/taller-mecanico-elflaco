@@ -40,7 +40,7 @@ class ProductController extends Controller
 
         // Low stock filter (only applies to active products)
         if ($request->has('low_stock')) {
-            $query->whereNull('deleted_at')->whereColumn('stock', '<=', 'min_stock');
+            $query->whereNull('deleted_at')->lowStock();
         }
 
         // Active products first, soft-deleted at the end

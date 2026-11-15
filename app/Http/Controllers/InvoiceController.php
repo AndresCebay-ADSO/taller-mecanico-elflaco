@@ -6,11 +6,11 @@ use App\Exceptions\BusinessRuleException;
 use App\Models\Invoice;
 use App\Models\ServiceOrder;
 use App\Models\Setting;
+use App\Services\CancellationService;
 use App\Services\CashService;
 use App\Services\InvoiceService;
 use App\Support\PaymentMethod;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class InvoiceController extends Controller
 {
@@ -81,31 +81,14 @@ class InvoiceController extends Controller
     /**
      * Anula la factura sin borrarla (solo administradores).
      */
-    public function cancel(Request $request, Invoice $invoice, InvoiceService $invoiceService, CashService $cashService)
+    public function cancel(Request $request, Invoice $invoice, CancellationService $cancellations, CashService $cashService)
     {
         $branchId = $invoice->serviceOrder?->branch_id;
         $this->ensureCurrentBranch($branchId);
-
-        // Efectivo de un día anterior: se pregunta si se devolvió la plata (decisión 2).
-        $asksForRefund = $invoice->asksForRefund();
-        if ($asksForRefund) {
-            $request->validate(['refunded' => 'required|boolean'], [
-                'refunded.required' => 'Indica si le devolviste la plata al cliente.',
-            ]);
-        }
-        $refunded = $asksForRefund && $request->boolean('refunded');
+        $refunded = $this->refundAnswer($request, $invoice);
 
         try {
-            $cancelled = DB::transaction(function () use ($invoice, $invoiceService, $cashService, $refunded, $branchId) {
-                if (!$invoiceService->cancel($invoice, auth()->id())) {
-                    return false;
-                }
-                if ($refunded) {
-                    $cashService->recordRefund($branchId, $invoice, auth()->id());
-                }
-
-                return true;
-            });
+            $cancelled = $cancellations->cancel($invoice, $refunded, auth()->id());
         } catch (BusinessRuleException $exception) {
             return back()->with('error', $exception->getMessage());
         }

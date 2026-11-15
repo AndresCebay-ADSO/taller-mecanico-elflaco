@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use DateTimeInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
 
@@ -28,6 +30,20 @@ class WorkshopJob extends Model
         'started_at',
         'completed_at',
     ];
+
+    /** Trabajos que cuentan: los no cancelados. */
+    public function scopeNotCancelled(Builder $query): Builder
+    {
+        return $query->where('status', '!=', self::STATUS_CANCELLED);
+    }
+
+    /** Trabajos completados desde `$from` (y hasta `$to`, si se da): son los que generan comisión. */
+    public function scopeCompletedBetween(Builder $query, DateTimeInterface $from, ?DateTimeInterface $to = null): Builder
+    {
+        return $query->where('status', self::STATUS_COMPLETED)
+            ->where('completed_at', '>=', $from)
+            ->when($to, fn (Builder $query) => $query->where('completed_at', '<=', $to));
+    }
 
     protected static function boot()
     {

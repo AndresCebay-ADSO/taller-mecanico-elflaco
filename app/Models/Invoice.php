@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use App\Support\PaymentMethod;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 class Invoice extends Model
@@ -125,5 +127,18 @@ class Invoice extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->whereNull('cancelled_at');
+    }
+
+    /** Facturas de órdenes de esa sucursal (la factura no guarda la sucursal: la toma de su orden). */
+    public function scopeForBranch(Builder $query, ?int $branchId): Builder
+    {
+        return $query->whereHas('serviceOrder', fn (Builder $order) => $order->forBranch($branchId));
+    }
+
+    /** Facturas con fecha entre esos dos días (incluidos). */
+    public function scopeOnDates(Builder $query, DateTimeInterface|string $from, DateTimeInterface|string $to): Builder
+    {
+        return $query->whereDate('invoice_date', '>=', Carbon::parse($from)->toDateString())
+            ->whereDate('invoice_date', '<=', Carbon::parse($to)->toDateString());
     }
 }

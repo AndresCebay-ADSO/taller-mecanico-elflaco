@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToBranch;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -9,10 +10,28 @@ use InvalidArgumentException;
 
 class ServiceOrder extends Model
 {
+    use BelongsToBranch;
+
     public const STATUS_PENDING = 'pending';
     public const STATUS_IN_PROGRESS = 'in_progress';
     public const STATUS_COMPLETED = 'completed';
     public const STATUS_CANCELLED = 'cancelled';
+
+    /**
+     * Cliente y moto: iguales al crear o editar una orden y al crear un trabajo individual (que crea su orden).
+     * Si no coinciden, una orden creada por un lado no se puede editar por el otro.
+     */
+    public const CUSTOMER_RULES = [
+        'customer_name' => 'required|string|max:255',
+        'customer_phone' => 'nullable|digits:10',
+        'vehicle_info' => 'required|string|max:255',
+    ];
+
+    /** Formulario de la orden: el cliente y la moto, más el documento y el motivo de ingreso. */
+    public const FORM_RULES = self::CUSTOMER_RULES + [
+        'customer_document' => 'nullable|string|max:20',
+        'service_description' => 'required|string|max:5000',
+    ];
 
     protected $fillable = [
         'customer_name',
@@ -92,6 +111,12 @@ class ServiceOrder extends Model
         return in_array($newStatus, $validTransitions[$this->status] ?? [], true);
     }
 
+    /** Número visible de la orden: #0042. */
+    public function displayNumber(): string
+    {
+        return '#' . str_pad((string) $this->id, 4, '0', STR_PAD_LEFT);
+    }
+
     public function statusLabel(): string
     {
         return match ($this->status) {
@@ -124,13 +149,5 @@ class ServiceOrder extends Model
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
-    }
-
-    public function scopeForBranch($query, ?int $branchId = null)
-    {
-        if ($branchId) {
-            return $query->where('branch_id', $branchId);
-        }
-        return $query->whereRaw('1 = 0');
     }
 }

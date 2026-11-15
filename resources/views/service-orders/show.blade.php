@@ -2,7 +2,7 @@
 {{-- El estado del modal vive aquí: <x-app-layout> no reenvía atributos como x-data. --}}
 <div class="ds" x-data="{ showJobModal: {{ $errors->any() && old('job_type_id') ? 'true' : 'false' }} }">
     @php
-        $orderNumber = 'Orden #' . str_pad($serviceOrder->id, 4, '0', STR_PAD_LEFT);
+        $orderNumber = 'Orden ' . $serviceOrder->displayNumber();
         $billableJobs = $serviceOrder->workshopJobs->where('status', '!=', 'cancelled');
         $totalLabor = $billableJobs->sum('total_amount');
         $totalProductsCost = $billableJobs->sum(fn ($j) => $j->jobProducts->sum('total_price'));

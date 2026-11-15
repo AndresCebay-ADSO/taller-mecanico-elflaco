@@ -10,8 +10,9 @@ Al terminar, en cualquier máquina:
 php artisan taller:verificar
 ```
 
-revisa PHP, extensiones, OPcache, `.env`, zona horaria, base de datos, migraciones, permisos y la interfaz compilada,
-y dice qué corregir. Sale con error si algo impide trabajar.
+revisa PHP (versión y parches de seguridad), extensiones, OPcache, `.env`, zona horaria, base de datos, migraciones,
+permisos, la interfaz compilada y que Apache y la base **no queden abiertos a la red**, y dice qué corregir. Sale con
+error si algo impide trabajar.
 
 Complementa a [`PRODUCCION_Y_DEMO.md`](PRODUCCION_Y_DEMO.md) (qué cambió para producción y guion de demo).
 
@@ -21,27 +22,44 @@ Complementa a [`PRODUCCION_Y_DEMO.md`](PRODUCCION_Y_DEMO.md) (qué cambió para 
 
 | Programa | Versión verificada | Para qué | Notas |
 | :-- | :-- | :-- | :-- |
-| XAMPP | 8.2.12 (PHP 8.2.12, MariaDB 10.4.32, Apache 2.4) | Servidor web + base de datos | Las 60+ pruebas pasan sobre MariaDB 10.4. |
+| XAMPP | **8.5.12** (PHP 8.5.12, MariaDB 10.11.16, Apache 2.4.65) | Servidor web + base de datos | Laravel 13 pide PHP 8.3 o superior. Las 150 pruebas pasan sobre esta versión. |
 | Git | cualquiera reciente | Traer y actualizar el código | |
-| Composer | 2.8 | Dependencias de PHP | |
+| Composer | 2.11 | Dependencias de PHP | Composer 2.8 muestra avisos con PHP 8.5: `composer self-update`. |
 | Node.js | 20 o superior (verificado 22.15) | Compilar la interfaz | Solo se usa al instalar o actualizar. |
 | AnyDesk | — | Soporte remoto | Configurar acceso desatendido con contraseña. |
 
 Ruta del proyecto: **`C:\taller\taller-mecanico-elflaco`**. Fuera de `htdocs` y **sin espacios ni tildes** en la
 ruta (algunas herramientas fallan con `C:\Users\María\Mis documentos\...`).
 
+### 1.1 Instalar XAMPP
+
+1. Descargarlo de <https://www.apachefriends.org/download.html>. **Ojo:** el botón grande de la página principal no
+   siempre es la última versión; en la página de descargas elegir **XAMPP para Windows 8.5.12** (o la más nueva). El
+   archivo se llama `xampp-windows-x64-8.5.12-…-installer.exe`. **No** usar la 8.2.12: tiene fallas graves conocidas
+   (CVE-2026-109618 y CVE-2026-109619, ejecución remota de código) y su rama deja de recibir parches el 31-dic-2026.
+2. Si había otro XAMPP, desinstalarlo antes (y respaldar sus bases con `mysqldump`: viven en `C:\xampp\mysql\data`).
+3. Componentes: solo **Apache, MySQL, PHP y phpMyAdmin**. Carpeta: **`C:\xampp`**.
+4. **Firewall de Windows:** si pregunta por Apache o MySQL, **Cancelar**. El sistema se usa en el mismo portátil
+   (`127.0.0.1`) y no necesita ese permiso; «Permitir» lo deja al alcance de cualquiera en el wifi del taller.
+5. Configurar PHP (§2) y la red (§3.1) **antes** de arrancar Apache y MySQL.
+
 ---
 
 ## 2. Configurar PHP (`C:\xampp\php\php.ini`)
 
-XAMPP viene pensado para desarrollo. Cambiar estas líneas (quitar el `;` del inicio donde lo tenga) y **reiniciar
-Apache** desde el panel de XAMPP:
+XAMPP viene pensado para desarrollo. Guardar una copia (`php.ini.original`), cambiar estas líneas (quitar el `;` del
+inicio donde lo tenga) y **reiniciar Apache** desde el panel de XAMPP:
 
 ```ini
-; OPcache: guarda el código PHP ya compilado. Sin esto cada página tarda ~4 veces más
-; (medido: ~210 ms → ~50 ms por página).
-zend_extension=opcache
+; Extensiones: zip la necesita la importación de Excel; las demás vienen activas en XAMPP 8.5.12 (verificar).
+extension=zip
+extension=fileinfo
+extension=mbstring
+extension=pdo_mysql
+; intl no hace falta: la app no la usa.
 
+; OPcache: guarda el código PHP ya compilado. Sin esto cada página tarda ~4 veces más
+; (medido: ~210 ms → ~50 ms por página). En PHP 8.5 ya viene incluido: NO agregar zend_extension=opcache.
 [opcache]
 opcache.enable=1
 opcache.enable_cli=1            ; necesario si se usa `php artisan serve`
@@ -50,31 +68,37 @@ opcache.max_accelerated_files=20000
 opcache.validate_timestamps=1   ; revisa si un archivo cambió (para que `git pull` se vea)
 opcache.revalidate_freq=2       ; en desarrollo: 0 (cambios visibles al recargar)
 
+; Seguridad: mitigación de CVE-2026-115560 que recomienda php.net hasta el próximo parche.
+session.upload_progress.enabled = Off
+
 ; Zona horaria (XAMPP trae Europe/Berlin). La app usa la suya, pero los comandos sueltos de PHP no.
 date.timezone=America/Bogota
-
-; Extensiones (casi todas vienen activas; verificar)
-extension=fileinfo
-extension=mbstring
-extension=pdo_mysql
-extension=zip
-extension=intl                  ; recomendada (hoy la app no la usa, Laravel sí en algunos helpers)
 ```
 
-Comprobar: `php -v` debe mostrar `with Zend OPcache`.
+Comprobar: `php -m` debe listar `zip` y `Zend OPcache`, y `php artisan taller:verificar` no debe avisar de OPcache
+ni de `session.upload_progress`.
 
 ---
 
 ## 3. Configurar MySQL / MariaDB
 
-### 3.1 Seguridad (obligatorio en la máquina del cliente)
+### 3.1 Red: solo este equipo (obligatorio en la máquina del cliente)
 
-XAMPP deja MySQL **escuchando en toda la red con `root` sin contraseña**: cualquiera conectado al mismo wifi puede
-entrar a la base. En `C:\xampp\mysql\bin\my.ini`, sección `[mysqld]`:
+XAMPP deja MySQL y Apache **escuchando en toda la red**, y MySQL con **`root` sin contraseña**: cualquiera conectado al
+mismo wifi puede entrar a la base o al sistema. Guardar copia de cada archivo (`.original`) y cambiar:
 
-```ini
-bind-address="127.0.0.1"
-```
+- `C:\xampp\mysql\bin\my.ini`, sección `[mysqld]`, debajo de `port=3306`:
+
+  ```ini
+  bind-address=127.0.0.1
+  ```
+
+- `C:\xampp\apache\conf\httpd.conf`: `Listen 80` → `Listen 127.0.0.1:80`
+- `C:\xampp\apache\conf\extra\httpd-ssl.conf`: `Listen 443` → `Listen 127.0.0.1:443`
+
+Comprobar la sintaxis de Apache: `C:\xampp\apache\bin\httpd -t` debe decir `Syntax OK`. `taller:verificar` revisa
+las dos cosas («Base de datos solo en este equipo» y «Apache solo en este equipo»). Si el `httpd.conf` está en otra
+ruta, ponerla en `APACHE_CONF` del `.env`.
 
 ### 3.2 Base y usuario propios (no usar `root`)
 
@@ -250,11 +274,25 @@ con lo que tenía y dice qué hacer.
 
 Si `git pull` se queja de cambios locales, **no** forzar: revisar con `git status` qué cambió en esa máquina.
 
+### 7.1 Parches de seguridad de PHP
+
+Cuando php.net publica un aviso de seguridad, el código del taller no cambia, pero hay que **actualizar XAMPP**. Si
+`taller:verificar` muestra AVISO en «Seguridad de PHP», o hay noticias de una falla grave:
+
+1. `scripts\windows\respaldo.bat` y copiar fuera de `C:\xampp` el `php.ini`, `my.ini`, `httpd.conf`,
+   `httpd-ssl.conf` y `httpd-vhosts.conf`.
+2. Desinstalar XAMPP, instalar el nuevo (§1.1) y repetir §2, §3.1 y §5 (tomando los cambios de las copias, no
+   copiando los archivos viejos encima: cada versión trae los suyos).
+3. Restaurar la base con `restaurar.bat` si la carpeta de datos no se conservó, y `taller:verificar`.
+
+Al publicar el arreglo, actualizar también la lista `SAFE_PHP` de `app/Console/Commands/CheckEnvironment.php`.
+
 ---
 
 ## 8. Checklist de entrega
 
-- [ ] `php artisan taller:verificar` sin errores.
+- [ ] `php artisan taller:verificar` sin errores, y en «Seguridad de PHP», «Base de datos solo en este equipo» y
+  «Apache solo en este equipo» dice OK.
 - [ ] Reiniciar el portátil: Apache y MySQL arrancan solos; el acceso directo abre el login.
 - [ ] Entrar con el administrador y **cambiar la contraseña** desde *Perfil* junto con el cliente.
 - [ ] Borrar la línea `ADMIN_PASSWORD` del `.env` y correr `php artisan config:cache`: ya no se usa y deja una contraseña escrita en el disco.
@@ -284,5 +322,7 @@ Si `git pull` se queja de cambios locales, **no** forzar: revisar con `git statu
 | Apache no arranca | Puerto 80 ocupado (IIS, Skype, «Servicio de publicación World Wide Web») | Detener ese servicio o cambiar `Listen 80` en `httpd.conf`. |
 | MySQL no arranca | Puerto 3306 ocupado por otro MySQL instalado | Detener el otro servicio o cambiar el puerto (y `DB_PORT`). |
 | `composer install` muy lento | El antivirus revisa cada archivo | Excluir `C:\taller` y `C:\xampp` del análisis en tiempo real. |
-| La documentación pide MySQL 8 / MariaDB 10.6 | XAMPP trae MariaDB 10.4 | Verificado: funciona con 10.4 (pruebas en verde). |
+| `composer install` falla: «openspout requires php…» o «laravel/framework requires php ^8.3» | PHP viejo (XAMPP 8.2) | Instalar XAMPP 8.5.12 (§1.1). |
+| Al iniciar sesión vuelve a pedir la contraseña tras actualizar | Laravel 13 guarda la sesión como JSON: las sesiones viejas se descartan una vez | Normal: entrar de nuevo. |
+| Apache no arranca después de §3.1 | Error al editar `Listen` | `C:\xampp\apache\bin\httpd -t` dice la línea; comparar con `httpd.conf.original`. |
 | Sin internet, la letra se ve distinta | — | Ya no pasa: fuente e iconos vienen dentro de la app. |

@@ -148,7 +148,7 @@ class WorkshopJobService
             }
 
             $jobs = WorkshopJob::where('service_order_id', $order->id)
-                ->where('status', '!=', WorkshopJob::STATUS_CANCELLED)
+                ->notCancelled()
                 ->lockForUpdate()
                 ->get();
 

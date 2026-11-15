@@ -44,12 +44,7 @@ class WorkshopJobController extends Controller
     {
         $branchId = $this->requireCurrentBranchId();
 
-        $validated = $request->validate($this->jobRules($branchId) + [
-            'vehicle_info' => 'required|string|max:255',
-            'customer_name' => 'required|string|max:255',
-            // Igual que en la orden: si no, la orden creada aquí no se puede editar después.
-            'customer_phone' => 'nullable|digits:10',
-        ]);
+        $validated = $request->validate($this->jobRules($branchId) + ServiceOrder::CUSTOMER_RULES);
 
         try {
             $jobService->createStandalone($branchId, $validated, $validated['products'] ?? []);

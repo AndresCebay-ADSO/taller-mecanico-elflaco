@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Exceptions\BusinessRuleException;
 use App\Exceptions\InsufficientStockException;
-use App\Models\Batch;
 use App\Models\BranchTransfer;
 use App\Models\InventoryMovement;
 use App\Models\Product;
@@ -54,15 +53,8 @@ class BranchTransferService
             $destinationProduct = $this->findOrCreateDestinationProduct($lockedTransfer, $sourceProduct);
 
             foreach ($tramos as $tramo) {
-                $batch = Batch::create([
-                    'product_id' => $destinationProduct->id,
-                    'supplier_id' => $tramo['supplier_id'],
-                    'cost_price' => $tramo['cost_price'],
-                    'sale_price' => $destinationProduct->sale_price,
-                    'quantity' => $tramo['quantity'],
-                    'remaining_stock' => $tramo['quantity'],
-                    'purchased_at' => now(),
-                ]);
+                // Llega con su costo y se vende al precio del producto en el destino (decisión 4).
+                $batch = $this->inventory->newBatch($destinationProduct, $tramo['quantity'], $tramo['cost_price'], $tramo['supplier_id']);
 
                 InventoryMovement::create([
                     'product_id' => $destinationProduct->id,

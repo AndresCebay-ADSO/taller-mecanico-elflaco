@@ -134,9 +134,9 @@
                 <x-table :headers="['Mecánico', ['label' => 'Trabajos', 'align' => 'right'], ['label' => 'Comisión', 'align' => 'right']]">
                     @foreach($mechanics as $mech)
                         <tr>
-                            <td class="px-4 py-3 font-medium">{{ $mech->name }}</td>
-                            <td class="px-4 py-3 text-right tabular-nums text-muted-foreground">{{ $mech->total_jobs }}</td>
-                            <td class="px-4 py-3 text-right font-medium tabular-nums">{{ money($mech->monthly_earnings) }}</td>
+                            <td class="px-4 py-3 font-medium">{{ $mech['name'] }}</td>
+                            <td class="px-4 py-3 text-right tabular-nums text-muted-foreground">{{ $mech['jobs'] }}</td>
+                            <td class="px-4 py-3 text-right font-medium tabular-nums">{{ money($mech['earnings']) }}</td>
                         </tr>
                     @endforeach
                 </x-table>

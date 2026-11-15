@@ -23,7 +23,7 @@
                 @foreach($serviceOrders as $order)
                     <tr class="transition-colors hover:bg-muted/50">
                         <td class="whitespace-nowrap px-4 py-3">
-                            <a href="{{ route('service-orders.show', $order) }}" class="font-mono font-medium text-primary hover:underline">#{{ str_pad($order->id, 4, '0', STR_PAD_LEFT) }}</a>
+                            <a href="{{ route('service-orders.show', $order) }}" class="font-mono font-medium text-primary hover:underline">{{ $order->displayNumber() }}</a>
                         </td>
                         <td class="px-4 py-3">
                             <p class="font-medium">{{ $order->customer_name }}</p>
@@ -39,7 +39,7 @@
                         <td class="whitespace-nowrap px-4 py-2 text-right">
                             <x-button variant="ghost" size="icon" href="{{ route('service-orders.edit', $order) }}" title="Editar orden">
                                 <i data-lucide="pencil" class="size-4"></i>
-                                <span class="sr-only">Editar la orden #{{ str_pad($order->id, 4, '0', STR_PAD_LEFT) }}</span>
+                                <span class="sr-only">Editar la orden {{ $order->displayNumber() }}</span>
                             </x-button>
                         </td>
                     </tr>

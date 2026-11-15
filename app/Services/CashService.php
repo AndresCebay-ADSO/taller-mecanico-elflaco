@@ -9,7 +9,6 @@ use App\Models\CashMovement;
 use App\Models\Invoice;
 use App\Models\Mechanic;
 use App\Models\Sale;
-use App\Models\WorkshopJob;
 use App\Support\PaymentMethod;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
@@ -39,15 +38,15 @@ class CashService
             : collect();
 
         $sales = Sale::forBranch($branchId)
-            ->where('status', '!=', 'anulada')
-            ->whereDate('sale_date', $date->toDateString())
+            ->notCancelled()
+            ->onDates($date, $date)
             ->select('payment_method', DB::raw('SUM(total_amount) as total'), DB::raw('COUNT(*) as items'))
             ->groupBy('payment_method')
             ->get();
 
         $invoices = Invoice::active()
-            ->whereHas('serviceOrder', fn ($query) => $query->forBranch($branchId))
-            ->whereDate('invoice_date', $date->toDateString())
+            ->forBranch($branchId)
+            ->onDates($date, $date)
             ->select('payment_method', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as items'))
             ->groupBy('payment_method')
             ->get();
@@ -116,13 +115,7 @@ class CashService
     /** Base sugerida: lo que quedó en el cajón al cerrar el último día anterior. */
     public function suggestedOpening(int $branchId, CarbonImmutable $date): float
     {
-        $previous = CashDay::where('branch_id', $branchId)
-            ->whereNotNull('closed_at')
-            ->where('date', '<', $date->toDateString())
-            ->orderByDesc('date')
-            ->first();
-
-        return $previous ? (float) $previous->cashLeft() : 0.0;
+        return (float) ($this->lastClosedBefore($branchId, $date)?->cashLeft() ?? 0.0);
     }
 
     /**
@@ -147,11 +140,7 @@ class CashService
             return collect();
         }
 
-        $previous = CashDay::where('branch_id', $branchId)
-            ->whereNotNull('closed_at')
-            ->where('date', '<', $date->toDateString())
-            ->orderByDesc('date')
-            ->first();
+        $previous = $this->lastClosedBefore($branchId, $date);
 
         $next = $day->isClosed()
             ? CashDay::where('branch_id', $branchId)->where('date', '>', $date->toDateString())->orderBy('date')->first()
@@ -405,8 +394,7 @@ class CashService
 
         return Mechanic::forBranch($branchId)
             ->withSum(['workshopJobs as earned' => fn ($query) => $query
-                ->where('status', WorkshopJob::STATUS_COMPLETED)
-                ->where('completed_at', '>=', CarbonImmutable::parse($start)->startOfDay())], 'mechanic_cost')
+                ->completedBetween(CarbonImmutable::parse($start)->startOfDay())], 'mechanic_cost')
             ->orderBy('name')
             ->get()
             ->map(fn (Mechanic $mechanic) => [
@@ -424,6 +412,16 @@ class CashService
         $start = CashDay::where('branch_id', $branchId)->min('date');
 
         return $start ? CarbonImmutable::parse($start) : null;
+    }
+
+    /** El último día cerrado antes de `$date`: de ahí sale la base del día. */
+    private function lastClosedBefore(int $branchId, CarbonImmutable $date): ?CashDay
+    {
+        return CashDay::where('branch_id', $branchId)
+            ->whereNotNull('closed_at')
+            ->where('date', '<', $date->toDateString())
+            ->orderByDesc('date')
+            ->first();
     }
 
     private function find(int $branchId, CarbonImmutable $date): ?CashDay

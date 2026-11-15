@@ -2,13 +2,16 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToBranch;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, BelongsToBranch;
+
     protected $fillable = [
         'name',
         'category',
@@ -19,6 +22,12 @@ class Product extends Model
         'min_stock',
         'upc',
     ];
+
+    /** Productos en su stock mínimo o por debajo. */
+    public function scopeLowStock(Builder $query): Builder
+    {
+        return $query->whereColumn('stock', '<=', 'min_stock');
+    }
 
     public function isLowStock(): bool
     {
@@ -121,15 +130,5 @@ class Product extends Model
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
-    }
-
-    public function scopeForBranch($query, ?int $branchId = null)
-    {
-        if ($branchId) {
-            return $query->where('branch_id', $branchId);
-        }
-        
-        // Block leaking if branch is not explicitly passed or set
-        return $query->whereRaw('1 = 0');
     }
 }

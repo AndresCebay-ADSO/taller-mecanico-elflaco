@@ -95,11 +95,11 @@ class SaleService
         return DB::transaction(function () use ($sale) {
             $lockedSale = Sale::whereKey($sale->id)->lockForUpdate()->firstOrFail();
 
-            if ($lockedSale->status === 'anulada') {
+            if ($lockedSale->isCancelled()) {
                 return false;
             }
 
-            $lockedSale->update(['status' => 'anulada']);
+            $lockedSale->update(['status' => Sale::STATUS_CANCELLED]);
             $this->inventory->reverseStockFromSale($lockedSale->id);
 
             return true;

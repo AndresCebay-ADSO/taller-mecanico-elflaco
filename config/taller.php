@@ -12,4 +12,10 @@ return [
     // Días sin un respaldo nuevo antes de avisar.
     'respaldos_dias_aviso' => (int) env('RESPALDOS_DIAS_AVISO', 3),
 
+    /*
+    | httpd.conf de Apache: taller:verificar revisa que Apache escuche solo en 127.0.0.1
+    | (sin esto, cualquiera en el wifi puede abrir el sistema). Si no existe, no se revisa.
+    */
+    'apache_conf' => env('APACHE_CONF', 'C:\xampp\apache\conf\httpd.conf'),
+
 ];

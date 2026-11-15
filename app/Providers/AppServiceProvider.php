@@ -35,9 +35,7 @@ class AppServiceProvider extends ServiceProvider
         View::composer('components.app-layout', function ($view) {
             try {
                 $branchId = app(BranchService::class)->getCurrentBranchId();
-                $count = Product::forBranch($branchId)
-                    ->whereColumn('stock', '<=', 'min_stock')
-                    ->count();
+                $count = Product::forBranch($branchId)->lowStock()->count();
                 $view->with('lowStockCount', $count);
             } catch (\Exception $e) {
                 $view->with('lowStockCount', 0);

@@ -26,31 +26,26 @@ class InventoryService
     private const COST_VALUED_MOVEMENTS = ['adjustment', 'transfer_out'];
 
     /**
-     * Get the active FIFO batch (oldest with stock).
+     * Lote nuevo de un producto. Se vende al precio del producto (un solo precio por producto, decisión 4)
+     * salvo que se indique otro; cada lote guarda su propio costo. No toca el stock ni crea el movimiento.
      */
-    public function getActiveBatch(int $productId): ?Batch
-    {
-        return Batch::where('product_id', $productId)
-            ->withStock()
-            ->fifo()
-            ->first();
-    }
-
-    /**
-     * Get the selling price from the active FIFO batch.
-     * Fallback to product's selling price if no active batch.
-     */
-    public function getSellingPrice(int $productId): float
-    {
-        $activeBatch = $this->getActiveBatch($productId);
-
-        if ($activeBatch && $activeBatch->sale_price !== null) {
-            return (float) $activeBatch->sale_price;
-        }
-
-        $product = Product::find($productId);
-
-        return $product ? (float) $product->sale_price : 0.0;
+    public function newBatch(
+        Product $product,
+        int $quantity,
+        float|string|null $costPrice,
+        ?int $supplierId = null,
+        float|string|null $salePrice = null,
+        mixed $purchasedAt = null,
+    ): Batch {
+        return Batch::create([
+            'product_id' => $product->id,
+            'supplier_id' => $supplierId,
+            'cost_price' => $costPrice,
+            'sale_price' => $salePrice ?? $product->sale_price,
+            'quantity' => $quantity,
+            'remaining_stock' => $quantity,
+            'purchased_at' => $purchasedAt ?? now(),
+        ]);
     }
 
     /**
@@ -203,15 +198,7 @@ class InventoryService
         if ($batch) {
             $batch->increment('remaining_stock', $quantity);
         } else {
-            $batch = Batch::create([
-                'product_id' => $product->id,
-                'supplier_id' => $supplierId,
-                'cost_price' => $product->purchase_price,
-                'sale_price' => $product->sale_price,
-                'quantity' => $quantity,
-                'remaining_stock' => $quantity,
-                'purchased_at' => now(),
-            ]);
+            $batch = $this->newBatch($product, $quantity, $product->purchase_price, $supplierId);
         }
 
         $product->increment('stock', $quantity);
@@ -237,15 +224,14 @@ class InventoryService
             $product = $this->lockProduct((int) $data['product_id']);
             $purchasedAt = $data['purchased_at'] ?? now();
 
-            $batch = Batch::create([
-                'product_id' => $product->id,
-                'supplier_id' => $data['supplier_id'] ?? null,
-                'cost_price' => $data['cost_price'],
-                'sale_price' => $data['sale_price'] ?? $product->sale_price,
-                'quantity' => $data['quantity'],
-                'remaining_stock' => $data['quantity'],
-                'purchased_at' => $purchasedAt,
-            ]);
+            $batch = $this->newBatch(
+                $product,
+                (int) $data['quantity'],
+                $data['cost_price'],
+                $data['supplier_id'] ?? null,
+                $data['sale_price'] ?? null,
+                $purchasedAt,
+            );
 
             InventoryMovement::create([
                 'product_id' => $product->id,
@@ -288,15 +274,7 @@ class InventoryService
             $reference = strtoupper($reason);
 
             if ($quantity > 0) {
-                $batch = Batch::create([
-                    'product_id' => $product->id,
-                    'supplier_id' => null,
-                    'cost_price' => $product->purchase_price,
-                    'sale_price' => $product->sale_price,
-                    'quantity' => $quantity,
-                    'remaining_stock' => $quantity,
-                    'purchased_at' => now(),
-                ]);
+                $batch = $this->newBatch($product, $quantity, $product->purchase_price);
 
                 $product->increment('stock', $quantity);
 
@@ -365,15 +343,7 @@ class InventoryService
             $difference = (int) $product->stock - (int) $batches->sum('remaining_stock');
 
             if ($difference > 0) {
-                Batch::create([
-                    'product_id' => $product->id,
-                    'supplier_id' => null,
-                    'cost_price' => $product->purchase_price,
-                    'sale_price' => $product->sale_price,
-                    'quantity' => $difference,
-                    'remaining_stock' => $difference,
-                    'purchased_at' => now(),
-                ]);
+                $this->newBatch($product, $difference, $product->purchase_price);
             }
 
             $excess = -$difference;
