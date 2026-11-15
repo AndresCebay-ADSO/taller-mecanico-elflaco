@@ -56,6 +56,16 @@ class BatchController extends Controller
                 $lockedBatch->cost_price = $validated['cost_price'];
                 $lockedBatch->save();
 
+                // Si es la última compra del producto, su costo de referencia también se corrige (decisión 6).
+                $latestPurchaseBatchId = InventoryMovement::where('product_id', $product->id)
+                    ->where('movement_type', 'purchase')
+                    ->orderByDesc('movement_date')
+                    ->orderByDesc('id')
+                    ->value('batch_id');
+                if ((int) $latestPurchaseBatchId === (int) $lockedBatch->id) {
+                    $product->update(['purchase_price' => $validated['cost_price']]);
+                }
+
                 $movement = InventoryMovement::where('batch_id', $lockedBatch->id)
                     ->where('movement_type', 'purchase')
                     ->first();

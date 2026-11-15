@@ -42,6 +42,9 @@ Estado: **pendiente de revisar** salvo que diga otra cosa.
    (corregido en la auditoría: antes se seguía cobrando el precio viejo). El costo de cada lote no cambia.
 6. **Cambiar el precio de compra en «Editar producto» no cambia el costo de los lotes que ya hay.** Solo se usa
    para los ajustes positivos y las unidades que vuelven sin lote de origen.
+   **Decidido (2026-11-14): el costo cambia solo con las compras.** «Editar producto» ya no tiene el campo: muestra
+   el costo de referencia solo para leer. Se fija al crear el producto y después lo actualiza cada compra. Corregir
+   la última compra en «Corregir lote» también corrige el costo de referencia; corregir una compra vieja, no.
 7. **Los empleados pueden editar productos, incluidos los precios,** y ver los costos en Inventario. Solo
    borrar productos, ajustes y correcciones de lote son de administrador. Hoy da igual (solo ella usa el
    sistema), pero importa si algún día hay empleados con usuario.

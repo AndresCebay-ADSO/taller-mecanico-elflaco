@@ -114,8 +114,10 @@ Actualizado: 2026-11-14 (v1.1.0 en preparación).
 - **Un solo precio de venta por producto (decidido, 4).** Al registrar una compra con otro precio, todas las unidades
   pasan a ese precio. Cambiar el precio en «Editar producto» también cambia el de todas las unidades.
 - Cada lote conserva su costo, así la ganancia sale con lo que costó cada unidad.
-- El precio de compra del producto es el costo de la última compra. Solo se usa en los ajustes positivos y en las
-  unidades que vuelven sin lote de origen (ver pendiente 6).
+- **El costo de referencia del producto es el costo de la última compra y cambia solo con las compras
+  (decidido, 6).** Se pone al crear el producto; en «Editar producto» solo se ve. Si la última compra se registró
+  con un costo equivocado, «Corregir lote» corrige el lote y también el costo de referencia. Se usa en los ajustes
+  que suman unidades y en las unidades que vuelven sin lote de origen.
 - Una compra exige un proveedor activo y asociado al producto.
 - **Ajustes** (administrador), con motivo ajuste, daño o pérdida:
   - si suman, crean un lote al costo del producto;
@@ -154,6 +156,5 @@ Actualizado: 2026-11-14 (v1.1.0 en preparación).
 
 Detalle en `docs/AUDITORIA_DECISIONES.md`.
 
-- **6.** Cambiar el precio de compra en el producto no cambia el costo de los lotes.
 - **8.** Cómo se encuentra el producto de destino en una transferencia.
 - **15.** ¿Cifrar los respaldos de Google Drive?

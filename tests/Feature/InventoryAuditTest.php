@@ -142,3 +142,37 @@ it('moves existing stock to the product price when migrating', function () {
         // Los lotes ya agotados son historia: no se tocan.
         ->and((float) $empty->fresh()->sale_price)->toBe(15000.0);
 });
+
+it('changes the reference cost only through purchases, not from the product form (decision 6)', function () {
+    [$admin, $branch] = branchUser(admin: true);
+    $supplier = Supplier::create(['name' => 'Proveedor', 'phone' => '3001112233', 'active' => true]);
+    $product = stockedProduct($branch, 2, cost: 10000, price: 20000);
+    $product->suppliers()->sync([$supplier->id]);
+    $session = ['current_branch_id' => $branch->id];
+
+    $this->actingAs($admin)->withSession($session)->get(route('products.edit', $product))
+        ->assertOk()->assertSee('Costo de referencia')->assertDontSee('name="purchase_price"', false);
+
+    // Aunque llegue en el formulario, se ignora.
+    $this->actingAs($admin)->withSession($session)
+        ->put(route('products.update', $product), productForm($product, $supplier, ['purchase_price' => 1]))
+        ->assertRedirect(route('products.index'));
+    expect((float) $product->fresh()->purchase_price)->toBe(10000.0);
+
+    $this->travel(1)->minutes();
+    $this->actingAs($admin)->withSession($session)->post(route('inventory.store-purchase'), [
+        'product_id' => $product->id, 'supplier_id' => $supplier->id, 'quantity' => 3, 'unit_price' => 13000, 'cash_payment' => 'none',
+    ]);
+    [$older, $latest] = Batch::where('product_id', $product->id)->orderBy('id')->get()->all();
+    expect((float) $product->fresh()->purchase_price)->toBe(13000.0);
+
+    $correct = fn (Batch $batch, float $cost) => $this->actingAs($admin)->withSession($session)->patch(route('batches.update', $batch), [
+        'supplier_id' => $supplier->id, 'cost_price' => $cost, 'notes' => 'Se digitó mal el costo de la factura',
+    ]);
+
+    // Corregir una compra vieja no toca la referencia; corregir la última sí.
+    $correct($older, 9000)->assertSessionHasNoErrors();
+    expect((float) $product->fresh()->purchase_price)->toBe(13000.0);
+    $correct($latest, 12500)->assertSessionHasNoErrors();
+    expect((float) $product->fresh()->purchase_price)->toBe(12500.0);
+});
