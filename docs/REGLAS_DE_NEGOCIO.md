@@ -67,9 +67,11 @@ Actualizado: 2026-11-14 (v1.1.0 en preparación).
 - Se numeran FAC-000001, FAC-000002… sin huecos. Una factura anulada conserva su número.
 - Valor = mano de obra + repuestos de los trabajos. Guarda cómo pagó el cliente.
 - **Con la caja de hoy cerrada no se generan facturas en efectivo (decidido, 1).** Mismo manejo que las ventas.
-- Anular una factura (administrador) la deja guardada como «Anulada». La orden se puede volver a facturar y sigue
-  «Completada» (ver pendiente 11). Si era en efectivo de un día anterior, pregunta por la devolución igual que una
-  venta **(decidido, 2)**.
+- **Anular una factura (administrador) la deja guardada como «Anulada» y la orden vuelve a «En progreso»
+  (decidido, 11).** Ahí se pueden agregar, eliminar o terminar trabajos y volver a facturar con el siguiente número.
+  Si era en efectivo de un día anterior, pregunta por la devolución igual que una venta **(decidido, 2)**.
+- **Una factura no cambia después de emitida (decidido, 11).** Guarda una copia de sus líneas (trabajos, mecánicos y
+  repuestos con sus precios) y siempre se imprime con ella, aunque la orden se corrija después.
 - El IVA está guardado en Configuración (19 %), pero **no se aplica** a ningún valor.
 
 ## Caja diaria
@@ -150,5 +152,4 @@ Detalle en `docs/AUDITORIA_DECISIONES.md`.
 - **8.** Cómo se encuentra el producto de destino en una transferencia.
 - **9.** Los empleados pueden eliminar órdenes sin trabajos.
 - **10.** «Mano de obra variable» y «total fijo por porcentaje» de los tipos de trabajo no hacen nada.
-- **11.** Al anular una factura, ¿la orden debería volver a «En progreso» para poder corregirla?
 - **15.** ¿Cifrar los respaldos de Google Drive?

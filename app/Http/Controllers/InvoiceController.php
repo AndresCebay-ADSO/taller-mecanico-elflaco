@@ -115,7 +115,7 @@ class InvoiceController extends Controller
         }
 
         return redirect()->route('invoices.show', $invoice)
-            ->with('success', "Factura {$invoice->invoice_number} anulada. La orden puede facturarse de nuevo."
+            ->with('success', "Factura {$invoice->invoice_number} anulada. La orden volvió a «En progreso»: puedes corregir sus trabajos y facturarla de nuevo."
                 . ($refunded ? ' La devolución de ' . money($invoice->amount) . ' salió de la caja de hoy.' : ''))
             ->with('warning', $cashService->closedDayNotice($branchId, $invoice->invoice_date, $invoice->payment_method));
     }

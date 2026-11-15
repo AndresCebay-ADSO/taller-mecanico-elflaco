@@ -195,6 +195,55 @@ describe('reportes', function () {
 });
 
 describe('facturas y órdenes', function () {
+    it('reopens the order when its invoice is cancelled, while the invoice keeps the lines it was issued with', function () {
+        [$admin, $branch] = branchUser(admin: true);
+        $product = stockedProduct($branch, 5, price: 20000);
+        [$order, $job] = completedJobOrder($branch, $product, quantity: 1, labor: 50000);
+        $first = app(InvoiceService::class)->generateFor($order);
+        $session = ['current_branch_id' => $branch->id];
+
+        expect($first->lineItems())->toHaveCount(1)
+            ->and($first->lineItems()[0])->toMatchArray(['labor' => 50000.0, 'description' => 'Mantenimiento'])
+            ->and($first->lineItems()[0]['parts'][0])->toMatchArray(['name' => $product->name, 'quantity' => 1, 'total_price' => 20000.0]);
+
+        $this->actingAs($admin)->withSession($session)->post(route('invoices.cancel', $first))->assertSessionHas('success');
+        expect($order->fresh())->status->toBe(ServiceOrder::STATUS_IN_PROGRESS)->completed_at->toBeNull();
+
+        // Se corrige la orden: sale el trabajo facturado y entra otro.
+        app(WorkshopJobService::class)->delete($job);
+        $fixed = app(WorkshopJobService::class)->addToOrder($order->fresh(), [
+            'job_type_id' => demoJobType()->id,
+            'mechanic_id' => branchMechanic($branch)->id,
+            'labor_cost' => 65000,
+            'description' => 'Ajuste de frenos',
+        ]);
+        $fixed->update(['status' => WorkshopJob::STATUS_COMPLETED, 'completed_at' => now()]);
+        $second = app(InvoiceService::class)->generateFor($order->fresh());
+
+        // La factura anulada se reimprime tal como se emitió; la nueva trae la corrección.
+        $this->actingAs($admin)->withSession($session)->get(route('documents.invoice', $first))
+            ->assertOk()->assertSee('Mantenimiento')->assertSee($product->name)->assertDontSee('Ajuste de frenos');
+        $this->actingAs($admin)->withSession($session)->get(route('invoices.show', $second))
+            ->assertOk()->assertSee('Ajuste de frenos')->assertDontSee($product->name);
+        expect((float) $second->amount)->toBe(65000.0)
+            ->and($order->fresh()->status)->toBe(ServiceOrder::STATUS_COMPLETED);
+    });
+
+    it('saves the lines of an invoice issued before the copy existed when it is cancelled', function () {
+        [$admin, $branch] = branchUser(admin: true);
+        [$order] = completedJobOrder($branch, stockedProduct($branch, 3), labor: 40000);
+        $invoice = app(InvoiceService::class)->generateFor($order);
+        Invoice::whereKey($invoice->id)->update(['line_items' => null]);
+
+        // Sin copia lee la orden, que con la factura vigente no ha cambiado.
+        expect($invoice->fresh()->lineItems()->first()['labor'])->toBe(40000.0);
+
+        app(InvoiceService::class)->cancel($invoice->fresh(), $admin->id);
+
+        expect($invoice->fresh()->line_items)->not->toBeNull()
+            ->and($invoice->fresh()->lineItems()->first()['labor'])->toBe(40000.0);
+    });
+
     it('keeps cancelled invoices on record and lets the order be invoiced again', function () {
         [$admin, $branch] = branchUser(admin: true);
         [$order] = completedJobOrder($branch, stockedProduct($branch, 3));

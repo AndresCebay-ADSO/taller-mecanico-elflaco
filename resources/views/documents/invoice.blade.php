@@ -1,8 +1,8 @@
 @php
     $order = $invoice->serviceOrder;
-    $jobs = $order->workshopJobs->where('status', '!=', 'cancelled');
-    $laborTotal = $jobs->sum('total_amount');
-    $partsTotal = $jobs->sum(fn ($job) => $job->jobProducts->sum('total_price'));
+    $lines = $invoice->lineItems();
+    $laborTotal = $lines->sum('labor');
+    $partsTotal = $lines->sum(fn ($line) => collect($line['parts'])->sum('total_price'));
     $cancelled = $invoice->isCancelled()
         ? 'Anulado el ' . $invoice->cancelled_at->format('d/m/Y h:i a') . ($invoice->cancelledBy ? ' por ' . $invoice->cancelledBy->name : '') . '. No tiene validez como comprobante.'
         : null;
@@ -34,7 +34,7 @@
         @endif
     </x-slot>
 
-    <x-document.job-lines :jobs="$jobs" />
+    <x-document.job-lines :lines="$lines" />
 
     <x-slot name="totals">
         <dl class="space-y-1.5">

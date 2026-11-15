@@ -39,7 +39,7 @@
                             @if(! $invoice->isCancelled() && auth()->user()->can('admin'))
                                 <form action="{{ route('invoices.cancel', $invoice) }}" method="POST"
                                       data-confirm="¿Anular la factura {{ $invoice->invoice_number }}?"
-                                      data-confirm-description="Queda registrada como anulada y la orden se puede facturar de nuevo con el siguiente número."
+                                      data-confirm-description="Queda registrada como anulada. La orden vuelve a «En progreso» para corregirla y facturarla de nuevo con el siguiente número."
                                       data-confirm-label="Anular factura"
                                       @include('cash.partials.refund-question', ['document' => $invoice, 'amount' => $invoice->amount])
                                       data-confirm-destructive>

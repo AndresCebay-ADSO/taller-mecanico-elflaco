@@ -57,6 +57,10 @@ Estado: **pendiente de revisar** salvo que diga otra cosa.
 11. **Corregir un comprobante ya emitido es difícil.** Al anularlo, la orden sigue «Completada»: se pueden eliminar
     trabajos, pero no agregar nuevos. Si hay que cambiar un trabajo, toca hacer una orden nueva. ¿Al anular el
     comprobante, la orden debería volver a «En progreso»?
+    **Decidido (2026-11-14): sí, y la factura guarda sus líneas.** Al anular una factura, la orden vuelve a «En
+    progreso» para corregir trabajos y facturarla de nuevo. Cada factura guarda al emitirse una copia de sus líneas
+    (`line_items`) y se imprime siempre con ella, aunque la orden cambie después. Las facturas anteriores reciben su
+    copia al anularse, cuando sus líneas todavía son las facturadas.
 12. **Una orden se puede marcar «Completada» sin generar el comprobante.** Entonces ese cobro no aparece en la caja
     ni en «Cobrado hoy por método». ¿Obligar a que completar la orden sea generando el comprobante?
     **Decidido (2026-11-14): sí.** «Completada» ya no aparece en Editar; la orden se completa solo con «Generar
@@ -86,9 +90,8 @@ Estado: **pendiente de revisar** salvo que diga otra cosa.
 
 ## Conocido, sin corregir (impacto bajo)
 
-- **Reimprimir un comprobante anulado puede mostrar líneas que no suman su total.** El comprobante guarda el total,
-  pero las líneas se leen de la orden en el momento de imprimir. Si después de anularlo se borra un trabajo de la
-  orden, la reimpresión del anulado muestra las líneas nuevas con el total viejo. Los comprobantes vigentes no se
-  afectan: con comprobante activo no se pueden borrar trabajos.
+- **Reimprimir un comprobante anulado puede mostrar líneas que no suman su total.** Corregido con la decisión 11
+  para todo lo que se emita o anule desde v1.1.0. Solo queda en los comprobantes anulados antes de esa versión si
+  después se borró un trabajo de su orden.
 - **Restaurar no pone la app en mantenimiento.** Si alguien registra algo mientras `restaurar.bat` carga la base, ese
   registro se pierde. Con un solo usuario no pasa: se restaura con el sistema sin uso.
